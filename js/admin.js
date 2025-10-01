@@ -83,3 +83,21 @@ function renderTickets(snapshot) {
   });
 }
 
+// --- Listen for Auth & Firestore Realtime ---
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+
+    // Listen realtime tiket
+    const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
+    onSnapshot(q, renderTickets);
+
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
+  }
+});
+
+
