@@ -1,9 +1,13 @@
 // js/admin.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { 
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { 
+  getFirestore, collection, query, orderBy, onSnapshot 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🔹 Firebase Config (ganti dengan punyamu)
+// 🔹 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -43,13 +47,41 @@ logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
+// --- Render Tiket ---
+function renderTickets(snapshot) {
+  ticketsBody.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
+      <td>${d.name || "-"}</td>
+      <td>${d.user_email || "-"}</td>
+      <td>${d.department || "-"}</td>
+      <td>${d.priority || "-"}</td>
+      <td>${d.subject || "-"}</td>
+      <td>${d.message || "-"}</td>
+    `;
+    ticketsBody.appendChild(tr);
+  });
+
+  if (snapshot.empty) {
+    ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
+  }
+}
+
 // --- MONITOR LOGIN STATE ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("✅ Login sebagai:", user.email);
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
-    loadTickets(); // hanya load tiket kalau admin sudah login
+
+    // 🔹 Listen realtime tiket
+    const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
+    onSnapshot(q, renderTickets);
+
   } else {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
@@ -57,48 +89,3 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
-
-// --- AMBIL DATA TIKET ---
-// --- AMBIL DATA TIKET ---
-function renderTickets(snapshot) {
-  ticketsBody.innerHTML = "";
-  if (snapshot.empty) {
-    ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket</td></tr>`;
-    return;
-  }
-
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${new Date(d.sent_at).toLocaleString()}</td>
-      <td>${d.name}</td>
-      <td>${d.user_email}</td>
-      <td>${d.department}</td>
-      <td>${d.priority}</td>
-      <td>${d.subject}</td>
-      <td>${d.message}</td>
-    `;
-    ticketsBody.appendChild(tr);
-  });
-}
-
-// --- Listen for Auth & Firestore Realtime ---
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-
-    // Listen realtime tiket
-    const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
-    onSnapshot(q, renderTickets);
-
-  } else {
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
-  }
-});
-
-
-
