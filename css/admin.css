@@ -31,4 +31,14 @@
     text-align: center;
     color: var(--muted);
     padding: 12px;
+
+}
+
+/* css/admin.css */
+.auth-buttons {
+    display: flex;
+    justify-content: flex-end;
+    /* dorong ke kanan */
+    gap: 10px;
+    margin-bottom: 16px;
 }
