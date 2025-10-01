@@ -59,34 +59,27 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // --- AMBIL DATA TIKET ---
-async function loadTickets() {
-  try {
-    ticketsBody.innerHTML = `<tr><td colspan="7">⏳ Memuat tiket...</td></tr>`;
-    const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
-      ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
-      return;
-    }
-
-    ticketsBody.innerHTML = "";
-    snap.forEach((doc) => {
-      const d = doc.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${new Date(d.sent_at).toLocaleString()}</td>
-        <td>${d.name}</td>
-        <td>${d.user_email}</td>
-        <td>${d.department}</td>
-        <td>${d.priority}</td>
-        <td>${d.subject}</td>
-        <td>${d.message}</td>
-      `;
-      ticketsBody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error("❌ Gagal load tiket:", err);
-    ticketsBody.innerHTML = `<tr><td colspan="7">❌ Gagal load tiket: ${err.message}</td></tr>`;
+// --- AMBIL DATA TIKET ---
+function renderTickets(snapshot) {
+  ticketsBody.innerHTML = "";
+  if (snapshot.empty) {
+    ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket</td></tr>`;
+    return;
   }
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(d.sent_at).toLocaleString()}</td>
+      <td>${d.name}</td>
+      <td>${d.user_email}</td>
+      <td>${d.department}</td>
+      <td>${d.priority}</td>
+      <td>${d.subject}</td>
+      <td>${d.message}</td>
+    `;
+    ticketsBody.appendChild(tr);
+  });
 }
+
