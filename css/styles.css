@@ -1,0 +1,111 @@
+:root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --accent: #2563eb;
+    --muted: #6b7280
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    background: var(--bg);
+    color: #0f172a
+}
+
+.container {
+    max-width: 1000px;
+    margin: 36px auto;
+    padding: 16px
+}
+
+header h1 {
+    margin: 0 0 6px;
+    font-size: 1.6rem
+}
+
+.card {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
+    margin-bottom: 18px
+}
+
+form label {
+    display: block;
+    margin-bottom: 12px
+}
+
+input[type=text],
+input[type=email],
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e6edf3;
+    border-radius: 8px;
+    font-size: 0.95rem
+}
+
+.card textarea{
+    resize: none;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px
+}
+
+button {
+    background: var(--accent);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 0;
+    cursor: pointer
+}
+
+button[type=reset] {
+    background: #efefef;
+    color: #111
+}
+
+.tickets ul {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.tickets li {
+    padding: 10px;
+    border-bottom: 1px dashed #eef2ff
+}
+
+#status {
+    margin-top: 12px;
+    color: var(--muted)
+}
+
+@media(min-width:800px) {
+    form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px
+    }
+
+    label[for=message],
+    textarea,
+    .actions {
+        grid-column: 1 / -1
+    }
+
+    .tickets {
+        grid-column: 1 / -1
+    }
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>IT Ticketing — Lapor Masalah</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- Firebase (modular SDK) -->
+    <script type="module" src="js/app.js"></script>
+</head>
+
+<body>
+    <main class="container">
+        <header>
+            <h1>IT Ticketing — Lapor Permasalahan</h1>
+            <p>Isi form di bawah untuk membuat tiket. Semua data tersimpan ke Firebase dan akan dikirim ke email
+                penerima.</p>
+        </header>
+
+
+        <form id="ticketForm" class="card">
+            <label>Nama Lengkap
+                <input type="text" name="name" id="name" required placeholder="Nama Anda">
+            </label>
+
+
+            <label>Email
+                <input type="email" name="user_email" id="user_email" required placeholder="email@contoh.com">
+            </label>
+
+
+            <label>Departemen
+                <select name="department" id="department" required>
+                    <option value="IT">IT</option>
+                    <option value="HR">HR</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Engineer">Engineer</option>
+                    <option value="QC">QC</option>
+                    <option value="Completion">Completion</option>
+                    <option value="HSE">HSE</option>
+                    <option value="Clinic">Clinic</option>
+                    <option value="Other">Lainnya</option>
+                </select>
+            </label>
+
+
+            <label>Prioritas
+                <select name="priority" id="priority" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </label>
+
+
+            <label>Ringkasan Masalah
+                <input type="text" name="subject" id="subject" required placeholder="Ringkasan singkat">
+            </label>
+
+
+            <label>Deskripsi Lengkap
+                <textarea name="message" id="message" rows="6" required
+                    placeholder="Jelaskan masalah secara detail..."></textarea>
+            </label>
+
+
+            <!--<label>Lampiran (opsional)
+                <input type="file" id="attachment" name="attachment">
+            </label>-->
+
+
+            <div class="actions">
+                <button type="submit" id="submitBtn">Kirim Tiket</button>
+                <button type="reset">Reset</button>
+            </div>
+
+
+            <div id="status" role="status" aria-live="polite"></div>
+        </form>
+
+
+        <!--<section class="tickets card">
+            <h2>Riwayat Tiket (terakhir 10)</h2>
+            <ul id="ticketsList"></ul>
+        </section>-->
+
+
+        <footer>
+            <small>Template ini menggunakan Firebase (Firestore) dan EmailJS untuk pengiriman email. Konfigurasi
+                diperlukan — lihat README di bawah.</small>
+
+</html>
