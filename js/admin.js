@@ -1,9 +1,9 @@
-// Firebase Modular SDK
+// Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Firebase config
+// 🔧 Firebase config kamu
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -14,10 +14,10 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5"
 };
 
-// Init Firebase
+// Init
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // DOM
@@ -41,37 +41,6 @@ logoutBtn.addEventListener("click", async () => {
     await signOut(auth);
   } catch (err) {
     console.error("Logout gagal", err);
-  }
-});
-
-document.getElementById("loginBtn").addEventListener("click", async () => {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (e) {
-    console.error("Login gagal", e);
-  }
-});
-
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
-});
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    console.log("Login sebagai", user.email);
-    // coba load tiket
-    try {
-      const snap = await getDocs(collection(db, "tickets"));
-      document.getElementById("tickets").innerHTML = "";
-      snap.forEach(doc => {
-        const d = doc.data();
-        document.getElementById("tickets").innerHTML += `<div>${d.subject} - ${d.priority}</div>`;
-      });
-    } catch (err) {
-      console.error("❌ Gagal load tiket:", err);
-    }
-  } else {
-    console.log("Belum login");
   }
 });
 
@@ -100,23 +69,16 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-
+// Fungsi ambil tiket
 async function loadTickets() {
-  const tbody = document.getElementById("ticketsBody");
-  tbody.innerHTML = "<tr><td colspan='7'>⏳ Memuat data...</td></tr>";
-
   try {
-    const colRef = collection(db, "tickets");
-    const q = query(colRef, orderBy("sent_at", "desc"));
-    const snapshot = await getDocs(q);
+    ticketsBody.innerHTML = `<tr><td colspan="7" class="loading">Memuat...</td></tr>`;
 
-    if (snapshot.empty) {
-      tbody.innerHTML = "<tr><td colspan='7'>Belum ada tiket.</td></tr>";
-      return;
-    }
+    const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
+    const snap = await getDocs(q);
 
-    tbody.innerHTML = "";
-    snapshot.forEach(doc => {
+    ticketsBody.innerHTML = "";
+    snap.forEach((doc) => {
       const d = doc.data();
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -128,13 +90,14 @@ async function loadTickets() {
         <td>${d.subject}</td>
         <td>${d.message}</td>
       `;
-      tbody.appendChild(tr);
+      ticketsBody.appendChild(tr);
     });
+
+    if (snap.empty) {
+      ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
+    }
   } catch (err) {
-    console.error("❌ Gagal load tiket:", err);
-    tbody.innerHTML = "<tr><td colspan='7'>Gagal memuat data.</td></tr>";
+    console.error(err);
+    ticketsBody.innerHTML = `<tr><td colspan="7">❌ Gagal load tiket: ${err.message}</td></tr>`;
   }
 }
-
-// Load data saat halaman dibuka
-loadTickets();
