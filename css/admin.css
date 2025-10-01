@@ -1,0 +1,34 @@
+.table-wrapper {
+    overflow-x: auto;
+}
+
+#ticketsTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+#ticketsTable thead {
+    background: #f9fafb;
+    text-align: left;
+}
+
+#ticketsTable th,
+#ticketsTable td {
+    padding: 10px;
+    vertical-align: top;
+}
+
+#ticketsTable tbody tr {
+    border-bottom: 1px dashed #eef2ff;
+}
+
+#ticketsTable tbody tr:hover {
+    background: #f1f5f9;
+}
+
+#ticketsTable td.loading {
+    text-align: center;
+    color: var(--muted);
+    padding: 12px;
+}
