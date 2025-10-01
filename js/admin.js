@@ -1,9 +1,9 @@
-// Firebase
+// js/admin.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🔧 Firebase config kamu
+// 🔹 Firebase Config (ganti dengan punyamu)
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -14,68 +14,61 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5"
 };
 
-// Init
+// 🔹 Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
-// DOM
+// 🔹 Elemen DOM
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 
-// Login
+// --- LOGIN ---
 loginBtn.addEventListener("click", async () => {
+  loginBtn.disabled = true; // cegah klik berkali-kali
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
-    alert("Login gagal: " + err.message);
-    console.error(err);
+    console.error("Login gagal:", err);
+    alert("❌ Login gagal: " + err.message);
+  } finally {
+    loginBtn.disabled = false; // aktifkan kembali tombol
   }
 });
 
-// Logout
+// --- LOGOUT ---
 logoutBtn.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-  } catch (err) {
-    console.error("Logout gagal", err);
-  }
+  await signOut(auth);
 });
 
-// Pantau status login
-onAuthStateChanged(auth, async (user) => {
+// --- MONITOR LOGIN STATE ---
+onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("✅ Login sebagai:", user.email);
-
-    // Tampilkan tombol logout, sembunyikan login
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
-
-    // Hanya admin yang boleh baca
-    if (user.email === "mr.rikohermansyah@gmail.com") {
-      loadTickets();
-    } else {
-      ticketsBody.innerHTML = `<tr><td colspan="7">❌ Akses ditolak: bukan admin</td></tr>`;
-    }
+    loadTickets(); // hanya load tiket kalau admin sudah login
   } else {
     console.log("❌ Belum login");
-
-    // Reset UI
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket.</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
 
-// Fungsi ambil tiket
+// --- AMBIL DATA TIKET ---
 async function loadTickets() {
   try {
-    ticketsBody.innerHTML = `<tr><td colspan="7" class="loading">Memuat...</td></tr>`;
-
+    ticketsBody.innerHTML = `<tr><td colspan="7">⏳ Memuat tiket...</td></tr>`;
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     const snap = await getDocs(q);
+
+    if (snap.empty) {
+      ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
+      return;
+    }
 
     ticketsBody.innerHTML = "";
     snap.forEach((doc) => {
@@ -92,12 +85,8 @@ async function loadTickets() {
       `;
       ticketsBody.appendChild(tr);
     });
-
-    if (snap.empty) {
-      ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
-    }
   } catch (err) {
-    console.error(err);
+    console.error("❌ Gagal load tiket:", err);
     ticketsBody.innerHTML = `<tr><td colspan="7">❌ Gagal load tiket: ${err.message}</td></tr>`;
   }
 }
