@@ -1,7 +1,7 @@
 // js/admin.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🔹 Firebase Config (ganti dengan punyamu)
 const firebaseConfig = {
@@ -99,5 +99,6 @@ onAuthStateChanged(auth, user => {
     ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
