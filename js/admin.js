@@ -20,6 +20,30 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// DOM
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const ticketsBody = document.getElementById("ticketsBody");
+
+// Login
+loginBtn.addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    alert("Login gagal: " + err.message);
+    console.error(err);
+  }
+});
+
+// Logout
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error("Logout gagal", err);
+  }
+});
+
 document.getElementById("loginBtn").addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
@@ -48,6 +72,31 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     console.log("Belum login");
+  }
+});
+
+// Pantau status login
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    console.log("✅ Login sebagai:", user.email);
+
+    // Tampilkan tombol logout, sembunyikan login
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+
+    // Hanya admin yang boleh baca
+    if (user.email === "mr.rikohermansyah@gmail.com") {
+      loadTickets();
+    } else {
+      ticketsBody.innerHTML = `<tr><td colspan="7">❌ Akses ditolak: bukan admin</td></tr>`;
+    }
+  } else {
+    console.log("❌ Belum login");
+
+    // Reset UI
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket.</td></tr>`;
   }
 });
 
