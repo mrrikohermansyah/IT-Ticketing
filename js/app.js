@@ -1,6 +1,10 @@
 // ==================== app.js (Halaman User - Modular v9) ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // ---------------------------------------------------------------
 // 🔹 Firebase Config
@@ -19,7 +23,7 @@ const firebaseConfig = {
 const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
 const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
-const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com"; // ganti sesuai kebutuhan
+const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
 // ---------------------------------------------------------------
 // Init Firebase & Firestore
@@ -68,22 +72,26 @@ form.addEventListener("submit", async (e) => {
   statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
+
+  // Payload awal sesuai template EmailJS
   const payload = {
-    inventory: (data.get("inventory") || "").toUpperCase(), // Inventory kapital
+    ticketId: "", // nanti diisi setelah Firestore
+    inventory: (data.get("inventory") || "").toUpperCase(),
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
-    sent_at: new Date().toISOString(),
+    sent_at: new Date().toLocaleString(), // lebih mudah dibaca
+    attachment: "", // default kosong
     recipient: STATIC_RECIPIENT_EMAIL,
   };
 
   try {
     // 1️⃣ simpan ke Firestore
     const id = await saveToFirestore(payload);
-    payload.ticketId = id;
+    payload.ticketId = id; // update ticketId sesuai template
 
     // 2️⃣ kirim email via EmailJS
     await sendEmail(payload);
@@ -97,4 +105,3 @@ form.addEventListener("submit", async (e) => {
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
-
