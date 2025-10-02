@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/admin.css" />
     <script type="module" src="js/admin.js"></script>
     <!-- Library Export -->
+    <script src="https://kit.fontawesome.com/xxxx.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -24,8 +25,12 @@
       </header>
       <!-- Tombol Export -->
       <div class="export-buttons">
-        <button onclick="exportToExcel()">📥 Export Excel</button>
-        <button onclick="exportToPDF()">📄 Export PDF</button>
+        <button onclick="exportToExcel()">
+          <i class="fa-solid fa-file-excel"></i> Export Excel
+        </button>
+        <button onclick="exportToPDF()">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
       </div>
       <div class="auth-buttons">
         <button id="loginBtn">Login dengan Google</button>
