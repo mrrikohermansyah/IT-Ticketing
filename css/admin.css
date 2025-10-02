@@ -1,6 +1,15 @@
 /* =============================
    Wrapper Table
 ============================= */
+.container {
+    max-width: 1500px;
+    /* bisa juga 1200px atau sesuai layar */
+    margin: 0 auto;
+    /* auto = center */
+    padding: 0 16px;
+    /* biar ada jarak dari tepi layar */
+}
+
 .table-wrapper {
   overflow-x: auto;
   max-width: 95vw;  /* hampir selebar layar */
@@ -122,3 +131,4 @@
     font-size: 0.8rem;
   }
 }
+
