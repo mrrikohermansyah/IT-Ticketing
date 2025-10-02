@@ -1,103 +1,94 @@
-<!doctype html>
-<html lang="id">
+// Modular Firebase + EmailJS integration
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>IT Ticketing — Lapor Masalah</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+// ---------- CONFIGURATION ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
+  authDomain: "itticketing-f926e.firebaseapp.com",
+  projectId: "itticketing-f926e",
+  storageBucket: "itticketing-f926e.firebasestorage.app",
+  messagingSenderId: "896370077103",
+  appId: "1:896370077103:web:1d692e88b611bff838935a",
+  measurementId: "G-TJCHPXG7D5"
+};
 
-    <!-- Firebase (modular SDK) -->
-    <script type="module" src="js/app.js"></script>
-</head>
+const EMAILJS_SERVICE_ID = 'service_gf26aop';
+const EMAILJS_TEMPLATE_ID = 'template_nsi9k3e';
+const EMAILJS_PUBLIC_KEY = '5Sl1dmt0fEZe1Wg38';
+const STATIC_RECIPIENT_EMAIL = 'mr.rikohermansyah@gmail.com';
 
-<body>
-    <main class="container">
-        <header>
-            <h1>IT Ticketing — Lapor Permasalahan</h1>
-            <p>Isi form di bawah untuk membuat tiket. Semua data tersimpan ke Firebase dan akan dikirim ke email
-                penerima.</p>
-        </header>
+// ---------------------------------------------------------------
+// Init Firebase & Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+// Init EmailJS
+if (window.emailjs) {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+} else {
+  console.warn('⚠️ EmailJS SDK tidak tersedia. Pastikan <script src="https://cdn.emailjs.com/dist/email.min.js"></script> ada di index.html');
+}
 
-        <form id="ticketForm" class="card">
-            <label>Kode Inventory
-        <input type="text" name="inventory" id="inventory" required placeholder="Cth: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll">
-    </label>
-            <label>Nama Lengkap
-                <input type="text" name="name" id="name" required placeholder="Nama Anda">
-            </label>
+// ---------------------------------------------------------------
+// DOM Elements
+const form = document.getElementById('ticketForm');
+const statusEl = document.getElementById('status');
 
+// ---------------------------------------------------------------
+// Fungsi kirim email via EmailJS
+async function sendEmail(payload) {
+  try {
+    return await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, payload);
+  } catch (err) {
+    throw err;
+  }
+}
 
-            <label>Email
-                <input type="email" name="user_email" id="user_email" required placeholder="email@contoh.com">
-            </label>
+// Simpan ke Firestore
+async function saveToFirestore(doc) {
+  try {
+    const col = collection(db, 'tickets');
+    const docRef = await addDoc(col, doc);
+    return docRef.id;
+  } catch (err) {
+    throw err;
+  }
+}
 
+// ---------------------------------------------------------------
+// Form Submit
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  statusEl.textContent = 'Mengirim tiket...';
 
-            <label>Departemen
-                <select name="department" id="department" required>
-                    <option value="Management">Management</option>
-                    <option value="IT">IT</option>
-                    <option value="HR">HR</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Engineer">Engineer</option>
-                    <option value="QC">QC</option>
-                    <option value="Completion">Completion</option>
-                    <option value="HSE">HSE</option>
-                    <option value="Clinic">Clinic</option>
-                    <option value="Other">Lainnya</option>
-                </select>
-            </label>
+  const data = new FormData(form);
+  const payload = {
+    inventory: (data.get('inventory') || '').toUpperCase(), // Inventory default kapital
+    name: data.get('name'),
+    user_email: data.get('user_email'),
+    department: data.get('department'),
+    priority: data.get('priority'),
+    subject: data.get('subject'),
+    message: data.get('message'),
+    sent_at: new Date().toISOString(),
+    recipient: STATIC_RECIPIENT_EMAIL
+  };
 
+  try {
+    // 1) simpan ke Firestore
+    const id = await saveToFirestore(payload);
+    payload.ticketId = id;
 
-            <label>Prioritas
-                <select name="priority" id="priority" required>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                </select>
-            </label>
+    // 2) kirim email
+    await sendEmail(payload);
 
-
-            <label>Ringkasan Masalah
-                <input type="text" name="subject" id="subject" required placeholder="Ringkasan singkat">
-            </label>
-
-
-            <label>Deskripsi Lengkap
-                <textarea name="message" id="message" rows="6" required
-                    placeholder="Jelaskan masalah secara detail..."></textarea>
-            </label>
-
-
-            <!--<label>Lampiran (opsional)
-                <input type="file" id="attachment" name="attachment">
-            </label>-->
-
-
-            <div class="actions">
-                <button type="submit" id="submitBtn">Kirim Tiket</button>
-                <button type="reset">Reset</button>
-            </div>
-
-
-            <div id="status" role="status" aria-live="polite"></div>
-        </form>
-
-
-        <!--<section class="tickets card">
-            <h2>Riwayat Tiket (terakhir 10)</h2>
-            <ul id="ticketsList"></ul>
-        </section>-->
-
-
-        <footer>
-            <small>Template ini menggunakan Firebase (Firestore) dan EmailJS untuk pengiriman email. Konfigurasi
-                diperlukan — lihat README di bawah.</small>
-
-
-</html>
-
-
+    statusEl.textContent = '✅ Tiket terkirim! ID: ' + id;
+    alert("✅ Tiket berhasil dikirim!\nID Tiket: " + id);
+    form.reset();
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = '❌ Terjadi kesalahan: ' + (err.message || err);
+    alert("❌ Gagal mengirim tiket: " + (err.message || err));
+  }
+});
