@@ -77,22 +77,53 @@ function renderTickets(snapshot) {
           <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
         </select>
       </td>
+      <td>
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;"></span>
+          <select class="statusSelect" data-id="${docSnap.id}">
+            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+            <option value="Close with Note" ${d.status_ticket === "Close with Note" ? "selected" : ""}>Close with Note</option>
+          </select>
+        </span>
+      </td>
     `;
+    ticketsBody.appendChild(tr);
+  });
+    if (snapshot.empty) {
+    ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
+  }
 
-    // 🔹 Listener update ke Firestore
-    const selectEl = tr.querySelector(".assignSelect");
-    selectEl.addEventListener("change", async (e) => {
-      const newValue = e.target.value;
+    // 🔹 Event listener assign IT
+  document.querySelectorAll(".assignSelect").forEach(select => {
+    select.addEventListener("change", async (e) => {
+      const ticketId = e.target.dataset.id;
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), { action_by: newValue });
-        console.log(`✅ Ticket ${docSnap.id} updated -> action_by = ${newValue}`);
+        await updateDoc(doc(db, "tickets", ticketId), {
+          action_by: e.target.value
+        });
+        console.log("✅ Berhasil update action_by");
       } catch (err) {
-        console.error("❌ Gagal update action_by:", err);
+        console.error("Gagal update action_by:", err);
         alert("❌ Gagal update action_by: " + err.message);
       }
     });
+  });
 
-    ticketsBody.appendChild(tr);
+  // 🔹 Event listener status ticket
+  document.querySelectorAll(".statusSelect").forEach(select => {
+    select.addEventListener("change", async (e) => {
+      const ticketId = e.target.dataset.id;
+      try {
+        await updateDoc(doc(db, "tickets", ticketId), {
+          status_ticket: e.target.value
+        });
+        console.log("✅ Berhasil update status_ticket");
+      } catch (err) {
+        console.error("Gagal update status_ticket:", err);
+        alert("❌ Gagal update status_ticket: " + err.message);
+      }
+    });
   });
 }
 
@@ -113,4 +144,3 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="8">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
-
