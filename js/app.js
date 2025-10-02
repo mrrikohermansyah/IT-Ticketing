@@ -1,16 +1,9 @@
-// ========== Firebase + EmailJS Integration ==========
-
-// --- Firebase
+// Modular Firebase + EmailJS integration
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-
 import {
   getFirestore,
   collection,
   addDoc,
-  query,
-  orderBy,
-  limit,
-  getDocs,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // ---------- CONFIGURATION ----------
@@ -24,16 +17,13 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// EmailJS config
 const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
 const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
-
-// Email penerima default
 const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
-// ----------------------------------------------------
-// Initialize Firebase
+// ---------------------------------------------------------------
+// Init Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -42,39 +32,26 @@ if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
   console.warn(
-    '⚠️ EmailJS SDK tidak ditemukan. Tambahkan <script src="https://cdn.emailjs.com/dist/email.min.js"></script> di index.html'
+    '⚠️ EmailJS SDK tidak tersedia. Pastikan <script src="https://cdn.emailjs.com/dist/email.min.js"></script> ada di index.html'
   );
 }
 
-// ---------- DOM ELEMENT ----------
+// ---------------------------------------------------------------
+// DOM Elements
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
-const ticketsList = document.getElementById("ticketsList");
 
-// ---------- Helper ----------
-function toTitleCase(str) {
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-// ---------- EmailJS ----------
+// ---------------------------------------------------------------
+// Fungsi kirim email via EmailJS
 async function sendEmail(payload) {
   try {
-    const res = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      payload
-    );
-    return res;
+    return await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, payload);
   } catch (err) {
     throw err;
   }
 }
 
-// ---------- Firestore ----------
+// Simpan ke Firestore
 async function saveToFirestore(doc) {
   try {
     const col = collection(db, "tickets");
@@ -85,19 +62,15 @@ async function saveToFirestore(doc) {
   }
 }
 
-// ---------- Submit Ticket ----------
+// ---------------------------------------------------------------
+// Form Submit
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
-
-  // 🔹 ambil & format inventory ke Title Case
-  let inventory = data.get("inventory") || "";
-  inventory = toTitleCase(inventory);
-
   const payload = {
-    inventory, // <-- field baru
+    inventory: (data.get("inventory") || "").toUpperCase(), // Inventory default kapital
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
@@ -118,52 +91,10 @@ form.addEventListener("submit", async (e) => {
 
     statusEl.textContent = "✅ Tiket terkirim! ID: " + id;
     alert("✅ Tiket berhasil dikirim!\nID Tiket: " + id);
-
     form.reset();
-    loadRecentTickets();
   } catch (err) {
     console.error(err);
     statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
-
-// ---------- Load Recent Tickets ----------
-async function loadRecentTickets() {
-  try {
-    ticketsList.innerHTML = "<li>Memuat...</li>";
-    const col = collection(db, "tickets");
-    const q = query(col, orderBy("sent_at", "desc"), limit(10));
-    const snap = await getDocs(q);
-
-    ticketsList.innerHTML = "";
-    snap.forEach((docSnap) => {
-      const d = docSnap.data();
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <strong>${d.name}</strong> — 
-        <em>${d.department}</em> — 
-        ${d.subject} — 
-        <span>${d.priority}</span><br>
-        <small>Inventory: ${d.inventory || "-"}</small><br>
-        <div class="muted">${new Date(d.sent_at).toLocaleString()}</div>
-      `;
-      ticketsList.appendChild(li);
-    });
-
-    if (!snap.size) ticketsList.innerHTML = "<li>Belum ada tiket.</li>";
-  } catch (err) {
-    ticketsList.innerHTML = "<li>Gagal memuat tiket.</li>";
-    console.error(err);
-  }
-}
-
-// load awal
-loadRecentTickets();
-
-// Debug info (hapus di production)
-window._TICKET_APP = {
-  firebaseConfig,
-  EMAILJS_SERVICE_ID,
-  EMAILJS_TEMPLATE_ID,
-};
