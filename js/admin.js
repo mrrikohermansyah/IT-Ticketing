@@ -84,6 +84,9 @@ function renderTickets(snapshot) {
     <span class="dot" style="background-color: ${statusColor}"></span>
   </div>
 </td>
+<td>
+    <textarea class="noteArea" data-id="${docSnap.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+  </td>
 
     `;
     ticketsBody.appendChild(tr);
@@ -132,5 +135,6 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
