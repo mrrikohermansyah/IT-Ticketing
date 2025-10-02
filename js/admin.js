@@ -76,13 +76,16 @@ function renderTickets(snapshot) {
         </select>
       </td>
       <td>
-        <select class="statusSelect" data-id="${docSnap.id}">
-          <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-          <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-          <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
-        </select>
-        <span class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${statusColor};margin-left:8px;"></span>
-      </td>
+  <div class="status-wrapper">
+    <select class="statusSelect">
+      <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+      <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+      <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+    </select>
+    <span class="dot" style="background-color: ${d.status_ticket === "Open" ? "red" : d.status_ticket === "Close" ? "green" : "orange"}"></span>
+  </div>
+</td>
+
     `;
     ticketsBody.appendChild(tr);
 
@@ -130,3 +133,4 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
