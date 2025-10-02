@@ -4,7 +4,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { 
-  getFirestore, collection, query, orderBy, onSnapshot 
+  getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🔹 Firebase Config
@@ -31,14 +31,14 @@ const ticketsBody = document.getElementById("ticketsBody");
 
 // --- LOGIN ---
 loginBtn.addEventListener("click", async () => {
-  loginBtn.disabled = true; // cegah klik berkali-kali
+  loginBtn.disabled = true;
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
     console.error("Login gagal:", err);
     alert("❌ Login gagal: " + err.message);
   } finally {
-    loginBtn.disabled = false; // aktifkan kembali tombol
+    loginBtn.disabled = false;
   }
 });
 
@@ -51,9 +51,15 @@ logoutBtn.addEventListener("click", async () => {
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
 
-  snapshot.forEach(doc => {
-    const d = doc.data();
+  if (snapshot.empty) {
+    ticketsBody.innerHTML = `<tr><td colspan="8">Belum ada tiket.</td></tr>`;
+    return;
+  }
+
+  snapshot.forEach(docSnap => {
+    const d = docSnap.data();
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
       <td>${d.name || "-"}</td>
@@ -62,13 +68,32 @@ function renderTickets(snapshot) {
       <td>${d.priority || "-"}</td>
       <td>${d.subject || "-"}</td>
       <td>${d.message || "-"}</td>
+      <td>
+        <select class="assignSelect">
+          <option value="">-- Pilih --</option>
+          <option value="IT1" ${d.action_by === "IT1" ? "selected" : ""}>IT1</option>
+          <option value="IT2" ${d.action_by === "IT2" ? "selected" : ""}>IT2</option>
+          <option value="Helpdesk" ${d.action_by === "Helpdesk" ? "selected" : ""}>Helpdesk</option>
+          <option value="Network" ${d.action_by === "Network" ? "selected" : ""}>Network</option>
+        </select>
+      </td>
     `;
+
+    // 🔹 Listener update ke Firestore
+    const selectEl = tr.querySelector(".assignSelect");
+    selectEl.addEventListener("change", async (e) => {
+      const newValue = e.target.value;
+      try {
+        await updateDoc(doc(db, "tickets", docSnap.id), { action_by: newValue });
+        console.log(`✅ Ticket ${docSnap.id} updated -> action_by = ${newValue}`);
+      } catch (err) {
+        console.error("❌ Gagal update action_by:", err);
+        alert("❌ Gagal update action_by: " + err.message);
+      }
+    });
+
     ticketsBody.appendChild(tr);
   });
-
-  if (snapshot.empty) {
-    ticketsBody.innerHTML = `<tr><td colspan="7">Belum ada tiket.</td></tr>`;
-  }
 }
 
 // --- MONITOR LOGIN STATE ---
@@ -78,7 +103,6 @@ onAuthStateChanged(auth, (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
-    // 🔹 Listen realtime tiket
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     onSnapshot(q, renderTickets);
 
@@ -86,6 +110,6 @@ onAuthStateChanged(auth, (user) => {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="7">Silakan login untuk melihat tiket</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="8">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
