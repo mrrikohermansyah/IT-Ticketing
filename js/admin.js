@@ -51,20 +51,16 @@ logoutBtn.addEventListener("click", async () => {
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
 
-  let statusColor = "gray";
+  snapshot.forEach(doc => {
+    const d = doc.data();
+
+    // Tentukan warna bulatan status
+    let statusColor = "gray";
     if (d.status_ticket === "Open") statusColor = "red";
     else if (d.status_ticket === "Close") statusColor = "green";
     else if (d.status_ticket === "Close with note") statusColor = "orange";
 
-  if (snapshot.empty) {
-    ticketsBody.innerHTML = `<tr><td colspan="8">Belum ada tiket.</td></tr>`;
-    return;
-  }
-
-  snapshot.forEach(docSnap => {
-    const d = docSnap.data();
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
       <td>${d.name || "-"}</td>
@@ -74,30 +70,31 @@ function renderTickets(snapshot) {
       <td>${d.subject || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>
-        <select class="assignSelect">
+        <select class="assignSelect" data-id="${doc.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
+          <option value="IT1" ${d.action_by === "IT1" ? "selected" : ""}>IT1</option>
+          <option value="IT2" ${d.action_by === "IT2" ? "selected" : ""}>IT2</option>
+          <option value="Helpdesk" ${d.action_by === "Helpdesk" ? "selected" : ""}>Helpdesk</option>
+          <option value="Network" ${d.action_by === "Network" ? "selected" : ""}>Network</option>
         </select>
       </td>
       <td>
-        <span style="display:inline-flex;align-items:center;gap:6px;">
-          <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;"></span>
-          <select class="statusSelect" data-id="${docSnap.id}">
-            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-            <option value="Close with Note" ${d.status_ticket === "Close with Note" ? "selected" : ""}>Close with Note</option>
-          </select>
-        </span>
+        <select class="statusSelect" data-id="${doc.id}">
+          <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+          <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+          <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+        </select>
+        <span class="dot" style="background:${statusColor}"></span>
       </td>
     `;
     ticketsBody.appendChild(tr);
   });
-    if (snapshot.empty) {
+
+  if (snapshot.empty) {
     ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
   }
+}
+
 
     // 🔹 Event listener assign IT
   document.querySelectorAll(".assignSelect").forEach(select => {
@@ -130,7 +127,7 @@ function renderTickets(snapshot) {
       }
     });
   });
-}
+
 
 // --- MONITOR LOGIN STATE ---
 onAuthStateChanged(auth, (user) => {
