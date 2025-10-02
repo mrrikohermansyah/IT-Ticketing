@@ -96,25 +96,23 @@
    Dot Status
 ============================= */
 .status-wrapper {
-    display: inline-flex;
-    /* penting → inline-flex biar muat di 1 baris tabel */
+    display: flex;
     align-items: center;
-    /* sejajarkan vertikal */
-    gap: 6px;
-    /* jarak antara select dan dot */
+    gap: 8px; /* jarak antar elemen */
 }
 
 .statusSelect {
-    flex: none;
-    /* biar dropdown tidak makan semua ruang */
+    flex: 1;          /* biar fleksibel, isi sisa ruang */
+    max-width: 180px; /* batasi biar ga terlalu panjang */
 }
+
 .dot {
-    width: 12px;
-    height: 12px;
+    flex: none;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    flex-shrink: 0;
-    /* biar tidak mengecil saat tabel sempit */
 }
+
 
 /* =============================
    Responsiveness
@@ -153,3 +151,4 @@
         font-size: 0.8rem;
     }
 }
+
