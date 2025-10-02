@@ -89,12 +89,15 @@
 /* =============================
    Dot Status
 ============================= */
-.dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-left: 6px;
+.status-wrapper {
+  display: flex;
+  align-items: center;   /* sejajarkan vertikal */
+  gap: 6px;              /* jarak antara select dan dot */
+}
+
+.statusSelect {
+  flex: 1;               /* biar dropdown tetap bisa lebar penuh */
+  max-width: 180px;
 }
 
 /* =============================
@@ -131,4 +134,5 @@
     font-size: 0.8rem;
   }
 }
+
 
