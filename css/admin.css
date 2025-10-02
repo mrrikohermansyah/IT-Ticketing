@@ -12,7 +12,7 @@
 
 .table-wrapper {
   overflow-x: auto;
-  max-width: 95vw;  /* hampir selebar layar */
+  max-width: 85vw;  /* hampir selebar layar */
   margin: 0 auto;   /* tetap center */
 }
 
@@ -141,6 +141,7 @@
     font-size: 0.8rem;
   }
 }
+
 
 
 
