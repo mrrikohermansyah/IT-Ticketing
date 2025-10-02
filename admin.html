@@ -1,66 +1,73 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - IT Ticketing</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/admin.css" />
     <script type="module" src="js/admin.js"></script>
-</head>
+    <!-- Library Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  </head>
 
-<body>
+  <body>
     <main class="container">
-        <header>
-            <h1>📋 Daftar Tiket Masuk</h1>
-            <p>Halaman ini menampilkan semua tiket yang tersimpan di Firebase Firestore.</p>
-        </header>
-        <div class="auth-buttons">
-            <button id="loginBtn">Login dengan Google</button>
-            <button id="logoutBtn" style="display:none">Logout</button>
-        </div>
-        <!--<div id="tickets"></div>-->
+      <header>
+        <h1>📋 Daftar Tiket Masuk</h1>
+        <p>
+          Halaman ini menampilkan semua tiket yang tersimpan di Firebase
+          Firestore.
+        </p>
+      </header>
+      <!-- Tombol Export -->
+      <div class="export-buttons">
+        <button onclick="exportToExcel()">📥 Export Excel</button>
+        <button onclick="exportToPDF()">📄 Export PDF</button>
+      </div>
+      <div class="auth-buttons">
+        <button id="loginBtn">Login dengan Google</button>
+        <button id="logoutBtn" style="display: none">Logout</button>
+      </div>
+      <!--<div id="tickets"></div>-->
 
-
-        <section class="card">
-            <h2 style="margin-top:0">Tiket Terbaru</h2>
-            <div class="filter-bar">
+      <section class="card">
+        <h2 style="margin-top: 0">Tiket Terbaru</h2>
+        <div class="filter-bar">
           <label for="filterActionBy">Filter Action By:</label>
           <select id="filterActionBy">
             <option value="all">-- Semua --</option>
           </select>
         </div>
-            <div class="table-wrapper">
-                <table id="ticketsTable">
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Kode Inventory</th>
-                            <th>Nama</th>
-                            <th>Email</th>
-                            <th>Departemen</th>
-                            <th>Prioritas</th>
-                            <th>Subjek</th>
-                            <th>Deskripsi</th>
-                            <th>Action By</th>
-                            <th>Status Ticket</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticketsBody">
-                        <tr>
-                            <td colspan="8" class="loading">Memuat data...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div class="table-wrapper">
+          <table id="ticketsTable">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Kode Inventory</th>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Departemen</th>
+                <th>Prioritas</th>
+                <th>Subjek</th>
+                <th>Deskripsi</th>
+                <th>Action By</th>
+                <th>Status Ticket</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsBody">
+              <tr>
+                <td colspan="8" class="loading">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
-</body>
-
+    <!-- File JS eksternal -->
+    <script src="js/export.js"></script>
+  </body>
 </html>
-
-
-
-
