@@ -71,10 +71,10 @@ function renderTickets(snapshot) {
       <td>
         <select class="assignSelect">
           <option value="">-- Pilih --</option>
-          <option value="IT1" ${d.action_by === "IT1" ? "selected" : ""}>IT1</option>
-          <option value="IT2" ${d.action_by === "IT2" ? "selected" : ""}>IT2</option>
-          <option value="Helpdesk" ${d.action_by === "Helpdesk" ? "selected" : ""}>Helpdesk</option>
-          <option value="Network" ${d.action_by === "Network" ? "selected" : ""}>Network</option>
+          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
         </select>
       </td>
     `;
@@ -113,3 +113,4 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="8">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
