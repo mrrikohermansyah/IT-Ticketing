@@ -2,50 +2,47 @@
    Wrapper Table
 ============================= */
 .table-wrapper {
-    overflow-x: auto;
-    max-width: 95vw;
-    /* hampir selebar layar */
-    margin: 0 auto;
-    /* tetap center */
+  overflow-x: auto;
+  max-width: 95vw;  /* hampir selebar layar */
+  margin: 0 auto;   /* tetap center */
 }
 
 /* =============================
    Tabel Tiket
 ============================= */
 #ticketsTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.95rem;
-    table-layout: fixed;
-    /* biar kontrol width per kolom */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  table-layout: fixed; /* kontrol lebar kolom */
 }
 
 #ticketsTable thead {
-    background: #f9fafb;
-    text-align: left;
+  background: #f9fafb;
+  text-align: left;
 }
 
 #ticketsTable th,
 #ticketsTable td {
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    word-wrap: break-word;
-    white-space: normal;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 #ticketsTable tbody tr {
-    border-bottom: 1px dashed #eef2ff;
+  border-bottom: 1px dashed #eef2ff;
 }
 
 #ticketsTable tbody tr:hover {
-    background: #f1f5f9;
+  background: #f1f5f9;
 }
 
 #ticketsTable td.loading {
-    text-align: center;
-    color: var(--muted);
-    padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  padding: 12px;
 }
 
 /* =============================
@@ -53,14 +50,12 @@
 ============================= */
 #ticketsTable th:nth-child(8),
 #ticketsTable td:nth-child(8) {
-    min-width: 180px;
-    /* Action By */
+  min-width: 180px; /* Action By */
 }
 
 #ticketsTable th:nth-child(9),
 #ticketsTable td:nth-child(9) {
-    min-width: 220px;
-    /* Status Ticket */
+  min-width: 220px; /* Status Ticket */
 }
 
 /* =============================
@@ -68,28 +63,62 @@
 ============================= */
 .assignSelect,
 .statusSelect {
-    width: 100%;
-    max-width: 200px;
+  width: 100%;
+  max-width: 200px;
 }
 
 /* =============================
    Tombol Auth
 ============================= */
 .auth-buttons {
-    display: flex;
-    justify-content: flex-end;
-    /* dorong ke kanan */
-    gap: 10px;
-    margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end; /* dorong ke kanan */
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 /* =============================
    Dot Status
 ============================= */
 .dot {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-left: 6px;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 6px;
+}
+
+/* =============================
+   Responsiveness
+============================= */
+@media (max-width: 1024px) {
+  #ticketsTable {
+    font-size: 0.85rem; /* kecilin font di tablet */
+  }
+
+  .assignSelect,
+  .statusSelect {
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  #ticketsTable th,
+  #ticketsTable td {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+
+  #ticketsTable th:nth-child(8),
+  #ticketsTable td:nth-child(8),
+  #ticketsTable th:nth-child(9),
+  #ticketsTable td:nth-child(9) {
+    min-width: 150px; /* biar muat di HP */
+  }
+
+  .assignSelect,
+  .statusSelect {
+    max-width: 140px;
+    font-size: 0.8rem;
+  }
 }
