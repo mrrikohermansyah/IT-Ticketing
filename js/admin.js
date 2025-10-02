@@ -1,10 +1,20 @@
 // js/admin.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { 
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { 
-  getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc 
+import {
+  getFirestore,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🔹 Firebase Config
@@ -15,7 +25,7 @@ const firebaseConfig = {
   storageBucket: "itticketing-f926e.firebasestorage.app",
   messagingSenderId: "896370077103",
   appId: "1:896370077103:web:1d692e88b611bff838935a",
-  measurementId: "G-TJCHPXG7D5"
+  measurementId: "G-TJCHPXG7D5",
 };
 
 // 🔹 Init Firebase
@@ -48,7 +58,7 @@ logoutBtn.addEventListener("click", async () => {
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
 
-  snapshot.forEach(docSnap => {
+  snapshot.forEach((docSnap) => {
     const d = docSnap.data();
 
     // Tentukan warna bulatan status
@@ -68,24 +78,40 @@ function renderTickets(snapshot) {
       <td>
         <select class="assignSelect" data-id="${docSnap.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
+          <option value="Riko Hermansyah" ${
+            d.action_by === "Riko Hermansyah" ? "selected" : ""
+          }>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${
+            d.action_by === "Abdurahman Hakim" ? "selected" : ""
+          }>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${
+            d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""
+          }>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${
+            d.action_by === "Ade Reinalwi" ? "selected" : ""
+          }>Ade Reinalwi</option>
         </select>
       </td>
       <td>
   <div class="status-wrapper">
     <select class="statusSelect">
-      <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-      <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-      <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+      <option value="Open" ${
+        d.status_ticket === "Open" ? "selected" : ""
+      }>Open</option>
+      <option value="Close" ${
+        d.status_ticket === "Close" ? "selected" : ""
+      }>Close</option>
+      <option value="Close with note" ${
+        d.status_ticket === "Close with note" ? "selected" : ""
+      }>Close with note</option>
     </select>
     <span class="dot" style="background-color: ${statusColor}"></span>
   </div>
 </td>
 <td>
-    <textarea class="noteArea" data-id="${docSnap.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+    <textarea class="noteArea" data-id="${
+      docSnap.id
+    }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
   </td>
 
     `;
@@ -94,7 +120,9 @@ function renderTickets(snapshot) {
     // 🔹 Event listener update "action_by"
     tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), { action_by: e.target.value });
+        await updateDoc(doc(db, "tickets", docSnap.id), {
+          action_by: e.target.value,
+        });
         console.log("✅ Action_by updated");
       } catch (err) {
         console.error("Gagal update action_by:", err);
@@ -104,31 +132,33 @@ function renderTickets(snapshot) {
     // 🔹 Event listener update "status_ticket"
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), { status_ticket: e.target.value });
+        await updateDoc(doc(db, "tickets", docSnap.id), {
+          status_ticket: e.target.value,
+        });
         console.log("✅ Status updated");
       } catch (err) {
         console.error("Gagal update status:", err);
       }
     });
   });
+  // update NOTE
+  tr.querySelector(".noteArea").addEventListener("change", async (e) => {
+    const newNote = e.target.value;
+    const id = e.target.dataset.id;
+    try {
+      await updateDoc(doc(db, "tickets", id), {
+        note: newNote,
+      });
+      console.log("Note updated:", newNote);
+    } catch (err) {
+      console.error("Error updating note:", err);
+    }
+  });
 
   if (snapshot.empty) {
     ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
   }
 }
-// update NOTE
-tr.querySelector(".noteArea").addEventListener("change", async (e) => {
-  const newNote = e.target.value;
-  const id = e.target.dataset.id;
-  try {
-    await updateDoc(doc(db, "tickets", id), {
-      note: newNote
-    });
-    console.log("Note updated:", newNote);
-  } catch (err) {
-    console.error("Error updating note:", err);
-  }
-});
 
 // --- MONITOR LOGIN STATE ---
 onAuthStateChanged(auth, (user) => {
@@ -140,7 +170,6 @@ onAuthStateChanged(auth, (user) => {
     // 🔹 Listen realtime tiket
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     onSnapshot(q, renderTickets);
-
   } else {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
@@ -148,7 +177,3 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
-
-
-
-
