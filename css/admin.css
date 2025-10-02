@@ -2,7 +2,7 @@
    Wrapper Table
 ============================= */
 .container {
-    max-width: 1500px;
+    max-width: 1700px;
     /* bisa juga 1200px atau sesuai layar */
     margin: 0 auto;
     /* auto = center */
@@ -141,6 +141,7 @@
     font-size: 0.8rem;
   }
 }
+
 
 
 
