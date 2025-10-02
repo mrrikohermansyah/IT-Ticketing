@@ -16,10 +16,10 @@ const firebaseConfig = {
 
 // ---------------------------------------------------------------
 // 🔹 Constants EmailJS
-const EMAILJS_PUBLIC_KEY = "MASUKKAN_PUBLIC_KEY";
-const EMAILJS_SERVICE_ID = "MASUKKAN_SERVICE_ID";
-const EMAILJS_TEMPLATE_ID = "MASUKKAN_TEMPLATE_ID";
-const STATIC_RECIPIENT_EMAIL = "support@yourdomain.com"; // ganti sesuai kebutuhan
+const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
+const EMAILJS_SERVICE_ID = "service_gf26aop";
+const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
+const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com"; // ganti sesuai kebutuhan
 
 // ---------------------------------------------------------------
 // Init Firebase & Firestore
@@ -97,3 +97,4 @@ form.addEventListener("submit", async (e) => {
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
+
