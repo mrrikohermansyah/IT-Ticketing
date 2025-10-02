@@ -1,12 +1,9 @@
-// Modular Firebase + EmailJS integration
+// ==================== app.js (Halaman User - Modular v9) ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// ---------- CONFIGURATION ----------
+// ---------------------------------------------------------------
+// 🔹 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -17,24 +14,24 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-const EMAILJS_SERVICE_ID = "service_gf26aop";
-const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
-const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
-const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
+// ---------------------------------------------------------------
+// 🔹 Constants EmailJS
+const EMAILJS_PUBLIC_KEY = "MASUKKAN_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "MASUKKAN_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "MASUKKAN_TEMPLATE_ID";
+const STATIC_RECIPIENT_EMAIL = "support@yourdomain.com"; // ganti sesuai kebutuhan
 
 // ---------------------------------------------------------------
 // Init Firebase & Firestore
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // ---------------------------------------------------------------
 // Init EmailJS
 if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
-  console.warn(
-    "⚠️ EmailJS SDK tidak tersedia. Pastikan sudah ada di index.html"
-  );
+  console.warn("⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html");
 }
 
 // ---------------------------------------------------------------
@@ -56,8 +53,8 @@ async function sendEmail(payload) {
 // Simpan ke Firestore
 async function saveToFirestore(doc) {
   try {
-    const col = db.collection("tickets");
-    const docRef = await col.add(doc);
+    const col = collection(db, "tickets");
+    const docRef = await addDoc(col, doc);
     return docRef.id;
   } catch (err) {
     throw err;
