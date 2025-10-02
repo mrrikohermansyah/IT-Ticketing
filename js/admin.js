@@ -38,6 +38,10 @@ const db = getFirestore(app);
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
+const filterSelect = document.getElementById("filterActionBy");
+
+// simpan semua tiket agar bisa difilter ulang
+let allTickets = [];
 
 // ==================== 🔹 LOGIN ====================
 loginBtn.addEventListener("click", async () => {
@@ -57,6 +61,7 @@ logoutBtn.addEventListener("click", async () => {
 // ==================== 🔹 Render Tiket ====================
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
+  allTickets = [];
 
   if (snapshot.empty) {
     ticketsBody.innerHTML = `<tr><td colspan="10">Belum ada tiket.</td></tr>`;
@@ -64,14 +69,41 @@ function renderTickets(snapshot) {
   }
 
   snapshot.forEach((docSnap) => {
-    const d = docSnap.data();
+    allTickets.push({ id: docSnap.id, ...docSnap.data() });
+  });
 
-    // Tentukan warna bulatan status
+  // 🔹 isi dropdown filter (hanya nama unik)
+  const names = [
+    ...new Set(allTickets.map((t) => t.action_by).filter(Boolean)),
+  ];
+  filterSelect.innerHTML = `<option value="all">-- Semua --</option>`;
+  names.forEach((name) => {
+    filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
+  });
+
+  applyFilter();
+}
+
+// ==================== 🔹 Apply Filter ====================
+function applyFilter() {
+  ticketsBody.innerHTML = "";
+  const selected = filterSelect.value;
+
+  const filtered =
+    selected === "all"
+      ? allTickets
+      : allTickets.filter((t) => t.action_by === selected);
+
+  if (filtered.length === 0) {
+    ticketsBody.innerHTML = `<tr><td colspan="10">Tidak ada tiket untuk filter ini.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach((d) => {
     let statusColor = "red";
     if (d.status_ticket === "Close") statusColor = "green";
     else if (d.status_ticket === "Close with note") statusColor = "orange";
 
-    // Buat row
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
@@ -82,38 +114,52 @@ function renderTickets(snapshot) {
       <td>${d.subject || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>
-        <select class="assignSelect" data-id="${docSnap.id}">
+        <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
+          <option value="Riko Hermansyah" ${
+            d.action_by === "Riko Hermansyah" ? "selected" : ""
+          }>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${
+            d.action_by === "Abdurahman Hakim" ? "selected" : ""
+          }>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${
+            d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""
+          }>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${
+            d.action_by === "Ade Reinalwi" ? "selected" : ""
+          }>Ade Reinalwi</option>
         </select>
       </td>
       <td>
         <div class="status-wrapper">
-          <select class="statusSelect" data-id="${docSnap.id}">
-            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+          <select class="statusSelect" data-id="${d.id}">
+            <option value="Open" ${
+              d.status_ticket === "Open" ? "selected" : ""
+            }>Open</option>
+            <option value="Close" ${
+              d.status_ticket === "Close" ? "selected" : ""
+            }>Close</option>
+            <option value="Close with note" ${
+              d.status_ticket === "Close with note" ? "selected" : ""
+            }>Close with note</option>
           </select>
           <span class="dot" style="background-color: ${statusColor}"></span>
         </div>
       </td>
       <td>
-        <textarea class="noteArea" data-id="${docSnap.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+        <textarea class="noteArea" data-id="${
+          d.id
+        }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
       </td>
     `;
-
     ticketsBody.appendChild(tr);
 
     // --- Event listener update "action_by"
     tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), {
+        await updateDoc(doc(db, "tickets", d.id), {
           action_by: e.target.value,
         });
-        console.log("✅ Action_by updated");
       } catch (err) {
         console.error("Gagal update action_by:", err);
       }
@@ -122,10 +168,9 @@ function renderTickets(snapshot) {
     // --- Event listener update "status_ticket"
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), {
+        await updateDoc(doc(db, "tickets", d.id), {
           status_ticket: e.target.value,
         });
-        console.log("✅ Status updated");
       } catch (err) {
         console.error("Gagal update status:", err);
       }
@@ -134,16 +179,18 @@ function renderTickets(snapshot) {
     // --- Event listener update "note"
     tr.querySelector(".noteArea").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", docSnap.id), {
+        await updateDoc(doc(db, "tickets", d.id), {
           note: e.target.value,
         });
-        console.log("✅ Note updated");
       } catch (err) {
         console.error("Gagal update note:", err);
       }
     });
   });
 }
+
+// event listener untuk filter
+filterSelect.addEventListener("change", applyFilter);
 
 // ==================== 🔹 MONITOR LOGIN STATE ====================
 onAuthStateChanged(auth, (user) => {
@@ -152,7 +199,6 @@ onAuthStateChanged(auth, (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
-    // Listen realtime tiket
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     onSnapshot(q, renderTickets);
   } else {
