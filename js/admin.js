@@ -51,6 +51,11 @@ logoutBtn.addEventListener("click", async () => {
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
 
+  let statusColor = "gray";
+    if (d.status_ticket === "Open") statusColor = "red";
+    else if (d.status_ticket === "Close") statusColor = "green";
+    else if (d.status_ticket === "Close with note") statusColor = "orange";
+
   if (snapshot.empty) {
     ticketsBody.innerHTML = `<tr><td colspan="8">Belum ada tiket.</td></tr>`;
     return;
