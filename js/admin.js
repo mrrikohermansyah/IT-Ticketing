@@ -116,6 +116,19 @@ function renderTickets(snapshot) {
     ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
   }
 }
+// update NOTE
+tr.querySelector(".noteArea").addEventListener("change", async (e) => {
+  const newNote = e.target.value;
+  const id = e.target.dataset.id;
+  try {
+    await updateDoc(doc(db, "tickets", id), {
+      note: newNote
+    });
+    console.log("Note updated:", newNote);
+  } catch (err) {
+    console.error("Error updating note:", err);
+  }
+});
 
 // --- MONITOR LOGIN STATE ---
 onAuthStateChanged(auth, (user) => {
@@ -135,6 +148,7 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
 
