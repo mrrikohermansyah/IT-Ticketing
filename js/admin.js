@@ -4,7 +4,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { 
-  getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc 
+  getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🔹 Firebase Config
@@ -31,14 +31,11 @@ const ticketsBody = document.getElementById("ticketsBody");
 
 // --- LOGIN ---
 loginBtn.addEventListener("click", async () => {
-  loginBtn.disabled = true;
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
     console.error("Login gagal:", err);
     alert("❌ Login gagal: " + err.message);
-  } finally {
-    loginBtn.disabled = false;
   }
 });
 
@@ -51,8 +48,8 @@ logoutBtn.addEventListener("click", async () => {
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
 
-  snapshot.forEach(doc => {
-    const d = doc.data();
+  snapshot.forEach(docSnap => {
+    const d = docSnap.data();
 
     // Tentukan warna bulatan status
     let statusColor = "gray";
@@ -70,7 +67,7 @@ function renderTickets(snapshot) {
       <td>${d.subject || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>
-        <select class="assignSelect" data-id="${doc.id}">
+        <select class="assignSelect" data-id="${docSnap.id}">
           <option value="">-- Pilih --</option>
           <option value="IT1" ${d.action_by === "IT1" ? "selected" : ""}>IT1</option>
           <option value="IT2" ${d.action_by === "IT2" ? "selected" : ""}>IT2</option>
@@ -79,55 +76,41 @@ function renderTickets(snapshot) {
         </select>
       </td>
       <td>
-        <select class="statusSelect" data-id="${doc.id}">
+        <select class="statusSelect" data-id="${docSnap.id}">
           <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
           <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
           <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
         </select>
-        <span class="dot" style="background:${statusColor}"></span>
+        <span class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${statusColor};margin-left:8px;"></span>
       </td>
     `;
     ticketsBody.appendChild(tr);
+
+    // 🔹 Event listener update "action_by"
+    tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
+      try {
+        await updateDoc(doc(db, "tickets", docSnap.id), { action_by: e.target.value });
+        console.log("✅ Action_by updated");
+      } catch (err) {
+        console.error("Gagal update action_by:", err);
+      }
+    });
+
+    // 🔹 Event listener update "status_ticket"
+    tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
+      try {
+        await updateDoc(doc(db, "tickets", docSnap.id), { status_ticket: e.target.value });
+        console.log("✅ Status updated");
+      } catch (err) {
+        console.error("Gagal update status:", err);
+      }
+    });
   });
 
   if (snapshot.empty) {
     ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
   }
 }
-
-
-    // 🔹 Event listener assign IT
-  document.querySelectorAll(".assignSelect").forEach(select => {
-    select.addEventListener("change", async (e) => {
-      const ticketId = e.target.dataset.id;
-      try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-          action_by: e.target.value
-        });
-        console.log("✅ Berhasil update action_by");
-      } catch (err) {
-        console.error("Gagal update action_by:", err);
-        alert("❌ Gagal update action_by: " + err.message);
-      }
-    });
-  });
-
-  // 🔹 Event listener status ticket
-  document.querySelectorAll(".statusSelect").forEach(select => {
-    select.addEventListener("change", async (e) => {
-      const ticketId = e.target.dataset.id;
-      try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-          status_ticket: e.target.value
-        });
-        console.log("✅ Berhasil update status_ticket");
-      } catch (err) {
-        console.error("Gagal update status_ticket:", err);
-        alert("❌ Gagal update status_ticket: " + err.message);
-      }
-    });
-  });
-
 
 // --- MONITOR LOGIN STATE ---
 onAuthStateChanged(auth, (user) => {
@@ -136,6 +119,7 @@ onAuthStateChanged(auth, (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
+    // 🔹 Listen realtime tiket
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     onSnapshot(q, renderTickets);
 
@@ -143,6 +127,6 @@ onAuthStateChanged(auth, (user) => {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="8">Silakan login untuk melihat tiket</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
