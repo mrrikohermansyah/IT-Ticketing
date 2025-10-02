@@ -52,9 +52,8 @@ function renderTickets(snapshot) {
     const d = docSnap.data();
 
     // Tentukan warna bulatan status
-    let statusColor = "gray";
-    if (d.status_ticket === "Open") statusColor = "red";
-    else if (d.status_ticket === "Close") statusColor = "green";
+    let statusColor = "red";
+    if (d.status_ticket === "Close") statusColor = "green";
     else if (d.status_ticket === "Close with note") statusColor = "orange";
 
     const tr = document.createElement("tr");
@@ -82,7 +81,7 @@ function renderTickets(snapshot) {
       <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
       <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
     </select>
-    <span class="dot" style="background-color: ${d.status_ticket === "Open" ? "red" : d.status_ticket === "Close" ? "green" : "orange"}"></span>
+    <span class="dot" style="background-color: ${statusColor}"></span>
   </div>
 </td>
 
@@ -133,4 +132,5 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
