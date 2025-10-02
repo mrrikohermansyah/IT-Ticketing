@@ -24,15 +24,16 @@ const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
 // ---------------------------------------------------------------
 // Init Firebase & Firestore
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
+// ---------------------------------------------------------------
 // Init EmailJS
 if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
   console.warn(
-    '⚠️ EmailJS SDK tidak tersedia. Pastikan <script src="https://cdn.emailjs.com/dist/email.min.js"></script> ada di index.html'
+    "⚠️ EmailJS SDK tidak tersedia. Pastikan sudah ada di index.html"
   );
 }
 
@@ -51,11 +52,12 @@ async function sendEmail(payload) {
   }
 }
 
+// ---------------------------------------------------------------
 // Simpan ke Firestore
 async function saveToFirestore(doc) {
   try {
-    const col = collection(db, "tickets");
-    const docRef = await addDoc(col, doc);
+    const col = db.collection("tickets");
+    const docRef = await col.add(doc);
     return docRef.id;
   } catch (err) {
     throw err;
@@ -63,14 +65,14 @@ async function saveToFirestore(doc) {
 }
 
 // ---------------------------------------------------------------
-// Form Submit
+// Form Submit Handler
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
   const payload = {
-    inventory: (data.get("inventory") || "").toUpperCase(), // Inventory default kapital
+    inventory: (data.get("inventory") || "").toUpperCase(), // Inventory kapital
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
@@ -82,14 +84,14 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // 1) simpan ke Firestore
+    // 1️⃣ simpan ke Firestore
     const id = await saveToFirestore(payload);
     payload.ticketId = id;
 
-    // 2) kirim email
+    // 2️⃣ kirim email via EmailJS
     await sendEmail(payload);
 
-    statusEl.textContent = "✅ Tiket terkirim! ID: " + id;
+    statusEl.textContent = "✅ Tiket berhasil dikirim! ID: " + id;
     alert("✅ Tiket berhasil dikirim!\nID Tiket: " + id);
     form.reset();
   } catch (err) {
