@@ -17,7 +17,7 @@ import {
   updateDoc,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🔹 Firebase Config
+// ==================== 🔹 Firebase Config ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -28,18 +28,18 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// 🔹 Init Firebase
+// ==================== 🔹 Init Firebase ====================
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-// 🔹 Elemen DOM
+// ==================== 🔹 DOM Elements ====================
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 
-// --- LOGIN ---
+// ==================== 🔹 LOGIN ====================
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
@@ -49,14 +49,19 @@ loginBtn.addEventListener("click", async () => {
   }
 });
 
-// --- LOGOUT ---
+// ==================== 🔹 LOGOUT ====================
 logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
-// --- Render Tiket ---
+// ==================== 🔹 Render Tiket ====================
 function renderTickets(snapshot) {
   ticketsBody.innerHTML = "";
+
+  if (snapshot.empty) {
+    ticketsBody.innerHTML = `<tr><td colspan="10">Belum ada tiket.</td></tr>`;
+    return;
+  }
 
   snapshot.forEach((docSnap) => {
     const d = docSnap.data();
@@ -66,6 +71,7 @@ function renderTickets(snapshot) {
     if (d.status_ticket === "Close") statusColor = "green";
     else if (d.status_ticket === "Close with note") statusColor = "orange";
 
+    // Buat row
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
@@ -78,46 +84,30 @@ function renderTickets(snapshot) {
       <td>
         <select class="assignSelect" data-id="${docSnap.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${
-            d.action_by === "Riko Hermansyah" ? "selected" : ""
-          }>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${
-            d.action_by === "Abdurahman Hakim" ? "selected" : ""
-          }>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${
-            d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""
-          }>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${
-            d.action_by === "Ade Reinalwi" ? "selected" : ""
-          }>Ade Reinalwi</option>
+          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
         </select>
       </td>
       <td>
-  <div class="status-wrapper">
-    <select class="statusSelect">
-      <option value="Open" ${
-        d.status_ticket === "Open" ? "selected" : ""
-      }>Open</option>
-      <option value="Close" ${
-        d.status_ticket === "Close" ? "selected" : ""
-      }>Close</option>
-      <option value="Close with note" ${
-        d.status_ticket === "Close with note" ? "selected" : ""
-      }>Close with note</option>
-    </select>
-    <span class="dot" style="background-color: ${statusColor}"></span>
-  </div>
-</td>
-<td>
-    <textarea class="noteArea" data-id="${
-      docSnap.id
-    }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
-  </td>
-
+        <div class="status-wrapper">
+          <select class="statusSelect" data-id="${docSnap.id}">
+            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+          </select>
+          <span class="dot" style="background-color: ${statusColor}"></span>
+        </div>
+      </td>
+      <td>
+        <textarea class="noteArea" data-id="${docSnap.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+      </td>
     `;
+
     ticketsBody.appendChild(tr);
 
-    // 🔹 Event listener update "action_by"
+    // --- Event listener update "action_by"
     tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
       try {
         await updateDoc(doc(db, "tickets", docSnap.id), {
@@ -129,7 +119,7 @@ function renderTickets(snapshot) {
       }
     });
 
-    // 🔹 Event listener update "status_ticket"
+    // --- Event listener update "status_ticket"
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       try {
         await updateDoc(doc(db, "tickets", docSnap.id), {
@@ -140,40 +130,35 @@ function renderTickets(snapshot) {
         console.error("Gagal update status:", err);
       }
     });
-  });
-  // update NOTE
-  tr.querySelector(".noteArea").addEventListener("change", async (e) => {
-    const newNote = e.target.value;
-    const id = e.target.dataset.id;
-    try {
-      await updateDoc(doc(db, "tickets", id), {
-        note: newNote,
-      });
-      console.log("Note updated:", newNote);
-    } catch (err) {
-      console.error("Error updating note:", err);
-    }
-  });
 
-  if (snapshot.empty) {
-    ticketsBody.innerHTML = `<tr><td colspan="9">Belum ada tiket.</td></tr>`;
-  }
+    // --- Event listener update "note"
+    tr.querySelector(".noteArea").addEventListener("change", async (e) => {
+      try {
+        await updateDoc(doc(db, "tickets", docSnap.id), {
+          note: e.target.value,
+        });
+        console.log("✅ Note updated");
+      } catch (err) {
+        console.error("Gagal update note:", err);
+      }
+    });
+  });
 }
 
-// --- MONITOR LOGIN STATE ---
+// ==================== 🔹 MONITOR LOGIN STATE ====================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("✅ Login sebagai:", user.email);
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
-    // 🔹 Listen realtime tiket
+    // Listen realtime tiket
     const q = query(collection(db, "tickets"), orderBy("sent_at", "desc"));
     onSnapshot(q, renderTickets);
   } else {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="9">Silakan login untuk melihat tiket</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="10">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
