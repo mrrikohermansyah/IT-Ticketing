@@ -125,7 +125,14 @@ function applyFilter() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
+      <td>
+  ${
+    d.sent_at && d.sent_at.toDate
+      ? d.sent_at.toDate().toLocaleString()
+      : "-"
+  }
+</td>
+
       <td>${d.inventory || "-"}</td>
       <!-- ✅ Dropdown kategori kode -->
     <td>
@@ -260,3 +267,4 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
