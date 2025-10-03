@@ -19,23 +19,6 @@ import {
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-await addDoc(collection(db, "tickets"), {
-  inventory,
-  name,
-  user_email,
-  department,
-  priority,
-  subject,
-  message,
-  code: "",
-  location: "",
-  qa: "",
-  status_ticket: "Open",
-  action_by: "",
-  note: "",
-  sent_at: serverTimestamp(), // ✅ timestamp asli
-});
-
 // ==================== 🔹 Firebase Config ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
@@ -267,6 +250,7 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
 
