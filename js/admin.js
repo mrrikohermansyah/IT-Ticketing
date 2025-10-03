@@ -129,6 +129,8 @@ function applyFilter() {
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
       <td>${d.duration || "-"}</td>
+      <td>${hitungDurasi(d.createdAt, d.updatedAt)}</td>
+
       <td>
         ${
           d.status_ticket === "Open"
@@ -202,13 +204,24 @@ function applyFilter() {
     // --- Event listener update "status_ticket"
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", d.id), {
+        const ticketRef = doc(db, "tickets", d.id);
+
+        await updateDoc(ticketRef, {
           status_ticket: e.target.value,
+          updatedAt: serverTimestamp(), // 🔹 waktu terakhir update
         });
       } catch (err) {
         console.error("Gagal update status:", err);
       }
     });
+
+    function hitungDurasi(createdAt, updatedAt) {
+      if (!createdAt || !updatedAt) return "-";
+      const start = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+      const end = updatedAt.toDate ? updatedAt.toDate() : new Date(updatedAt);
+      const durasiMenit = Math.floor((end - start) / 60000);
+      return durasiMenit + " menit";
+    }
 
     // --- Event listener update "note"
     tr.querySelector(".noteArea").addEventListener("change", async (e) => {
