@@ -42,6 +42,12 @@ const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 const filterSelect = document.getElementById("filterActionBy");
 
+// 🔹 Tambahkan event listener di sini
+filterSelect.addEventListener("change", () => {
+  console.log("Filter dipilih:", filterSelect.value);
+  applyFilter();
+});
+
 // IT whitelist
 const IT_NAMES = [
   "Riko Hermansyah",
@@ -232,4 +238,5 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
