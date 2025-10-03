@@ -113,27 +113,6 @@ function applyFilter() {
   //console.log("All Tickets action_by:", allTickets.map(t => t.action_by));
   //console.log("Filtered Tickets:", filtered.map(t => t.action_by));
 
-  // Fungsi untuk export
-function exportToPDF() {
-  const doc = new jsPDF();
-
-  // contoh: export teks dari elemen tertentu
-  const filterBar = document.querySelector(".filter-bar");
-  if (filterBar) {
-    doc.text(filterBar.innerText, 10, 10);
-  }
-
-  doc.save("export.pdf");
-}
-
-// Hubungkan tombol ke fungsi
-document.addEventListener("DOMContentLoaded", () => {
-  const btnExport = document.getElementById("btnExportPDF");
-  if (btnExport) {
-    btnExport.addEventListener("click", exportToPDF);
-  }
-});
-
   if (filtered.length === 0) {
     ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
     return;
@@ -282,6 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
 
 
 
