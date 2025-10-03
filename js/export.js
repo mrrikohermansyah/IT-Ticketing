@@ -1,33 +1,37 @@
-// ==================== Export Excel ====================
+// ==================== EXPORT TO EXCEL ====================
 function exportToExcel() {
-  const table = document.getElementById("ticketsTable");
-  if (!table) {
-    alert("❌ Tabel tidak ditemukan!");
-    return;
-  }
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Tickets" });
-  XLSX.writeFile(wb, "tickets.xlsx");
-}
+  // Data header sesuai gambar
+  const header = [
+    "Tgl. / Date",
+    "Kode Inv. (uraian) / Inv. Code (Description)",
+    "Kode / Code",
+    "Lokasi / Location¹",
+    "Keterangan / Remarks",
+    "Pengguna / User",
+    "Durasi / Duration",
+    "Kendali Mutu / Quality Assurance",
+  ];
 
-// ==================== Export PDF ====================
-function exportToPDF() {
-  const table = document.getElementById("ticketsTable");
-  if (!table) {
-    alert("❌ Tabel tidak ditemukan!");
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("l", "pt", "a4"); // landscape, point, A4
-
-  doc.text("📋 Laporan Tiket IT", 40, 40);
-
-  doc.autoTable({
-    html: "#ticketsTable",
-    startY: 60,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [41, 128, 185] }, // biru untuk header
+  // Ambil data dari tabel admin
+  const rows = [];
+  const trs = document.querySelectorAll("#ticketsTable tbody tr");
+  trs.forEach((tr) => {
+    const cells = [...tr.querySelectorAll("td")].map((td) =>
+      td.innerText.trim()
+    );
+    rows.push(cells);
   });
 
-  doc.save("tickets.pdf");
+  // Gabungkan header + data
+  const data = [header, ...rows];
+
+  // Buat worksheet
+  const ws = XLSX.utils.aoa_to_sheet(data);
+
+  // Buat workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tickets");
+
+  // Export
+  XLSX.writeFile(wb, "tickets.xlsx");
 }
