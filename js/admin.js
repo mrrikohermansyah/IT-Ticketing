@@ -260,6 +260,30 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// ==================== 🔹 Export PDF ====================
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;   // ambil jsPDF dari window
+  const doc = new jsPDF();
+
+  // contoh export isi tabel tickets
+  const table = document.getElementById("ticketsTable"); 
+  if (table) {
+    doc.text("Daftar Tiket", 10, 10);
+    doc.text(table.innerText, 10, 20); // sederhana, export teks saja
+  }
+
+  doc.save("tickets.pdf");
+}
+
+// hubungkan tombol dengan fungsi
+document.addEventListener("DOMContentLoaded", () => {
+  const btnExport = document.getElementById("btnExportPDF");
+  if (btnExport) {
+    btnExport.addEventListener("click", exportToPDF);
+  }
+});
+
+
 
 
 
