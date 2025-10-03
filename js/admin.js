@@ -80,6 +80,15 @@ function hitungDurasi(createdAt, updatedAt) {
   return isNaN(menit) ? "-" : `${menit} menit`;
 }
 
+// mapping device → code
+function mapDeviceToCode(device) {
+  if (["PC", "Laptop", "Printer", "Projector"].includes(device)) return "HW";
+  if (device === "Jaringan") return "NW";
+  if (["MSOffice", "Software"].includes(device)) return "SW";
+  if (device === "Lainlain") return "OT";
+  return "OT";
+}
+
 // ==================== 🔹 Apply Filter & render rows ====================
 function applyFilter() {
   ticketsBody.innerHTML = "";
@@ -107,22 +116,14 @@ function applyFilter() {
 
     const sentAt = formatTimestamp(d.createdAt || d.sent_at);
 
+    // gunakan d.code jika sudah tersimpan, fallback ke mapping otomatis dari device
+    const codeValue = d.code || mapDeviceToCode(d.device);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${sentAt}</td>
       <td>${d.inventory || "-"}</td>
-      <td>
-        <select class="codeSelect" data-id="${d.id}">
-          <option value="">-- Pilih --</option>
-          <option value="HW" ${d.code === "HW" ? "selected" : ""}>HW</option>
-          <option value="SW" ${d.code === "SW" ? "selected" : ""}>SW</option>
-          <option value="NW" ${d.code === "NW" ? "selected" : ""}>NW</option>
-          <option value="HW&SW" ${d.code === "HW&SW" ? "selected" : ""}>HW&SW</option>
-          <option value="HW&NW" ${d.code === "HW&NW" ? "selected" : ""}>HW&NW</option>
-          <option value="KB" ${d.code === "KB" ? "selected" : ""}>KB</option>
-          <option value="Other" ${d.code === "Other" ? "selected" : ""}>Lainnya</option>
-        </select>
-      </td>
+      <td>${codeValue || "-"}</td>
       <td>${d.location || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
@@ -144,9 +145,10 @@ function applyFilter() {
         <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
           ${IT_NAMES.map(
-            (it) => `<option value="${it}" ${
-              d.action_by === it ? "selected" : ""
-            }>${it}</option>`
+            (it) =>
+              `<option value="${it}" ${
+                d.action_by === it ? "selected" : ""
+              }>${it}</option>`
           ).join("")}
         </select>
       </td>
@@ -167,15 +169,14 @@ function applyFilter() {
         </div>
       </td>
       <td>
-        <textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+        <textarea class="noteArea" data-id="${
+          d.id
+        }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
       </td>
     `;
     ticketsBody.appendChild(tr);
 
     // ---------- Listeners ----------
-    tr.querySelector(".codeSelect").addEventListener("change", (e) =>
-      updateDoc(doc(db, "tickets", d.id), { code: e.target.value })
-    );
     tr.querySelector(".assignSelect").addEventListener("change", (e) =>
       updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
     );
@@ -206,7 +207,9 @@ onAuthStateChanged(auth, (user) => {
 
       // Isi filter dengan IT whitelist
       const names = [
-        ...new Set(allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))),
+        ...new Set(
+          allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))
+        ),
       ];
 
       filterSelect.innerHTML = `<option value="all">-- Semua --</option>
