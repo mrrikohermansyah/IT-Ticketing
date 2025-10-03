@@ -76,11 +76,10 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  statusEl.textContent = "Mengirim tiket...";
+  if (statusEl) statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
 
-  // ✅ Data untuk Firestore
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     name: data.get("name"),
@@ -90,7 +89,7 @@ form.addEventListener("submit", async (e) => {
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
-    sent_at: serverTimestamp(), // timestamp asli Firestore
+    sent_at: serverTimestamp(),
     code: "",
     qa: "",
     status_ticket: "Open",
@@ -99,25 +98,32 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // 1️⃣ Simpan ke Firestore
+    // Simpan ke Firestore
     const id = await saveToFirestore(docData);
 
-    // 2️⃣ Buat payload untuk EmailJS (supaya punya ticketId juga)
+    // Buat payload untuk EmailJS
     const payload = {
       ...docData,
       ticketId: id,
+      sent_at: new Date().toLocaleString("id-ID"),
       recipient: STATIC_RECIPIENT_EMAIL,
     };
+
     await sendEmail(payload);
 
-    // ✅ Pesan sukses
-    statusEl.textContent = "✅ Tiket berhasil dikirim!";
+    // ✅ Pesan sukses (aman dengan pengecekan)
+    if (statusEl) statusEl.textContent = "✅ Tiket berhasil dikirim!";
     form.reset();
   } catch (err) {
     console.error(err);
-    statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
+    if (statusEl) {
+      statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
+    } else {
+      alert("❌ Terjadi kesalahan: " + (err.message || err));
+    }
   }
 });
+
 
 
 
