@@ -105,7 +105,12 @@ function applyFilter() {
   ticketsBody.innerHTML = "";
   const selected = filterSelect.value || "all";
 
-  const filtered = selected === "all" ? allTickets : allTickets.filter((t) => t.action_by === selected);
+  const filtered =
+    selected === "all"
+      ? allTickets
+      : selected === "unassigned"
+      ? allTickets.filter((t) => !t.action_by) // belum di-assign
+      : allTickets.filter((t) => t.action_by === selected);
 
   if (filtered.length === 0) {
     ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
@@ -140,7 +145,15 @@ function applyFilter() {
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
       <td>${hitungDurasi(d.createdAt, d.updatedAt)}</td>
-      <td>${d.status_ticket === "Open" ? "Continue" : d.status_ticket === "Close" ? "Finish" : d.status_ticket === "Close with note" ? "Finish (note)" : "-"}</td>
+      <td>${
+        d.status_ticket === "Open"
+          ? "Continue"
+          : d.status_ticket === "Close"
+          ? "Finish"
+          : d.status_ticket === "Close with note"
+          ? "Finish (note)"
+          : "-"
+      }</td>
       <td>${d.user_email || "-"}</td>
       <td>${d.department || "-"}</td>
       <td>${d.priority || "-"}</td>
@@ -183,7 +196,7 @@ function applyFilter() {
       }
     });
 
-    // update action_by (manual)
+    // update action_by (manual assign IT)
     tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
       const id = e.target.dataset.id;
       try {
@@ -200,9 +213,11 @@ function applyFilter() {
       const newStatus = e.target.value;
       try {
         const ticketRef = doc(db, "tickets", id);
-        const updaterEmail = auth.currentUser ? auth.currentUser.email : null;
-        const payload = { status_ticket: newStatus, updatedAt: serverTimestamp() };
-        if (updaterEmail) payload.action_by = updaterEmail;
+        const payload = {
+          status_ticket: newStatus,
+          updatedAt: serverTimestamp(),
+        };
+        // ⚠️ TIDAK isi action_by dengan email user
         await updateDoc(ticketRef, payload);
         console.log(`✅ status updated ${id} -> ${newStatus}`);
       } catch (err) {
@@ -236,7 +251,34 @@ onAuthStateChanged(auth, (user) => {
 
     // Ambil tiket terbaru (paling atas = terbaru) — URUTKAN berdasar createdAt
     const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
-    onSnapshot(q, renderTickets);
+    onSnapshot(q, (snapshot) => {
+      allTickets = [];
+      snapshot.forEach((docSnap) => {
+        allTickets.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // Daftar IT fix (whitelist)
+      const IT_NAMES = [
+        "Riko Hermansyah",
+        "Abdurahman Hakim",
+        "Moch Wahyu Nugroho",
+        "Ade Reinalwi",
+      ];
+
+      // Ambil nama unik dari tiket (hanya IT_NAMES)
+      const names = [
+        ...new Set(allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))),
+      ];
+
+      // Isi filter
+      filterSelect.innerHTML = `<option value="all">-- Semua --</option>
+                                <option value="unassigned">-- Belum di-assign --</option>`;
+      names.forEach((name) => {
+        filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+
+      applyFilter();
+    });
   } else {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
@@ -244,3 +286,5 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
+
