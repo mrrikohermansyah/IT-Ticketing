@@ -36,7 +36,9 @@ const db = getFirestore(app);
 if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
-  console.warn("⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html");
+  console.warn(
+    "⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html"
+  );
 }
 
 // ---------------------------------------------------------------
@@ -81,6 +83,20 @@ form.addEventListener("submit", async (e) => {
 
   const data = new FormData(form);
 
+  // --- Ambil device dan tentukan code otomatis ---
+  const device = data.get("device");
+  let code = "OT"; // default
+  if (["PC", "Laptop", "Printer", "Projector"].includes(device)) {
+    code = "HW";
+  } else if (device === "Jaringan") {
+    code = "NW";
+  } else if (["MSOffice", "Software"].includes(device)) {
+    code = "SW";
+  } else if (device === "Lainlain") {
+    code = "OT";
+  }
+
+  // --- Buat data untuk Firestore ---
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     name: data.get("name"),
@@ -90,8 +106,9 @@ form.addEventListener("submit", async (e) => {
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
+    device,
     sent_at: serverTimestamp(),
-    code: "",
+    code,
     qa: "",
     status_ticket: "Open",
     action_by: "",
@@ -124,9 +141,3 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
-
-
-
-
-
-
