@@ -242,22 +242,49 @@ onAuthStateChanged(auth, (user) => {
 // ==================== 🔹 Export PDF ====================
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("l", "pt", "a4"); // landscape, point, A4
+  const doc = new jsPDF("l", "pt", "a4"); // landscape
 
   doc.setFontSize(14);
   doc.text("Daftar Tiket IT", 40, 40);
 
-  // ambil data tabel
   const table = document.getElementById("ticketsTable");
-  if (table) {
-    doc.autoTable({
-      html: "#ticketsTable",   // langsung ambil dari table HTML
-      startY: 60,
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185] }, // biru header
-      alternateRowStyles: { fillColor: [245, 245, 245] } // warna selang-seling
+  if (!table) return;
+
+  // === Ambil header ===
+  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText);
+
+  // === Ambil isi baris (tbody) ===
+  const rows = Array.from(table.querySelectorAll("tbody tr")).map(tr => {
+    return Array.from(tr.querySelectorAll("td")).map((td, idx) => {
+      // Khusus kolom Action By (index 12)
+      if (idx === 12) {
+        const select = td.querySelector("select");
+        return select ? select.value || "-" : td.innerText;
+      }
+      // Khusus kolom Status Ticket (index 13)
+      if (idx === 13) {
+        const select = td.querySelector("select");
+        return select ? select.value || "-" : td.innerText;
+      }
+      // Khusus kolom Note (index 14)
+      if (idx === 14) {
+        const textarea = td.querySelector("textarea");
+        return textarea ? textarea.value || "-" : td.innerText;
+      }
+      // Default ambil teks
+      return td.innerText;
     });
-  }
+  });
+
+  // Buat tabel ke PDF
+  doc.autoTable({
+    head: [headers],
+    body: rows,
+    startY: 60,
+    styles: { fontSize: 8, cellPadding: 4, valign: "middle" },
+    headStyles: { fillColor: [41, 128, 185], halign: "center" },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
+  });
 
   doc.save("tickets.pdf");
 }
@@ -268,6 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
+
 
 
 
