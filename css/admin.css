@@ -176,6 +176,22 @@
    Mobile Card View Tiket
 ============================= */
 @media (max-width: 600px) {
+   /* Pastikan semua input, select, textarea tidak melebar keluar */
+  #ticketsTable td input,
+  #ticketsTable td select,
+  #ticketsTable td textarea {
+    max-width: 100%; /* biar tidak overflow */
+    width: auto; /* mengikuti lebar td */
+    flex: 1; /* isi ikut proporsional */
+    box-sizing: border-box;
+  }
+
+  /* Untuk textarea khusus (catatan) biar rapi */
+  #ticketsTable td textarea {
+    min-height: 60px;
+    resize: vertical; /* biar user bisa tarik ke bawah, bukan ke samping */
+  }
+   
   #ticketsTable,
   #ticketsTable thead,
   #ticketsTable tbody,
@@ -233,3 +249,4 @@
     margin-bottom: 6px;
   }
 }
+
