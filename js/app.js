@@ -98,14 +98,6 @@ form.addEventListener("submit", async (e) => {
     note: "",
   };
 
-  // ✅ Data untuk EmailJS
-  const payload = {
-    ...docData,
-    ticketId: "", // nanti diisi setelah Firestore
-    sent_at: new Date().toLocaleString("id-ID"), // timestamp human readable
-    recipient: STATIC_RECIPIENT_EMAIL,
-  };
-
   try {
     // 1️⃣ Simpan ke Firestore
     const id = await saveToFirestore(docData);
@@ -126,5 +118,6 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
   }
 });
+
 
 
