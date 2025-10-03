@@ -4,6 +4,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // ---------------------------------------------------------------
@@ -35,7 +36,9 @@ const db = getFirestore(app);
 if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
-  console.warn("⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html");
+  console.warn(
+    "⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html"
+  );
 }
 
 // ---------------------------------------------------------------
@@ -73,20 +76,22 @@ form.addEventListener("submit", async (e) => {
 
   const data = new FormData(form);
 
-  // Payload awal sesuai template EmailJS
-  const payload = {
-    ticketId: "", // nanti diisi setelah Firestore
+  // Payload untuk Firestore
+  const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
-    location: data.get("location"),   // ✅ tambahan lokasi
+    location: data.get("location"),
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
-    sent_at: new Date().toLocaleString(), // lebih mudah dibaca
-    attachment: "", // default kosong
-    recipient: STATIC_RECIPIENT_EMAIL,
+    sent_at: serverTimestamp(), // ✅ timestamp asli Firestore
+    code: "",
+    qa: "",
+    status_ticket: "Open",
+    action_by: "",
+    note: "",
   };
 
   try {
@@ -106,4 +111,3 @@ form.addEventListener("submit", async (e) => {
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
-
