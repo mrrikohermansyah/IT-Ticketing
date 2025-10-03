@@ -251,13 +251,59 @@ body {
    Responsiveness Desktop-Tablet
 ============================= */
 @media (max-width: 1024px) {
-  #ticketsTable {
-    font-size: 0.9rem;
+  #ticketsTable,
+  #ticketsTable thead,
+  #ticketsTable tbody,
+  #ticketsTable th,
+  #ticketsTable td,
+  #ticketsTable tr {
+    display: block;
+    width: 100%;
   }
 
-  .assignSelect,
-  .statusSelect {
-    max-width: 160px;
+  #ticketsTable thead {
+    display: none;
+  }
+
+  #ticketsTable tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    padding: 12px;
+  }
+
+  #ticketsTable td {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border: none;
+  }
+
+  #ticketsTable td::before {
+    content: attr(data-label);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+
+  #ticketsTable td {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #111827;
+    word-break: break-word;
+  }
+
+  #ticketsTable tr td:first-child {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 6px;
   }
 }
 
@@ -274,7 +320,6 @@ body {
     font-size: 0.85rem;
   }
 }
-
 /* =============================
    Mobile Card View Tiket
 ============================= */
@@ -334,6 +379,7 @@ body {
     margin-bottom: 6px;
   }
 }
+
 
 
 
