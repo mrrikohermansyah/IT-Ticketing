@@ -1,11 +1,10 @@
-// js/admin.js (rapih, siap pakai)
-// 🔹 Import Firebase SDK
+// js/admin.js (rapi & siap pakai)
+// ==================== 🔹 Import Firebase SDK ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
   collection,
   updateDoc,
-  addDoc,
   doc,
   query,
   orderBy,
@@ -43,7 +42,15 @@ const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 const filterSelect = document.getElementById("filterActionBy");
 
-// Simpan semua tiket agar bisa difilter ulang
+// IT whitelist
+const IT_NAMES = [
+  "Riko Hermansyah",
+  "Abdurahman Hakim",
+  "Moch Wahyu Nugroho",
+  "Ade Reinalwi",
+];
+
+// Global data cache
 let allTickets = [];
 
 // ==================== 🔹 LOGIN / LOGOUT ====================
@@ -51,7 +58,6 @@ loginBtn.addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
-    console.error("Login gagal:", err);
     alert("❌ Login gagal: " + err.message);
   }
 });
@@ -62,7 +68,6 @@ logoutBtn.addEventListener("click", async () => {
 // ==================== 🔹 Helpers ====================
 function formatTimestamp(ts) {
   if (!ts) return "-";
-  // Firestore Timestamp has toDate()
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
 }
@@ -71,33 +76,8 @@ function hitungDurasi(createdAt, updatedAt) {
   if (!createdAt || !updatedAt) return "-";
   const start = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   const end = updatedAt.toDate ? updatedAt.toDate() : new Date(updatedAt);
-  if (isNaN(start) || isNaN(end)) return "-";
   const menit = Math.floor((end - start) / 60000);
-  return `${menit} menit`;
-}
-
-// ==================== 🔹 Render Tiket ====================
-function renderTickets(snapshot) {
-  ticketsBody.innerHTML = "";
-  allTickets = [];
-
-  if (snapshot.empty) {
-    ticketsBody.innerHTML = `<tr><td colspan="15">Belum ada tiket.</td></tr>`;
-    return;
-  }
-
-  snapshot.forEach((docSnap) => {
-    allTickets.push({ id: docSnap.id, ...docSnap.data() });
-  });
-
-  // isi dropdown filter hanya dengan nama unik
-  const names = [...new Set(allTickets.map((t) => t.action_by).filter(Boolean))];
-  filterSelect.innerHTML = `<option value="all">-- Semua --</option>`;
-  names.forEach((name) => {
-    filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
-  });
-
-  applyFilter();
+  return isNaN(menit) ? "-" : `${menit} menit`;
 }
 
 // ==================== 🔹 Apply Filter & render rows ====================
@@ -109,7 +89,7 @@ function applyFilter() {
     selected === "all"
       ? allTickets
       : selected === "unassigned"
-      ? allTickets.filter((t) => !t.action_by) // belum di-assign
+      ? allTickets.filter((t) => !t.action_by)
       : allTickets.filter((t) => t.action_by === selected);
 
   if (filtered.length === 0) {
@@ -118,10 +98,12 @@ function applyFilter() {
   }
 
   filtered.forEach((d) => {
-    // warna status
-    let statusColor = "red";
-    if (d.status_ticket === "Close") statusColor = "green";
-    else if (d.status_ticket === "Close with note") statusColor = "orange";
+    const statusColor =
+      d.status_ticket === "Close"
+        ? "green"
+        : d.status_ticket === "Close with note"
+        ? "orange"
+        : "red";
 
     const sentAt = formatTimestamp(d.createdAt || d.sent_at);
 
@@ -161,20 +143,27 @@ function applyFilter() {
       <td>
         <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
+          ${IT_NAMES.map(
+            (it) => `<option value="${it}" ${
+              d.action_by === it ? "selected" : ""
+            }>${it}</option>`
+          ).join("")}
         </select>
       </td>
       <td>
         <div class="status-wrapper">
           <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+            <option value="Open" ${
+              d.status_ticket === "Open" ? "selected" : ""
+            }>Open</option>
+            <option value="Close" ${
+              d.status_ticket === "Close" ? "selected" : ""
+            }>Close</option>
+            <option value="Close with note" ${
+              d.status_ticket === "Close with note" ? "selected" : ""
+            }>Close with note</option>
           </select>
-          <span class="dot" style="background-color: ${statusColor}"></span>
+          <span class="dot" style="background-color:${statusColor}"></span>
         </div>
       </td>
       <td>
@@ -183,94 +172,43 @@ function applyFilter() {
     `;
     ticketsBody.appendChild(tr);
 
-    // ---------- listeners ----------
-    // update kode (code)
-    tr.querySelector(".codeSelect").addEventListener("change", async (e) => {
-      const id = e.target.dataset.id;
-      try {
-        await updateDoc(doc(db, "tickets", id), { code: e.target.value });
-        console.log("✅ code updated", id, e.target.value);
-      } catch (err) {
-        console.error("Gagal update code:", err);
-        alert("Gagal update code: " + (err.message || err));
-      }
-    });
-
-    // update action_by (manual assign IT)
-    tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
-      const id = e.target.dataset.id;
-      try {
-        await updateDoc(doc(db, "tickets", id), { action_by: e.target.value });
-        console.log("✅ action_by updated", id);
-      } catch (err) {
-        console.error("Gagal update action_by:", err);
-      }
-    });
-
-    // update status -> juga tulis updatedAt (serverTimestamp)
-    tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
-      const id = e.target.dataset.id;
-      const newStatus = e.target.value;
-      try {
-        const ticketRef = doc(db, "tickets", id);
-        const payload = {
-          status_ticket: newStatus,
-          updatedAt: serverTimestamp(),
-        };
-        // ⚠️ TIDAK isi action_by dengan email user
-        await updateDoc(ticketRef, payload);
-        console.log(`✅ status updated ${id} -> ${newStatus}`);
-      } catch (err) {
-        console.error("Gagal update status:", err);
-        alert("Gagal update status: " + (err.message || err));
-      }
-    });
-
-    // update note
-    tr.querySelector(".noteArea").addEventListener("change", async (e) => {
-      const id = e.target.dataset.id;
-      try {
-        await updateDoc(doc(db, "tickets", id), { note: e.target.value });
-        console.log("✅ Note updated", id);
-      } catch (err) {
-        console.error("Gagal update note:", err);
-      }
-    });
+    // ---------- Listeners ----------
+    tr.querySelector(".codeSelect").addEventListener("change", (e) =>
+      updateDoc(doc(db, "tickets", d.id), { code: e.target.value })
+    );
+    tr.querySelector(".assignSelect").addEventListener("change", (e) =>
+      updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
+    );
+    tr.querySelector(".statusSelect").addEventListener("change", (e) =>
+      updateDoc(doc(db, "tickets", d.id), {
+        status_ticket: e.target.value,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    tr.querySelector(".noteArea").addEventListener("change", (e) =>
+      updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
+    );
   });
 }
-
-// event listener untuk filter
-filterSelect.addEventListener("change", applyFilter);
 
 // ==================== 🔹 Monitor Login State ====================
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("✅ Login sebagai:", user.email);
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
-    // Ambil tiket terbaru (paling atas = terbaru) — URUTKAN berdasar createdAt
     const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
     onSnapshot(q, (snapshot) => {
       allTickets = [];
-      snapshot.forEach((docSnap) => {
-        allTickets.push({ id: docSnap.id, ...docSnap.data() });
-      });
+      snapshot.forEach((docSnap) =>
+        allTickets.push({ id: docSnap.id, ...docSnap.data() })
+      );
 
-      // Daftar IT fix (whitelist)
-      const IT_NAMES = [
-        "Riko Hermansyah",
-        "Abdurahman Hakim",
-        "Moch Wahyu Nugroho",
-        "Ade Reinalwi",
-      ];
-
-      // Ambil nama unik dari tiket (hanya IT_NAMES)
+      // Isi filter dengan IT whitelist
       const names = [
         ...new Set(allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))),
       ];
 
-      // Isi filter
       filterSelect.innerHTML = `<option value="all">-- Semua --</option>
                                 <option value="unassigned">-- Belum di-assign --</option>`;
       names.forEach((name) => {
@@ -280,11 +218,8 @@ onAuthStateChanged(auth, (user) => {
       applyFilter();
     });
   } else {
-    console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
-
-
