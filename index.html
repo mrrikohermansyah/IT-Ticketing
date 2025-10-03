@@ -1,32 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IT Ticketing — Lapor Masalah</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>IT Ticketing — Lapor Masalah</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css" />
 
-  <!-- NOTE:
+    <!-- NOTE:
        - Saat ini file menggunakan EmailJS UMD build (window.emailjs).
        - Jika kamu ingin pakai ESM (rekomendasi untuk project modular), hapus baris UMD di bawah
          dan import EmailJS ESM dari app.js:
          import { init, send } from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.esm.min.js";
-  -->
-</head>
+  --></head>
 
-<body>
-  <main class="container">
-    <header>
-      <h1>IT Ticketing — Lapor Permasalahan</h1>
-      <p>
-        Isi form di bawah untuk membuat tiket. Semua data tersimpan ke Firebase dan akan dikirim ke email
-        penerima.
-      </p>
-    </header>
+  <body>
+    <main class="container">
+      <header>
+        <h1>IT Ticketing — Lapor Permasalahan</h1>
+        <p>
+          Isi form di bawah untuk membuat tiket. Semua data tersimpan ke
+          Firebase dan akan dikirim ke email penerima.
+        </p>
+      </header>
 
-    <form id="ticketForm" class="card" autocomplete="on">
+      <form id="ticketForm" class="card" autocomplete="on">
         <label for="inventory"
           >Kode Inventory
           <input
@@ -36,6 +35,19 @@
             required
             placeholder="Cth: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll"
           />
+        </label>
+        <label for="device">
+          Jenis Perangkat
+          <select name="device" id="device" required>
+            <option value="PC">PC</option>
+            <option value="Laptop">Laptop</option>
+            <option value="Printer">Printer</option>
+            <option value="Jaringan">Jaringan</option>
+            <option value="MSOffice">MS Office</option>
+            <option value="Software">Software Lain</option>
+            <option value="Projector">Projector</option>
+            <option value="Lainlain">Lain-lain</option>
+          </select>
         </label>
 
         <label for="name"
@@ -134,25 +146,20 @@
         <div id="status" role="status" aria-live="polite"></div>
       </form>
 
-    <footer>
-      <small>
-        Template ini menggunakan Firebase (Firestore) dan EmailJS untuk pengiriman email. Konfigurasi
-        diperlukan — lihat README di repo.
-      </small>
-    </footer>
-  </main>
+      <footer>
+        <small>
+          Template ini menggunakan Firebase (Firestore) dan EmailJS untuk
+          pengiriman email. Konfigurasi diperlukan — lihat README di repo.
+        </small>
+      </footer>
+    </main>
 
-  <!-- EmailJS UMD (global: window.emailjs)
+    <!-- EmailJS UMD (global: window.emailjs)
        NOTE: keep this ONLY if you plan to use window.emailjs in app.js.
        If you prefer ESM imports, remove this line and import email.esm in app.js. -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-  <!-- Your module script (Firebase + app logic) -->
-  <script type="module" src="js/app.js"></script>
-</body>
+    <!-- Your module script (Firebase + app logic) -->
+    <script type="module" src="js/app.js"></script>
+  </body>
 </html>
-
-
-
-
-
