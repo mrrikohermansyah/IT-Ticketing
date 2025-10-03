@@ -173,13 +173,9 @@
 }
 
 /* =============================
-   HP Kecil (Card View Mode)
+   Mobile Card View Tiket
 ============================= */
 @media (max-width: 600px) {
-  .table-wrapper {
-    overflow-x: hidden; /* hapus scroll horizontal */
-  }
-
   #ticketsTable,
   #ticketsTable thead,
   #ticketsTable tbody,
@@ -191,51 +187,48 @@
   }
 
   #ticketsTable thead {
-    display: none; /* sembunyikan header */
+    display: none;
   }
 
   #ticketsTable tr {
-    margin-bottom: 15px;
+    margin-bottom: 16px;
     border: 1px solid #e5e7eb;
-    background: #fff;
     border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 12px;
   }
 
   #ticketsTable td {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    padding: 6px 0;
+    padding: 6px 4px;
     border: none;
   }
 
   #ticketsTable td::before {
     content: attr(data-label);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7280; /* abu-abu label */
+    margin-right: 8px;
     flex: 1;
-    font-weight: 600;
-    color: #374151;
-    margin-right: 10px;
+    max-width: 40%;
     text-align: left;
   }
 
   #ticketsTable td {
     flex: 2;
-    text-align: right;
-    color: #111827;
+    font-size: 0.9rem;
+    color: #111827; /* isi lebih tegas */
     word-break: break-word;
   }
 
-  /* Biar field penting lebih menonjol */
-  #ticketsTable td[data-label="Status Ticket"] {
-    font-weight: bold;
-    color: #2563eb; /* biru */
-  }
-
-  #ticketsTable td[data-label="Prioritas"],
-  #ticketsTable td[data-label="Durasi"] {
+  /* Biar judul tiket (tanggal + kode) lebih mencolok */
+  #ticketsTable tr td:first-child {
     font-weight: 600;
-    color: #dc2626; /* merah */
+    font-size: 1rem;
+    color: #1e40af;
+    margin-bottom: 6px;
   }
 }
