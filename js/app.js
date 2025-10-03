@@ -80,6 +80,7 @@ form.addEventListener("submit", async (e) => {
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
+    location: data.get("location"),   // ✅ tambahan lokasi
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
@@ -105,3 +106,4 @@ form.addEventListener("submit", async (e) => {
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
+
