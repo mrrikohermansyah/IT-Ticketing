@@ -108,7 +108,19 @@ function applyFilter() {
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
       <td>${d.inventory || "-"}</td>
-      <td>${d.code || "-"}</td>
+      <!-- ✅ Dropdown kategori kode -->
+    <td>
+      <select class="codeSelect" data-id="${d.id}">
+        <option value="">-- Pilih --</option>
+        <option value="HW" ${d.code === "HW" ? "selected" : ""}>HW</option>
+        <option value="SW" ${d.code === "SW" ? "selected" : ""}>SW</option>
+        <option value="NW" ${d.code === "NW" ? "selected" : ""}>NW</option>
+        <option value="HW&SW" ${d.code === "HW&SW" ? "selected" : ""}>HW&SW</option>
+        <option value="HW&NW" ${d.code === "HW&NW" ? "selected" : ""}>HW&NW</option>
+        <option value="KB" ${d.code === "KB" ? "selected" : ""}>KB</option>
+        <option value="Other" ${d.code === "Other" ? "selected" : ""}>Lainnya</option>
+      </select>
+    </td>
       <td>${d.location || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
@@ -207,5 +219,6 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
