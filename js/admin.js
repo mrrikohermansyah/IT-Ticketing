@@ -113,7 +113,17 @@ function applyFilter() {
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
       <td>${d.duration || "-"}</td>
-      <td>${d.qa || "-"}</td>
+        <td>
+    ${
+      d.status_ticket === "Open"
+        ? "Continue"
+        : d.status_ticket === "Close"
+        ? "Finish"
+        : d.status_ticket === "Close with note"
+        ? "Finish (note)"
+        : "-"
+    }
+  </td>
       <td>${d.user_email || "-"}</td>
       <td>${d.department || "-"}</td>
       <td>${d.priority || "-"}</td>
@@ -197,4 +207,5 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
