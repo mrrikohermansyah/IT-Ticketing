@@ -8,7 +8,7 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth,
@@ -110,15 +110,15 @@ function applyFilter() {
       <td>
   ${
     d.sent_at
-      ? (d.sent_at.toDate
-          ? d.sent_at.toDate().toLocaleString("id-ID", { 
-              dateStyle: "short", 
-              timeStyle: "short" 
-            })
-          : new Date(d.sent_at).toLocaleString("id-ID", { 
-              dateStyle: "short", 
-              timeStyle: "short" 
-            }))
+      ? d.sent_at.toDate
+        ? d.sent_at.toDate().toLocaleString("id-ID", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+        : new Date(d.sent_at).toLocaleString("id-ID", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
       : "-"
   }
 </td>
@@ -257,9 +257,3 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
-
-
-
-
-
-
