@@ -43,6 +43,7 @@ if (window.emailjs) {
 // DOM Elements
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
+console.log("statusEl:", statusEl);
 
 // ---------------------------------------------------------------
 // Fungsi kirim email via EmailJS
@@ -123,6 +124,7 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
+
 
 
 
