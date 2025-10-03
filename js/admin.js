@@ -44,7 +44,7 @@ const filterSelect = document.getElementById("filterActionBy");
 
 // 🔹 Tambahkan event listener di sini
 filterSelect.addEventListener("change", () => {
-  console.log("Filter dipilih:", filterSelect.value);
+  //console.log("Filter dipilih:", filterSelect.value);
   applyFilter();
 });
 
@@ -108,10 +108,10 @@ function applyFilter() {
       : allTickets.filter((t) => t.action_by === selected);
 
   // 🔍 Debug log
-  console.log("=== DEBUG FILTER ===");
-  console.log("Selected:", selected);
-  console.log("All Tickets action_by:", allTickets.map(t => t.action_by));
-  console.log("Filtered Tickets:", filtered.map(t => t.action_by));
+  //console.log("=== DEBUG FILTER ===");
+  //console.log("Selected:", selected);
+  //console.log("All Tickets action_by:", allTickets.map(t => t.action_by));
+  //console.log("Filtered Tickets:", filtered.map(t => t.action_by));
 
   if (filtered.length === 0) {
     ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
@@ -238,5 +238,6 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
