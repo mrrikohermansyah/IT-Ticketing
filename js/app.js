@@ -96,6 +96,8 @@ form.addEventListener("submit", async (e) => {
     code = "OT";
   }
 
+  console.log("Kode otomatis:", code);
+
   // --- Buat data untuk Firestore ---
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
@@ -141,3 +143,4 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
+
