@@ -111,6 +111,8 @@ form.addEventListener("submit", async (e) => {
     subject: data.get("subject"),
     message: data.get("message"), // 🔹 jangan ditiban sama device lagi
     sent_at: serverTimestamp(),
+    createdAt: serverTimestamp(), // 🔹 waktu tiket dibuat
+    updatedAt: null,              // 🔹 nanti diubah saat IT update status
     qa: "",
     status_ticket: "Open",
     action_by: "",
@@ -140,5 +142,6 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
+
 
 
