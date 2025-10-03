@@ -8,8 +8,10 @@
     <link rel="stylesheet" href="css/admin.css" />
     <script type="module" src="js/admin.js"></script>
     <!-- Library Export -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- Tambahkan di admin.html -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -24,6 +26,7 @@
           Firestore.
         </p>
       </header>
+
       <!-- Tombol Export -->
       <div class="export-buttons">
         <button onclick="exportToExcel()">
@@ -33,11 +36,11 @@
           <i class="fa-solid fa-file-pdf"></i> Export PDF
         </button>
       </div>
+
       <div class="auth-buttons">
         <button id="loginBtn">Login dengan Google</button>
         <button id="logoutBtn" style="display: none">Logout</button>
       </div>
-      <!--<div id="tickets"></div>-->
 
       <section class="card">
         <h2 style="margin-top: 0">Tiket Terbaru</h2>
@@ -70,17 +73,43 @@
             </thead>
             <tbody id="ticketsBody">
               <tr>
-                <td colspan="8" class="loading">Memuat data...</td>
+                <td colspan="15" class="loading">Memuat data...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
     </main>
+
     <!-- File JS eksternal -->
     <script src="js/export.js"></script>
+
+    <!-- 🔹 Script auto data-label untuk responsive table -->
+    <script>
+      function addDataLabels() {
+        const table = document.getElementById("ticketsTable");
+        if (!table) return;
+        const headers = Array.from(table.querySelectorAll("thead th")).map(
+          (th) => th.innerText.trim()
+        );
+
+        table.querySelectorAll("tbody tr").forEach((row) => {
+          row.querySelectorAll("td").forEach((td, i) => {
+            if (headers[i]) {
+              td.setAttribute("data-label", headers[i]);
+            }
+          });
+        });
+      }
+
+      // Jalankan tiap kali halaman load
+      window.addEventListener("load", addDataLabels);
+      // Jalankan ulang tiap kali ada perubahan tabel (misal Firestore update)
+      const observer = new MutationObserver(addDataLabels);
+      observer.observe(document.getElementById("ticketsBody"), {
+        childList: true,
+        subtree: true,
+      });
+    </script>
   </body>
 </html>
-
-
-
