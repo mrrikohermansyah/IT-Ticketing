@@ -11,6 +11,7 @@ import {
   getFirestore,
   collection,
   query,
+  addDoc,
   orderBy,
   onSnapshot,
   doc,
@@ -267,4 +268,5 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
