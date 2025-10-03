@@ -95,7 +95,7 @@ function applyFilter() {
       : allTickets.filter((t) => t.action_by === selected);
 
   if (filtered.length === 0) {
-    ticketsBody.innerHTML = `<tr><td colspan="11">Tidak ada tiket untuk filter ini.</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
     return;
   }
 
@@ -107,50 +107,38 @@ function applyFilter() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${d.sent_at ? new Date(d.sent_at).toLocaleString() : "-"}</td>
-      <td>${d.inventory || "-"}</td>   <!-- ✅ Kode Inventory -->
+      <td>${d.inventory || "-"}</td>
+      <td>${d.code || "-"}</td>
+      <td>${d.location || "-"}</td>
+      <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
+      <td>${d.duration || "-"}</td>
+      <td>${d.qa || "-"}</td>
       <td>${d.user_email || "-"}</td>
       <td>${d.department || "-"}</td>
       <td>${d.priority || "-"}</td>
       <td>${d.subject || "-"}</td>
-      <td>${d.message || "-"}</td>
       <td>
         <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${
-            d.action_by === "Riko Hermansyah" ? "selected" : ""
-          }>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${
-            d.action_by === "Abdurahman Hakim" ? "selected" : ""
-          }>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${
-            d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""
-          }>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${
-            d.action_by === "Ade Reinalwi" ? "selected" : ""
-          }>Ade Reinalwi</option>
+          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
         </select>
       </td>
       <td>
         <div class="status-wrapper">
           <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${
-              d.status_ticket === "Open" ? "selected" : ""
-            }>Open</option>
-            <option value="Close" ${
-              d.status_ticket === "Close" ? "selected" : ""
-            }>Close</option>
-            <option value="Close with note" ${
-              d.status_ticket === "Close with note" ? "selected" : ""
-            }>Close with note</option>
+            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
           </select>
           <span class="dot" style="background-color: ${statusColor}"></span>
         </div>
       </td>
       <td>
-        <textarea class="noteArea" data-id="${
-          d.id
-        }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+        <textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
       </td>
     `;
     ticketsBody.appendChild(tr);
@@ -206,6 +194,7 @@ onAuthStateChanged(auth, (user) => {
     console.log("❌ Belum login");
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="11">Silakan login untuk melihat tiket</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
