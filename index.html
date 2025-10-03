@@ -27,74 +27,112 @@
     </header>
 
     <form id="ticketForm" class="card" autocomplete="on" novalidate>
-      <label for="inventory">Kode Inventory
-        <input type="text" name="inventory" id="inventory" required
-               placeholder="Cth: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll" />
-      </label>
+        <label for="inventory"
+          >Kode Inventory
+          <input
+            type="text"
+            name="inventory"
+            id="inventory"
+            required
+            placeholder="Cth: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll"
+          />
+        </label>
 
-      <label for="name">Nama Lengkap
-        <input type="text" name="name" id="name" required placeholder="Nama Anda" />
-      </label>
+        <label for="name"
+          >Nama Lengkap
+          <input
+            type="text"
+            name="name"
+            id="name"
+            required
+            placeholder="Nama Anda"
+            required
+          />
+        </label>
 
-      <label for="user_email">Email
-        <input type="email" name="user_email" id="user_email" required placeholder="email@perushaan.com" />
-      </label>
+        <label for="user_email"
+          >Email
+          <input
+            type="email"
+            name="user_email"
+            id="user_email"
+            required
+            placeholder="email@perushaan.com"
+            required
+          />
+        </label>
 
-      <label for="department">Departemen
-        <select name="department" id="department" required>
-          <option value="Management">Management</option>
-          <option value="IT">IT</option>
-          <option value="HR">HR</option>
-          <option value="Finance">Finance</option>
-          <option value="Engineer">Engineer</option>
-          <option value="QC">QC</option>
-          <option value="Completion">Completion</option>
-          <option value="HSE">HSE</option>
-          <option value="Clinic">Clinic</option>
-          <option value="Other">Lainnya</option>
-        </select>
-      </label>
+        <label for="department"
+          >Departemen
+          <select name="department" id="department" required>
+            <option value="Management">Management</option>
+            <option value="IT">IT</option>
+            <option value="HR">HR</option>
+            <option value="Finance">Finance</option>
+            <option value="Engineer">Engineer</option>
+            <option value="QC">QC</option>
+            <option value="Completion">Completion</option>
+            <option value="HSE">HSE</option>
+            <option value="Clinic">Clinic</option>
+            <option value="Other">Lainnya</option>
+          </select>
+        </label>
 
-      <!-- 🔹 Lokasi Baru -->
-  <label for="location">
-    Lokasi
-    <select name="location" id="location" required>
-      <option value="White Office">White Office</option>
-      <option value="Blue Office">Blue Office</option>
-      <option value="Green Office">Green Office</option>
-      <option value="Red Office">Red Office</option>
-      <option value="HRD">HRD</option>
-      <option value="Clinic">Clinic</option>
-      <option value="HSE Yard">HSE Yard</option>
-      <option value="Control Room">Control Room</option>
-      <option value="Welding School">Welding School</option>
-    </select>
-  </label>
+        <!-- 🔹 Lokasi Baru -->
+        <label for="location">
+          Lokasi
+          <select name="location" id="location" required>
+            <option value="White Office">White Office</option>
+            <option value="Blue Office">Blue Office</option>
+            <option value="Green Office">Green Office</option>
+            <option value="Red Office">Red Office</option>
+            <option value="HRD">HRD</option>
+            <option value="Clinic">Clinic</option>
+            <option value="HSE Yard">HSE Yard</option>
+            <option value="Control Room">Control Room</option>
+            <option value="Welding School">Welding School</option>
+          </select>
+        </label>
 
-      <label for="priority">Prioritas
-        <select name="priority" id="priority" required>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-        </select>
-      </label>
+        <label for="priority"
+          >Prioritas
+          <select name="priority" id="priority" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </label>
 
-      <label for="subject">Ringkasan Masalah
-        <input type="text" name="subject" id="subject" required placeholder="Ringkasan singkat" />
-      </label>
+        <label for="subject"
+          >Ringkasan Masalah
+          <input
+            type="text"
+            name="subject"
+            id="subject"
+            required
+            placeholder="Ringkasan singkat"
+            required
+          />
+        </label>
 
-      <label for="message">Deskripsi Lengkap
-        <textarea name="message" id="message" rows="6" required
-                  placeholder="Jelaskan masalah secara detail..."></textarea>
-      </label>
+        <label for="message"
+          >Deskripsi Lengkap
+          <textarea
+            name="message"
+            id="message"
+            rows="6"
+            required
+            placeholder="Jelaskan masalah secara detail..."
+          ></textarea>
+        </label>
 
-      <div class="actions">
-        <button type="submit" id="submitBtn">Kirim Tiket</button>
-        <button type="reset">Reset</button>
-      </div>
+        <div class="actions">
+          <button type="submit" id="submitBtn">Kirim Tiket</button>
+          <button type="reset">Reset</button>
+        </div>
 
-      <div id="status" role="status" aria-live="polite"></div>
-    </form>
+        <div id="status" role="status" aria-live="polite"></div>
+      </form>
 
     <footer>
       <small>
@@ -113,4 +151,5 @@
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
 
