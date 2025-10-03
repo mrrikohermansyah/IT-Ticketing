@@ -111,13 +111,14 @@ form.addEventListener("submit", async (e) => {
     await sendEmail(payload);
 
     // ✅ Pesan sukses
-    statusEl.textContent = "✅ Tiket berhasil dikirim! ID: ";
+    statusEl.textContent = "✅ Tiket berhasil dikirim!";
     form.reset();
   } catch (err) {
     console.error(err);
     statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
   }
 });
+
 
 
 
