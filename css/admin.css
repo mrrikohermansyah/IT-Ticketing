@@ -176,77 +176,29 @@
    Mobile Card View Tiket
 ============================= */
 @media (max-width: 600px) {
-   /* Pastikan semua input, select, textarea tidak melebar keluar */
-  #ticketsTable td input,
+  /* Biar semua input, select, textarea ngepas lebar card */
   #ticketsTable td select,
-  #ticketsTable td textarea {
-    max-width: 100%; /* biar tidak overflow */
-    width: auto; /* mengikuti lebar td */
-    flex: 1; /* isi ikut proporsional */
+  #ticketsTable td textarea,
+  #ticketsTable td input {
+    width: 100%;         /* maksimal selebar kolom/card */
+    max-width: 100%;     
     box-sizing: border-box;
   }
 
-  /* Untuk textarea khusus (catatan) biar rapi */
+  /* khusus textarea Note */
   #ticketsTable td textarea {
-    min-height: 60px;
-    resize: vertical; /* biar user bisa tarik ke bawah, bukan ke samping */
-  }
-   
-  #ticketsTable,
-  #ticketsTable thead,
-  #ticketsTable tbody,
-  #ticketsTable th,
-  #ticketsTable td,
-  #ticketsTable tr {
-    display: block;
-    width: 100%;
+    min-height: 60px;    /* biar nggak terlalu kecil */
+    resize: vertical;    /* user bisa tarik ke bawah aja */
   }
 
-  #ticketsTable thead {
-    display: none;
-  }
-
-  #ticketsTable tr {
-    margin-bottom: 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    padding: 12px;
-  }
-
-  #ticketsTable td {
-    display: flex;
-    justify-content: flex-start;  /* ⬅️ jangan space-between */
-    align-items: center;
-    gap: 8px;                     /* ⬅️ jarak kecil antar label dan isi */
-    padding: 6px 4px;
-    border: none;
-  }
-
-  #ticketsTable td::before {
-    content: attr(data-label);
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #6b7280; /* abu-abu label */
-    flex-shrink: 0; /* biar label nggak ketekan */
-    min-width: 100px; /* ⬅️ biar rata kiri semua */
-    text-align: left;
-  }
-
-  #ticketsTable td {
-    flex: 1;
+  /* Kalau mau gaya seperti Status Ticket (rounded + padding) */
+  #ticketsTable td select,
+  #ticketsTable td textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 6px 8px;
     font-size: 0.9rem;
-    color: #111827; /* isi lebih tegas */
-    word-break: break-word;
-  }
-
-  /* Biar judul tiket (tanggal + kode) lebih mencolok */
-  #ticketsTable tr td:first-child {
-    font-weight: 600;
-    font-size: 1rem;
-    color: #1e40af;
-    margin-bottom: 6px;
   }
 }
+
 
