@@ -36,9 +36,7 @@ const db = getFirestore(app);
 if (window.emailjs) {
   emailjs.init(EMAILJS_PUBLIC_KEY);
 } else {
-  console.warn(
-    "⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html"
-  );
+  console.warn("⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html");
 }
 
 // ---------------------------------------------------------------
@@ -72,11 +70,17 @@ async function saveToFirestore(doc) {
 // Form Submit Handler
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  if (!form.checkValidity()) {
+    form.reportValidity(); // tampilkan pesan HTML5
+    return;
+  }
+
   statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
 
-  // Payload untuk Firestore
+  // ✅ Data untuk Firestore
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     name: data.get("name"),
@@ -86,7 +90,7 @@ form.addEventListener("submit", async (e) => {
     priority: data.get("priority"),
     subject: data.get("subject"),
     message: data.get("message"),
-    sent_at: serverTimestamp(), // ✅ timestamp asli Firestore
+    sent_at: serverTimestamp(), // timestamp asli Firestore
     code: "",
     qa: "",
     status_ticket: "Open",
@@ -94,10 +98,18 @@ form.addEventListener("submit", async (e) => {
     note: "",
   };
 
+  // ✅ Data untuk EmailJS
+  const payload = {
+    ...docData,
+    ticketId: "", // nanti diisi setelah Firestore
+    sent_at: new Date().toLocaleString("id-ID"), // timestamp human readable
+    recipient: STATIC_RECIPIENT_EMAIL,
+  };
+
   try {
     // 1️⃣ simpan ke Firestore
-    const id = await saveToFirestore(payload);
-    payload.ticketId = id; // update ticketId sesuai template
+    const id = await saveToFirestore(docData);
+    payload.ticketId = id;
 
     // 2️⃣ kirim email via EmailJS
     await sendEmail(payload);
