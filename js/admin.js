@@ -74,7 +74,9 @@ function renderTickets(snapshot) {
   });
 
   // 🔹 Isi dropdown filter hanya dengan nama unik
-  const names = [...new Set(allTickets.map((t) => t.action_by).filter(Boolean))];
+  const names = [
+    ...new Set(allTickets.map((t) => t.action_by).filter(Boolean)),
+  ];
   filterSelect.innerHTML = `<option value="all">-- Semua --</option>`;
   names.forEach((name) => {
     filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
@@ -122,21 +124,7 @@ function applyFilter() {
     tr.innerHTML = `
       <td>${sentAt}</td>
       <td>${d.inventory || "-"}</td>
-
-      <!-- ✅ Dropdown kategori kode -->
-      <td>
-        <select class="codeSelect" data-id="${d.id}">
-          <option value="">-- Pilih --</option>
-          <option value="HW" ${d.code === "HW" ? "selected" : ""}>HW</option>
-          <option value="SW" ${d.code === "SW" ? "selected" : ""}>SW</option>
-          <option value="NW" ${d.code === "NW" ? "selected" : ""}>NW</option>
-          <option value="HW&SW" ${d.code === "HW&SW" ? "selected" : ""}>HW&SW</option>
-          <option value="HW&NW" ${d.code === "HW&NW" ? "selected" : ""}>HW&NW</option>
-          <option value="KB" ${d.code === "KB" ? "selected" : ""}>KB</option>
-          <option value="Other" ${d.code === "Other" ? "selected" : ""}>Lainnya</option>
-        </select>
-      </td>
-
+      <td>${d.code || "-"}</td>
       <td>${d.location || "-"}</td>
       <td>${d.message || "-"}</td>
       <td>${d.name || "-"}</td>
@@ -160,26 +148,42 @@ function applyFilter() {
       <td>
         <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
-          <option value="Riko Hermansyah" ${d.action_by === "Riko Hermansyah" ? "selected" : ""}>Riko Hermansyah</option>
-          <option value="Abdurahman Hakim" ${d.action_by === "Abdurahman Hakim" ? "selected" : ""}>Abdurahman Hakim</option>
-          <option value="Moch Wahyu Nugroho" ${d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""}>Moch Wahyu Nugroho</option>
-          <option value="Ade Reinalwi" ${d.action_by === "Ade Reinalwi" ? "selected" : ""}>Ade Reinalwi</option>
+          <option value="Riko Hermansyah" ${
+            d.action_by === "Riko Hermansyah" ? "selected" : ""
+          }>Riko Hermansyah</option>
+          <option value="Abdurahman Hakim" ${
+            d.action_by === "Abdurahman Hakim" ? "selected" : ""
+          }>Abdurahman Hakim</option>
+          <option value="Moch Wahyu Nugroho" ${
+            d.action_by === "Moch Wahyu Nugroho" ? "selected" : ""
+          }>Moch Wahyu Nugroho</option>
+          <option value="Ade Reinalwi" ${
+            d.action_by === "Ade Reinalwi" ? "selected" : ""
+          }>Ade Reinalwi</option>
         </select>
       </td>
 
       <td>
         <div class="status-wrapper">
           <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+            <option value="Open" ${
+              d.status_ticket === "Open" ? "selected" : ""
+            }>Open</option>
+            <option value="Close" ${
+              d.status_ticket === "Close" ? "selected" : ""
+            }>Close</option>
+            <option value="Close with note" ${
+              d.status_ticket === "Close with note" ? "selected" : ""
+            }>Close with note</option>
           </select>
           <span class="dot" style="background-color: ${statusColor}"></span>
         </div>
       </td>
 
       <td>
-        <textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+        <textarea class="noteArea" data-id="${
+          d.id
+        }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
       </td>
     `;
     ticketsBody.appendChild(tr);
@@ -187,7 +191,9 @@ function applyFilter() {
     // --- Event listener update "action_by"
     tr.querySelector(".assignSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value });
+        await updateDoc(doc(db, "tickets", d.id), {
+          action_by: e.target.value,
+        });
       } catch (err) {
         console.error("Gagal update action_by:", err);
       }
@@ -196,7 +202,9 @@ function applyFilter() {
     // --- Event listener update "status_ticket"
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       try {
-        await updateDoc(doc(db, "tickets", d.id), { status_ticket: e.target.value });
+        await updateDoc(doc(db, "tickets", d.id), {
+          status_ticket: e.target.value,
+        });
       } catch (err) {
         console.error("Gagal update status:", err);
       }
