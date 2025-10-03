@@ -109,8 +109,16 @@ function applyFilter() {
     tr.innerHTML = `
       <td>
   ${
-    d.sent_at && d.sent_at.toDate
-      ? d.sent_at.toDate().toLocaleString()
+    d.sent_at
+      ? (d.sent_at.toDate
+          ? d.sent_at.toDate().toLocaleString("id-ID", { 
+              dateStyle: "short", 
+              timeStyle: "short" 
+            })
+          : new Date(d.sent_at).toLocaleString("id-ID", { 
+              dateStyle: "short", 
+              timeStyle: "short" 
+            }))
       : "-"
   }
 </td>
@@ -249,6 +257,7 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
 
 
 
