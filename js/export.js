@@ -25,9 +25,6 @@ function exportToExcel() {
   // Gabungkan header + data
   const data = [header, ...rows];
 
-  // 🔹 Tambahkan ini
-console.log("Data untuk Excel:", data);
-
   // Buat worksheet
   const ws = XLSX.utils.aoa_to_sheet(data);
 
@@ -38,4 +35,5 @@ console.log("Data untuk Excel:", data);
   // Export
   XLSX.writeFile(wb, "tickets.xlsx");
 }
+
 
