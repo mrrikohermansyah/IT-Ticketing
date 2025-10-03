@@ -6,10 +6,12 @@ import {
   getFirestore,
   collection,
   updateDoc,
+  addDoc,
   doc,
   query,
   orderBy,
   onSnapshot,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth,
@@ -254,3 +256,4 @@ onAuthStateChanged(auth, (user) => {
     ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
+
