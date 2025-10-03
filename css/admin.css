@@ -136,6 +136,33 @@ body {
   font-size: 1rem;
 }
 
+/* =============================
+   Note Area (Admin)
+============================= */
+.noteArea {
+  width: 100%;
+  min-height: 50px;
+  max-height: 120px; /* biar ga kebablasan tinggi */
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.4;
+  resize: vertical; /* user bisa tarik ke bawah kalau perlu */
+  background: #f9fafb;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.noteArea:focus {
+  outline: none;
+  border-color: #2563eb; /* warna biru accent */
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+
 
 /* =============================
    Table
@@ -307,5 +334,6 @@ body {
     margin-bottom: 6px;
   }
 }
+
 
 
