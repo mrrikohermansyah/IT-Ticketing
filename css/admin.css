@@ -1,107 +1,129 @@
 /* =============================
-   Wrapper Table
+   Variables & Base
 ============================= */
-.container {
-  max-width: 1850px; /* monitor besar */
-  margin: 0 auto;
-  padding: 0 16px;
+:root {
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --accent: #2563eb;
+  --danger: #e53935;
+  --muted: #6b7280;
+  --border: #e5e7eb;
 }
 
-.table-wrapper {
-  overflow-x: auto; /* tetap scroll kalau desktop kecil */
-  max-width: 100%;
-  margin: 0 auto;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  background: var(--bg);
+  color: #0f172a;
+  line-height: 1.5;
 }
 
 /* =============================
-   Wrapper tombol auth
+   Wrapper
+============================= */
+.container {
+  max-width: 1850px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* =============================
+   Auth Buttons
 ============================= */
 .auth-buttons {
   display: flex;
-  justify-content: flex-end; /* tombol selalu di kanan */
+  justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-/* =============================
-   Tombol Login/Logout
-============================= */
 .auth-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 10px 16px;
   font-size: 15px;
   font-weight: 500;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   line-height: 1;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-/* Default Login */
+.auth-btn:hover {
+  transform: translateY(-1px);
+}
+
 .login-btn {
-  background-color: #4285f4;
+  background-color: var(--accent);
   color: #fff;
 }
 .login-btn:hover {
-  background-color: #357ae8;
+  background-color: #1e4fbb;
 }
 
-/* Logout (warna merah biar jelas) */
 .logout-btn {
-  background-color: #e53935;
+  background-color: var(--danger);
   color: #fff;
 }
 .logout-btn:hover {
   background-color: #c62828;
 }
 
-/* =============================
-   Logo Google
-============================= */
 .google-logo {
   width: 20px;
   height: 20px;
-  display: inline-block;
   object-fit: contain;
-  vertical-align: middle;
-
-  /* Background putih bulat */
   background: #fff;
   border-radius: 50%;
-  padding: 2px; /* biar logo tidak kepotong */
+  padding: 2px;
 }
 
 /* =============================
-   Tabel Tiket (Desktop/Tablet)
+   Table
 ============================= */
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
 #ticketsTable {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  table-layout: fixed; /* kontrol lebar kolom */
-  min-width: 900px; /* biar ga terlalu sempit */
+  min-width: 900px;
+  background: var(--card);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 #ticketsTable thead {
   background: #f9fafb;
-  text-align: left;
 }
 
 #ticketsTable th,
 #ticketsTable td {
-  padding: 10px;
+  padding: 12px 14px;
   text-align: left;
   vertical-align: top;
-  word-wrap: break-word;
-  white-space: normal;
+  border-bottom: 1px solid var(--border);
 }
 
-#ticketsTable tbody tr {
-  border-bottom: 1px dashed #eef2ff;
+#ticketsTable th {
+  font-weight: 600;
+  color: #374151;
+}
+
+#ticketsTable tbody tr:nth-child(even) {
+  background: #fafafa;
 }
 
 #ticketsTable tbody tr:hover {
@@ -111,7 +133,7 @@
 #ticketsTable td.loading {
   text-align: center;
   color: var(--muted);
-  padding: 12px;
+  padding: 16px;
 }
 
 /* =============================
@@ -121,10 +143,14 @@
 .statusSelect {
   width: 100%;
   max-width: 200px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
 }
 
 /* =============================
-   Dot Status
+   Status with Dot
 ============================= */
 .status-wrapper {
   display: flex;
@@ -138,7 +164,6 @@
 }
 
 .dot {
-  flex: none;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -149,7 +174,7 @@
 ============================= */
 @media (max-width: 1024px) {
   #ticketsTable {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .assignSelect,
@@ -161,14 +186,14 @@
 @media (max-width: 768px) {
   #ticketsTable th,
   #ticketsTable td {
-    padding: 8px;
-    font-size: 0.8rem;
+    padding: 10px;
+    font-size: 0.85rem;
   }
 
   .assignSelect,
   .statusSelect {
     max-width: 140px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -192,18 +217,18 @@
 
   #ticketsTable tr {
     margin-bottom: 16px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    background: var(--card);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     padding: 12px;
   }
 
   #ticketsTable td {
     display: flex;
-    justify-content: flex-start;  /* ⬅️ jangan space-between */
+    justify-content: flex-start;
     align-items: center;
-    gap: 8px;                     /* ⬅️ jarak kecil antar label dan isi */
+    gap: 8px;
     padding: 6px 4px;
     border: none;
   }
@@ -212,27 +237,22 @@
     content: attr(data-label);
     font-size: 0.8rem;
     font-weight: 500;
-    color: #6b7280; /* abu-abu label */
-    flex-shrink: 0; /* biar label nggak ketekan */
-    min-width: 100px; /* ⬅️ biar rata kiri semua */
-    text-align: left;
+    color: var(--muted);
+    min-width: 90px;
+    flex-shrink: 0;
   }
 
   #ticketsTable td {
     flex: 1;
     font-size: 0.9rem;
-    color: #111827; /* isi lebih tegas */
+    color: #111827;
     word-break: break-word;
   }
 
-  /* Biar judul tiket (tanggal + kode) lebih mencolok */
   #ticketsTable tr td:first-child {
     font-weight: 600;
     font-size: 1rem;
-    color: #1e40af;
+    color: var(--accent);
     margin-bottom: 6px;
   }
 }
-
-
-
