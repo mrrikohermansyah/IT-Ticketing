@@ -114,8 +114,7 @@ form.addEventListener("submit", async (e) => {
     // 2️⃣ kirim email via EmailJS
     await sendEmail(payload);
 
-    statusEl.textContent = "✅ Tiket berhasil dikirim! ID: " + id;
-    alert("✅ Tiket berhasil dikirim!\nID Tiket: " + id);
+    statusEl.textContent = "✅ Tiket berhasil dikirim!";
     form.reset();
   } catch (err) {
     console.error(err);
@@ -123,3 +122,4 @@ form.addEventListener("submit", async (e) => {
     alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
+
