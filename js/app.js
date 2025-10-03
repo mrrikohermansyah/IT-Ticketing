@@ -107,19 +107,24 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // 1️⃣ simpan ke Firestore
+    // 1️⃣ Simpan ke Firestore
     const id = await saveToFirestore(docData);
-    payload.ticketId = id;
 
-    // 2️⃣ kirim email via EmailJS
+    // 2️⃣ Buat payload untuk EmailJS (supaya punya ticketId juga)
+    const payload = {
+      ...docData,
+      ticketId: id,
+      recipient: STATIC_RECIPIENT_EMAIL,
+    };
     await sendEmail(payload);
 
-    statusEl.textContent = "✅ Tiket berhasil dikirim!";
+    // ✅ Pesan sukses
+    statusEl.textContent = "✅ Tiket berhasil dikirim! ID: ";
     form.reset();
   } catch (err) {
     console.error(err);
     statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
-    alert("❌ Gagal mengirim tiket: " + (err.message || err));
   }
 });
+
 
