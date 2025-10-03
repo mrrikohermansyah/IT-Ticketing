@@ -2,59 +2,54 @@
    Wrapper Table
 ============================= */
 .container {
-    max-width: 1700px;
-    /* bisa juga 1200px atau sesuai layar */
-    margin: 0 auto;
-    /* auto = center */
-    padding: 0 16px;
-    /* biar ada jarak dari tepi layar */
+  max-width: 1850px; /* monitor besar */
+  margin: 0 auto;
+  padding: 0 16px;
 }
 
 .table-wrapper {
-    overflow-x: hidden;
-    max-width: 100%;
-    /* hampir selebar layar */
-    margin: 0 auto;
-    /* tetap center */
+  overflow-x: auto; /* 🔹 biar bisa scroll di HP */
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 /* =============================
    Tabel Tiket
 ============================= */
 #ticketsTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.95rem;
-    table-layout: fixed;
-    /* kontrol lebar kolom */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  table-layout: fixed; /* kontrol lebar kolom */
+  min-width: 900px; /* 🔹 minimal biar tidak terlalu sempit */
 }
 
 #ticketsTable thead {
-    background: #f9fafb;
-    text-align: left;
+  background: #f9fafb;
+  text-align: left;
 }
 
 #ticketsTable th,
 #ticketsTable td {
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    word-wrap: break-word;
-    white-space: normal;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 #ticketsTable tbody tr {
-    border-bottom: 1px dashed #eef2ff;
+  border-bottom: 1px dashed #eef2ff;
 }
 
 #ticketsTable tbody tr:hover {
-    background: #f1f5f9;
+  background: #f1f5f9;
 }
 
 #ticketsTable td.loading {
-    text-align: center;
-    color: var(--muted);
-    padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  padding: 12px;
 }
 
 /* =============================
@@ -62,14 +57,12 @@
 ============================= */
 #ticketsTable th:nth-child(8),
 #ticketsTable td:nth-child(8) {
-    min-width: 180px;
-    /* Action By */
+  min-width: 180px; /* Action By */
 }
 
 #ticketsTable th:nth-child(9),
 #ticketsTable td:nth-child(9) {
-    min-width: 220px;
-    /* Status Ticket */
+  min-width: 220px; /* Status Ticket */
 }
 
 /* =============================
@@ -77,78 +70,128 @@
 ============================= */
 .assignSelect,
 .statusSelect {
-    width: 100%;
-    max-width: 200px;
+  width: 100%;
+  max-width: 200px;
 }
 
 /* =============================
    Tombol Auth
 ============================= */
 .auth-buttons {
-    display: flex;
-    justify-content: flex-end;
-    /* dorong ke kanan */
-    gap: 10px;
-    margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 /* =============================
    Dot Status
 ============================= */
 .status-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* jarak antar elemen */
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .statusSelect {
-    flex: 1;          /* biar fleksibel, isi sisa ruang */
-    max-width: 180px; /* batasi biar ga terlalu panjang */
+  flex: 1;
+  max-width: 180px;
 }
 
 .dot {
-    flex: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
 }
-
 
 /* =============================
    Responsiveness
 ============================= */
 @media (max-width: 1024px) {
-    #ticketsTable {
-        font-size: 0.85rem;
-        /* kecilin font di tablet */
-    }
+  #ticketsTable {
+    font-size: 0.85rem;
+  }
 
-    .assignSelect,
-    .statusSelect {
-        max-width: 160px;
-    }
+  .assignSelect,
+  .statusSelect {
+    max-width: 160px;
+  }
 }
 
 @media (max-width: 768px) {
+  #ticketsTable th,
+  #ticketsTable td {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
 
-    #ticketsTable th,
-    #ticketsTable td {
-        padding: 8px;
-        font-size: 0.8rem;
-    }
+  #ticketsTable th:nth-child(8),
+  #ticketsTable td:nth-child(8),
+  #ticketsTable th:nth-child(9),
+  #ticketsTable td:nth-child(9) {
+    min-width: 150px;
+  }
 
-    #ticketsTable th:nth-child(8),
-    #ticketsTable td:nth-child(8),
-    #ticketsTable th:nth-child(9),
-    #ticketsTable td:nth-child(9) {
-        min-width: 150px;
-        /* biar muat di HP */
-    }
-
-    .assignSelect,
-    .statusSelect {
-        max-width: 140px;
-        font-size: 0.8rem;
-    }
+  .assignSelect,
+  .statusSelect {
+    max-width: 140px;
+    font-size: 0.8rem;
+  }
 }
 
+/* 🔹 HP Kecil (stacked card view) */
+@media (max-width: 600px) {
+  #ticketsTable,
+  #ticketsTable thead,
+  #ticketsTable tbody,
+  #ticketsTable th,
+  #ticketsTable td,
+  #ticketsTable tr {
+    display: block;
+    width: 100%;
+  }
+
+  #ticketsTable thead {
+    display: none; /* sembunyikan header */
+  }
+
+  #ticketsTable tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    padding: 12px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  }
+
+  #ticketsTable td {
+    text-align: left;
+    padding: 6px 10px;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  #ticketsTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #444;
+    flex: 1;
+    margin-right: 10px;
+  }
+
+  #ticketsTable td {
+    flex: 2;
+    color: #222;
+    word-break: break-word;
+  }
+
+  #ticketsTable .loading {
+    text-align: center;
+    font-style: italic;
+    color: #777;
+    box-shadow: none;
+  }
+}
