@@ -75,7 +75,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   if (!form.checkValidity()) {
-    form.reportValidity(); // tampilkan pesan HTML5
+    form.reportValidity();
     return;
   }
 
@@ -85,6 +85,8 @@ form.addEventListener("submit", async (e) => {
 
   // --- Ambil device dan tentukan code otomatis ---
   const device = data.get("device");
+  console.log("Device yang dipilih:", device);
+
   let code = "OT"; // default
   if (["PC", "Laptop", "Printer", "Projector"].includes(device)) {
     code = "HW";
@@ -95,22 +97,20 @@ form.addEventListener("submit", async (e) => {
   } else if (device === "Lainlain") {
     code = "OT";
   }
-
   console.log("Kode otomatis:", code);
 
-  // --- Buat data untuk Firestore ---
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
+    device, // 🔹 simpan jenis perangkat
+    code,   // 🔹 hasil mapping otomatis
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
     location: data.get("location"),
     priority: data.get("priority"),
     subject: data.get("subject"),
-    message: data.get("message"),
-    device,
+    message: data.get("message"), // 🔹 jangan ditiban sama device lagi
     sent_at: serverTimestamp(),
-    code,
     qa: "",
     status_ticket: "Open",
     action_by: "",
@@ -118,10 +118,8 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // Simpan ke Firestore
     const id = await saveToFirestore(docData);
 
-    // Buat payload untuk EmailJS
     const payload = {
       ...docData,
       ticketId: id,
@@ -131,7 +129,6 @@ form.addEventListener("submit", async (e) => {
 
     await sendEmail(payload);
 
-    // ✅ Pesan sukses (aman dengan pengecekan)
     if (statusEl) statusEl.textContent = "✅ Tiket berhasil dikirim!";
     form.reset();
   } catch (err) {
@@ -143,4 +140,5 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
+
 
