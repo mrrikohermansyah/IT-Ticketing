@@ -241,26 +241,35 @@ onAuthStateChanged(auth, (user) => {
 
 // ==================== 🔹 Export PDF ====================
 function exportToPDF() {
-  const { jsPDF } = window.jspdf;   // ambil jsPDF dari window
-  const doc = new jsPDF();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("l", "pt", "a4"); // landscape, point, A4
 
-  // contoh export isi tabel tickets
-  const table = document.getElementById("ticketsTable"); 
+  doc.setFontSize(14);
+  doc.text("Daftar Tiket IT", 40, 40);
+
+  // ambil data tabel
+  const table = document.getElementById("ticketsTable");
   if (table) {
-    doc.text("Daftar Tiket", 10, 10);
-    doc.text(table.innerText, 10, 20); // sederhana, export teks saja
+    doc.autoTable({
+      html: "#ticketsTable",   // langsung ambil dari table HTML
+      startY: 60,
+      styles: { fontSize: 8, cellPadding: 4 },
+      headStyles: { fillColor: [41, 128, 185] }, // biru header
+      alternateRowStyles: { fillColor: [245, 245, 245] } // warna selang-seling
+    });
   }
 
   doc.save("tickets.pdf");
 }
 
-// hubungkan tombol dengan fungsi
 document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
+
 
 
 
