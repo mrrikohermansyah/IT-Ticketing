@@ -8,20 +8,20 @@
 }
 
 .table-wrapper {
-  overflow-x: auto; /* 🔹 biar bisa scroll di HP */
+  overflow-x: auto; /* tetap scroll kalau desktop kecil */
   max-width: 100%;
   margin: 0 auto;
 }
 
 /* =============================
-   Tabel Tiket
+   Tabel Tiket (Desktop/Tablet)
 ============================= */
 #ticketsTable {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
   table-layout: fixed; /* kontrol lebar kolom */
-  min-width: 900px; /* 🔹 minimal biar tidak terlalu sempit */
+  min-width: 900px; /* biar ga terlalu sempit */
 }
 
 #ticketsTable thead {
@@ -53,35 +53,12 @@
 }
 
 /* =============================
-   Kolom Khusus
-============================= */
-#ticketsTable th:nth-child(8),
-#ticketsTable td:nth-child(8) {
-  min-width: 180px; /* Action By */
-}
-
-#ticketsTable th:nth-child(9),
-#ticketsTable td:nth-child(9) {
-  min-width: 220px; /* Status Ticket */
-}
-
-/* =============================
    Form Control dalam Cell
 ============================= */
 .assignSelect,
 .statusSelect {
   width: 100%;
   max-width: 200px;
-}
-
-/* =============================
-   Tombol Auth
-============================= */
-.auth-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 16px;
 }
 
 /* =============================
@@ -106,7 +83,7 @@
 }
 
 /* =============================
-   Responsiveness
+   Responsiveness Desktop-Tablet
 ============================= */
 @media (max-width: 1024px) {
   #ticketsTable {
@@ -126,13 +103,6 @@
     font-size: 0.8rem;
   }
 
-  #ticketsTable th:nth-child(8),
-  #ticketsTable td:nth-child(8),
-  #ticketsTable th:nth-child(9),
-  #ticketsTable td:nth-child(9) {
-    min-width: 150px;
-  }
-
   .assignSelect,
   .statusSelect {
     max-width: 140px;
@@ -140,8 +110,14 @@
   }
 }
 
-/* 🔹 HP Kecil (stacked card view) */
+/* =============================
+   HP Kecil (Card View Mode)
+============================= */
 @media (max-width: 600px) {
+  .table-wrapper {
+    overflow-x: hidden; /* hapus scroll horizontal */
+  }
+
   #ticketsTable,
   #ticketsTable thead,
   #ticketsTable tbody,
@@ -158,40 +134,46 @@
 
   #ticketsTable tr {
     margin-bottom: 15px;
-    border: 1px solid #ddd;
-    padding: 12px;
+    border: 1px solid #e5e7eb;
     background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 
   #ticketsTable td {
-    text-align: left;
-    padding: 6px 10px;
-    border: none;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    padding: 6px 0;
+    border: none;
   }
 
   #ticketsTable td::before {
     content: attr(data-label);
-    font-weight: 600;
-    color: #444;
     flex: 1;
+    font-weight: 600;
+    color: #374151;
     margin-right: 10px;
+    text-align: left;
   }
 
   #ticketsTable td {
     flex: 2;
-    color: #222;
+    text-align: right;
+    color: #111827;
     word-break: break-word;
   }
 
-  #ticketsTable .loading {
-    text-align: center;
-    font-style: italic;
-    color: #777;
-    box-shadow: none;
+  /* Biar field penting lebih menonjol */
+  #ticketsTable td[data-label="Status Ticket"] {
+    font-weight: bold;
+    color: #2563eb; /* biru */
+  }
+
+  #ticketsTable td[data-label="Prioritas"],
+  #ticketsTable td[data-label="Durasi"] {
+    font-weight: 600;
+    color: #dc2626; /* merah */
   }
 }
