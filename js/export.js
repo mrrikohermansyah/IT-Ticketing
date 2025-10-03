@@ -19,6 +19,10 @@ function exportToExcel() {
     const cells = [...tr.querySelectorAll("td")].map((td) =>
       td.innerText.trim()
     );
+    // 🔹 Kolom ke-3 (index 3) = Lokasi
+    if (cells[3]) {
+      cells[3] = "Bintan / " + cells[3];
+    }
     rows.push(cells);
   });
 
@@ -35,5 +39,6 @@ function exportToExcel() {
   // Export
   XLSX.writeFile(wb, "tickets.xlsx");
 }
+
 
 
