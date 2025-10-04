@@ -1,3 +1,4 @@
+/* ==== Login Page ==== */
 body {
   font-family: Arial, sans-serif;
   display: flex;
@@ -10,23 +11,27 @@ body {
 
 .login-box {
   background: white;
-  padding: 30px 25px;
+  padding: 20px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-align: center;
-  width: 320px;
+  width: 300px;
 }
 
 .login-box h2 {
-  margin-bottom: 20px; /* perbaikan dari 80px → 20px */
-  font-size: 22px;
-  color: #333;
+  margin-bottom: 30px;
 }
 
-input {
+.login-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* biar ada jarak antar input */
+}
+
+/* Input styling */
+.login-box input {
   width: 100%;
-  padding: 10px; /* biar nyaman saat ngetik */
-  margin-bottom: 12px; /* konsisten antar field */
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
@@ -34,9 +39,16 @@ input {
   box-sizing: border-box;
 }
 
+.login-box input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Button styling */
 button {
-  margin-top: 10px;
-  padding: 12px;
+  margin-top: 5px;
+  padding: 10px;
   width: 100%;
   border: none;
   border-radius: 6px;
@@ -54,43 +66,14 @@ button:hover {
 
 .google-btn {
   background: #db4437;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px; /* jarak icon Google dan teks */
-}
-
-.google-btn img {
-  width: 18px;
-  height: 18px;
 }
 
 .google-btn:hover {
   background: #b03125;
 }
 
-.divider {
-  text-align: center;
-  margin: 15px 0;
-  font-size: 13px;
-  color: #777;
-  position: relative;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: #ddd;
-}
-
-.divider::before {
-  left: 0;
-}
-
-.divider::after {
-  right: 0;
+hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #eee;
 }
