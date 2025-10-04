@@ -58,9 +58,10 @@ emailBtn.addEventListener("click", async () => {
     const user = result.user;
     console.log("Login Email sukses:", user);
     alert(`Selamat datang ${user.email}`);
-    window.location.href = "dashboard.html";
+    window.location.href = "admin.html";
   } catch (error) {
     console.error("Login Email gagal:", error.message);
     alert("Login gagal: " + error.message);
   }
 });
+
