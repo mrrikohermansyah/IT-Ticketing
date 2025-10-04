@@ -1,0 +1,96 @@
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f6f9;
+  margin: 0;
+}
+
+.login-box {
+  background: white;
+  padding: 30px 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 320px;
+}
+
+.login-box h2 {
+  margin-bottom: 20px; /* perbaikan dari 80px → 20px */
+  font-size: 22px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 10px; /* biar nyaman saat ngetik */
+  margin-bottom: 12px; /* konsisten antar field */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+button {
+  margin-top: 10px;
+  padding: 12px;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+.google-btn {
+  background: #db4437;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* jarak icon Google dan teks */
+}
+
+.google-btn img {
+  width: 18px;
+  height: 18px;
+}
+
+.google-btn:hover {
+  background: #b03125;
+}
+
+.divider {
+  text-align: center;
+  margin: 15px 0;
+  font-size: 13px;
+  color: #777;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}

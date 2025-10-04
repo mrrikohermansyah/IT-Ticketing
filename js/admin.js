@@ -42,6 +42,22 @@ const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 const filterSelect = document.getElementById("filterActionBy");
 
+// Redirect ke login.html
+if (goLoginBtn) {
+  goLoginBtn.addEventListener("click", () => {
+    window.location.href = "login.html";
+  });
+}
+
+// Logout
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    alert("Anda telah logout");
+    window.location.href = "login.html";
+  });
+}
+
 // 🔹 Tambahkan event listener di sini
 filterSelect.addEventListener("change", () => {
   //console.log("Filter dipilih:", filterSelect.value);
@@ -110,8 +126,14 @@ function applyFilter() {
   // 🔍 Debug log
   //console.log("=== DEBUG FILTER ===");
   //console.log("Selected:", selected);
-  //console.log("All Tickets action_by:", allTickets.map(t => t.action_by));
-  //console.log("Filtered Tickets:", filtered.map(t => t.action_by));
+  //console.log(
+  //  "All Tickets action_by:",
+  //  allTickets.map((t) => t.action_by)
+  // );
+  // console.log(
+  //  "Filtered Tickets:",
+  //  filtered.map((t) => t.action_by)
+  //);
 
   if (filtered.length === 0) {
     ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
@@ -251,10 +273,12 @@ function exportToPDF() {
   if (!table) return;
 
   // === Ambil header ===
-  const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText);
+  const headers = Array.from(table.querySelectorAll("thead th")).map(
+    (th) => th.innerText
+  );
 
   // === Ambil isi baris (tbody) ===
-  const rows = Array.from(table.querySelectorAll("tbody tr")).map(tr => {
+  const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) => {
     return Array.from(tr.querySelectorAll("td")).map((td, idx) => {
       // Khusus kolom Action By (index 12)
       if (idx === 12) {
@@ -283,7 +307,7 @@ function exportToPDF() {
     startY: 60,
     styles: { fontSize: 8, cellPadding: 4, valign: "middle" },
     headStyles: { fillColor: [41, 128, 185], halign: "center" },
-    alternateRowStyles: { fillColor: [245, 245, 245] }
+    alternateRowStyles: { fillColor: [245, 245, 245] },
   });
 
   doc.save("tickets.pdf");
@@ -295,15 +319,3 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-

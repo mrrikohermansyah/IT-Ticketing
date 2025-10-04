@@ -102,7 +102,7 @@ form.addEventListener("submit", async (e) => {
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     device, // 🔹 simpan jenis perangkat
-    code,   // 🔹 hasil mapping otomatis
+    code, // 🔹 hasil mapping otomatis
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
@@ -112,7 +112,7 @@ form.addEventListener("submit", async (e) => {
     message: data.get("message"), // 🔹 jangan ditiban sama device lagi
     sent_at: serverTimestamp(),
     createdAt: serverTimestamp(), // 🔹 waktu tiket dibuat
-    updatedAt: null,              // 🔹 nanti diubah saat IT update status
+    updatedAt: null, // 🔹 nanti diubah saat IT update status
     qa: "",
     status_ticket: "Open",
     action_by: "",
@@ -142,6 +142,3 @@ form.addEventListener("submit", async (e) => {
     }
   }
 });
-
-
-

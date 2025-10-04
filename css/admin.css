@@ -54,7 +54,7 @@ body {
   cursor: pointer;
   line-height: 1;
   transition: background 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .auth-btn:hover {
@@ -107,7 +107,7 @@ body {
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
   color: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* efek hover umum */
@@ -135,7 +135,6 @@ body {
 .export-buttons i {
   font-size: 1rem;
 }
-
 /* =============================
    Note Area (Admin)
 ============================= */
@@ -162,8 +161,6 @@ body {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-
-
 /* =============================
    Table
 ============================= */
@@ -180,7 +177,7 @@ body {
   background: var(--card);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 #ticketsTable thead {
@@ -320,6 +317,7 @@ body {
     font-size: 0.85rem;
   }
 }
+
 /* =============================
    Mobile Card View Tiket
 ============================= */
@@ -343,7 +341,7 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--card);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     padding: 12px;
   }
 
@@ -384,12 +382,12 @@ body {
 .filter-bar {
   display: flex;
   align-items: center;
-  gap: 10px;                /* jarak antar elemen */
+  gap: 10px; /* jarak antar elemen */
   padding: 12px 16px;
-  background: #f9f9f9;      /* warna latar lembut */
-  border: 1px solid #ddd;   /* garis tipis */
-  border-radius: 10px;      /* sudut membulat */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  background: #f9f9f9; /* warna latar lembut */
+  border: 1px solid #ddd; /* garis tipis */
+  border-radius: 10px; /* sudut membulat */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   margin: 15px 0;
   font-family: "Poppins", sans-serif;
 }
@@ -418,8 +416,8 @@ body {
 
 .filter-bar select:focus {
   outline: none;
-  border-color: #4a90e2;       /* warna fokus */
-  box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
+  border-color: #4a90e2; /* warna fokus */
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
 /* === Responsive: untuk HP kecil === */
@@ -438,9 +436,3 @@ body {
     width: 100%;
   }
 }
-
-
-
-
-
-
