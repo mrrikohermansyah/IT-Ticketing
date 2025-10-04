@@ -28,6 +28,7 @@ const googleBtn = document.getElementById("loginGoogle");
 const emailBtn = document.getElementById("loginEmailBtn");
 const emailInput = document.getElementById("loginEmail");
 const passwordInput = document.getElementById("loginPassword");
+const loginForm = document.getElementById("loginForm"); // form wrapper
 
 // ==================== Google Login ====================
 googleBtn?.addEventListener("click", async () => {
@@ -35,7 +36,7 @@ googleBtn?.addEventListener("click", async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
     alert(`✅ Selamat datang ${user.displayName}`);
-    window.location.href = "admin.html"; // redirect setelah login
+    window.location.href = "admin.html";
   } catch (error) {
     console.error("Login Google gagal:", error);
     alert("❌ Login Google gagal: " + error.message);
@@ -43,7 +44,9 @@ googleBtn?.addEventListener("click", async () => {
 });
 
 // ==================== Email Login ====================
-async function handleEmailLogin() {
+async function handleEmailLogin(e) {
+  e.preventDefault(); // cegah reload form bawaan browser
+
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
@@ -56,19 +59,16 @@ async function handleEmailLogin() {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const user = result.user;
     console.log("Login Email sukses:", user);
-    alert(`Selamat datang ${user.email}`);
+    alert(`✅ Selamat datang ${user.email}`);
     window.location.href = "admin.html";
   } catch (error) {
-    console.error("Login Email gagal:", error.code, error.message);
-    alert(`❌ Login gagal [${error.code}]: ${error.message}`);
+    console.error("Login Email gagal:", error);
+    alert("❌ Login gagal, periksa kembali email atau password Anda.");
   }
 }
 
-emailBtn.addEventListener("click", handleEmailLogin);
+// klik tombol
+emailBtn?.addEventListener("click", handleEmailLogin);
 
-// Biar bisa login pakai ENTER juga
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    handleEmailLogin();
-  }
-});
+// tekan ENTER dalam form
+loginForm?.addEventListener("submit", handleEmailLogin);
