@@ -49,16 +49,6 @@ if (goLoginBtn) {
   });
 }
 
-// Logout
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    await signOut(auth);
-    alert("Anda telah logout");
-    window.location.replace("login.html");
-
-  });
-}
-
 // 🔹 Tambahkan event listener di sini
 filterSelect.addEventListener("change", () => {
   //console.log("Filter dipilih:", filterSelect.value);
@@ -84,9 +74,18 @@ loginBtn.addEventListener("click", async () => {
     alert("❌ Login gagal: " + err.message);
   }
 });
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-});
+// Logout (cukup 1x, jangan ditulis lagi di bawah)
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      alert("Anda telah logout");
+      window.location.replace("login.html");
+    } catch (err) {
+      alert("❌ Gagal logout: " + err.message);
+    }
+  });
+}
 
 // ==================== 🔹 Helpers ====================
 function formatTimestamp(ts) {
@@ -320,5 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
 
 
