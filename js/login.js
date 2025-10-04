@@ -21,6 +21,7 @@ const firebaseConfig = {
 // Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // ==================== Element DOM ====================
 const googleBtn = document.getElementById("loginGoogle");
@@ -29,22 +30,20 @@ const emailInput = document.getElementById("loginEmail");
 const passwordInput = document.getElementById("loginPassword");
 
 // ==================== Google Login ====================
-googleBtn.addEventListener("click", async () => {
+googleBtn?.addEventListener("click", async () => {
   try {
-    const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    console.log("Login Google sukses:", user);
-    alert(`Selamat datang ${user.displayName}`);
-    window.location.href = "admin.html";
+    alert(`✅ Selamat datang ${user.displayName}`);
+    window.location.href = "admin.html"; // redirect setelah login
   } catch (error) {
-    console.error("Login Google gagal:", error.message);
-    alert("Login Google gagal: " + error.message);
+    console.error("Login Google gagal:", error);
+    alert("❌ Login Google gagal: " + error.message);
   }
 });
 
 // ==================== Email Login ====================
-emailBtn.addEventListener("click", async () => {
+async function handleEmailLogin() {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
@@ -60,8 +59,16 @@ emailBtn.addEventListener("click", async () => {
     alert(`Selamat datang ${user.email}`);
     window.location.href = "admin.html";
   } catch (error) {
-    console.error("Login Email gagal:", error.message);
-    alert("Login gagal: " + error.message);
+    console.error("Login Email gagal:", error.code, error.message);
+    alert(`❌ Login gagal [${error.code}]: ${error.message}`);
+  }
+}
+
+emailBtn.addEventListener("click", handleEmailLogin);
+
+// Biar bisa login pakai ENTER juga
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    handleEmailLogin();
   }
 });
-
