@@ -54,7 +54,7 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     await signOut(auth);
     alert("Anda telah logout");
-    window.location.href = "login.html";
+    window.location.replace = "login.html";
   });
 }
 
@@ -319,3 +319,4 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
