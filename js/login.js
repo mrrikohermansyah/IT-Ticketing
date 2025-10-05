@@ -99,3 +99,13 @@ emailBtn?.addEventListener("click", handleEmailLogin);
 
 // tekan ENTER dalam form
 loginForm?.addEventListener("submit", handleEmailLogin);
+
+// Buat elemen <a>
+const backLink = document.createElement("a");
+backLink.href = "https://mrrikohermansyah.github.io/IT-Ticketing/"; // ganti sesuai target halamanmu
+backLink.textContent = "← Go to Input Ticket";
+backLink.classList.add("back-link");
+
+// Sisipkan ke container
+document.getElementById("backLinkContainer").appendChild(backLink);
+
