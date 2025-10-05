@@ -1,4 +1,4 @@
-// ==================== app.js (Halaman User - Modular v9) ====================
+// ==================== 🔹 Import Firebase SDK ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
@@ -7,8 +7,7 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// ---------------------------------------------------------------
-// 🔹 Firebase Config
+// ==================== 🔹 Firebase Config ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -19,100 +18,77 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// ---------------------------------------------------------------
-// 🔹 Constants EmailJS
+// ==================== 🔹 EmailJS Config ====================
 const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
 const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
 const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
-// ---------------------------------------------------------------
-// Init Firebase & Firestore
+// ==================== 🔹 Init Firebase & Firestore ====================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---------------------------------------------------------------
-// Init EmailJS
-if (window.emailjs) {
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-} else {
-  console.warn(
-    "⚠️ EmailJS SDK tidak tersedia. Pastikan script EmailJS ada di index.html"
-  );
-}
+// ==================== 🔹 Init EmailJS ====================
+emailjs.init(EMAILJS_PUBLIC_KEY);
 
-// ---------------------------------------------------------------
-// DOM Elements
+// ==================== 🔹 DOM Element ====================
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
-console.log("statusEl:", statusEl);
 
-// ---------------------------------------------------------------
-// Fungsi kirim email via EmailJS
+// ==================== 🔹 Kirim Email ====================
 async function sendEmail(payload) {
   try {
-    return await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, payload);
+    const res = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      payload
+    );
+    console.log("✅ Email terkirim:", res.status);
+    return res;
   } catch (err) {
-    throw err;
+    console.error("❌ Email gagal:", err);
+    throw new Error("Gagal mengirim email.");
   }
 }
 
-// ---------------------------------------------------------------
-// Simpan ke Firestore
+// ==================== 🔹 Simpan ke Firestore ====================
 async function saveToFirestore(doc) {
-  try {
-    const col = collection(db, "tickets");
-    const docRef = await addDoc(col, doc);
-    return docRef.id;
-  } catch (err) {
-    throw err;
-  }
+  const col = collection(db, "tickets");
+  const ref = await addDoc(col, doc);
+  return ref.id;
 }
 
-// ---------------------------------------------------------------
-// Form Submit Handler
+// ==================== 🔹 Submit Handler ====================
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
+  if (!form.checkValidity()) return form.reportValidity();
 
-  if (statusEl) statusEl.textContent = "Mengirim tiket...";
+  statusEl.textContent = "Mengirim tiket...";
 
   const data = new FormData(form);
-
-  // --- Ambil device dan tentukan code otomatis ---
   const device = data.get("device");
-  console.log("Device yang dipilih:", device);
 
-  let code = "OT"; // default
-  if (["PC", "Laptop", "Printer", "Projector"].includes(device)) {
-    code = "HW";
-  } else if (device === "Jaringan") {
-    code = "NW";
-  } else if (["MSOffice", "Software"].includes(device)) {
-    code = "SW";
-  } else if (device === "Lainlain") {
-    code = "OT";
-  }
-  console.log("Kode otomatis:", code);
+  // Tentukan kode tiket
+  let code = "OT";
+  if (["PC", "Laptop", "Printer", "Projector"].includes(device)) code = "HW";
+  else if (device === "Jaringan") code = "NW";
+  else if (["MSOffice", "Software"].includes(device)) code = "SW";
 
+  // Buat data dokumen untuk Firestore
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
-    device, // 🔹 simpan jenis perangkat
-    code, // 🔹 hasil mapping otomatis
+    device,
+    code,
     name: data.get("name"),
     user_email: data.get("user_email"),
     department: data.get("department"),
     location: data.get("location"),
     priority: data.get("priority"),
     subject: data.get("subject"),
-    message: data.get("message"), // 🔹 jangan ditiban sama device lagi
-    sent_at: serverTimestamp(),
-    createdAt: serverTimestamp(), // 🔹 waktu tiket dibuat
-    updatedAt: null, // 🔹 nanti diubah saat IT update status
+    message: data.get("message"),
+    createdAt: serverTimestamp(),
+    updatedAt: null,
     qa: "",
     status_ticket: "Open",
     action_by: "",
@@ -120,25 +96,30 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
+    // Simpan ke Firestore
     const id = await saveToFirestore(docData);
 
-    const payload = {
-      ...docData,
+    // Tentukan warna prioritas untuk EmailJS
+    const priorityColor =
+      {
+        High: "#dc3545", // merah
+        Medium: "#ffc107", // kuning
+        Low: "#28a745", // hijau
+      }[docData.priority] || "#007bff"; // default biru
+
+    // Kirim email notifikasi
+    await sendEmail({
       ticketId: id,
+      ...docData,
+      priority_color: priorityColor, // 🔹 tambahan penting
       sent_at: new Date().toLocaleString("id-ID"),
       recipient: STATIC_RECIPIENT_EMAIL,
-    };
+    });
 
-    await sendEmail(payload);
-
-    if (statusEl) statusEl.textContent = "✅ Tiket berhasil dikirim!";
+    statusEl.textContent = "✅ Tiket berhasil dikirim!";
     form.reset();
   } catch (err) {
     console.error(err);
-    if (statusEl) {
-      statusEl.textContent = "❌ Terjadi kesalahan: " + (err.message || err);
-    } else {
-      alert("❌ Terjadi kesalahan: " + (err.message || err));
-    }
+    statusEl.textContent = "❌ Terjadi kesalahan: " + err.message;
   }
 });
