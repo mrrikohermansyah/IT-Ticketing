@@ -16,14 +16,31 @@ function exportToExcel() {
   const rows = [];
   const trs = document.querySelectorAll("#ticketsTable tbody tr");
   trs.forEach((tr) => {
-    const cells = [...tr.querySelectorAll("td")].map((td) =>
-      td.innerText.trim()
-    );
-    // 🔹 Kolom ke-3 (index 3) = Lokasi
-    if (cells[3]) {
-      cells[3] = "Bintan / " + cells[3];
+    const tds = tr.querySelectorAll("td");
+    const rowData = [];
+
+    tds.forEach((td) => {
+      const select = td.querySelector("select");
+      let value = "";
+
+      if (select) {
+        // Ambil teks dari option yang dipilih
+        const selectedOption = select.options[select.selectedIndex];
+        value = selectedOption ? selectedOption.text.trim() : "";
+      } else {
+        // Ambil teks biasa dari cell
+        value = td.innerText.trim();
+      }
+
+      rowData.push(value);
+    });
+
+    // Kolom ke-3 (index 3) = Lokasi
+    if (rowData[3]) {
+      rowData[3] = "Bintan / " + rowData[3];
     }
-    rows.push(cells);
+
+    rows.push(rowData);
   });
 
   // Gabungkan header + data
