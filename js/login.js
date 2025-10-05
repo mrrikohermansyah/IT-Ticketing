@@ -35,11 +35,23 @@ googleBtn?.addEventListener("click", async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    alert(`✅ Selamat datang ${user.displayName}`);
-    window.location.href = "admin.html";
+
+    // Ganti alert dengan SweetAlert2
+    Swal.fire({
+      icon: "success",
+      title: "Selamat Datang!",
+      text: `✅ Halo ${user.displayName}`,
+      confirmButtonText: "Lanjut",
+    }).then(() => {
+      window.location.href = "../admin/index.html";
+    });
   } catch (error) {
     console.error("Login Google gagal:", error);
-    alert("❌ Login Google gagal: " + error.message);
+    Swal.fire({
+      icon: "error",
+      title: "Login Gagal",
+      text: "❌ " + error.message,
+    });
   }
 });
 
@@ -51,7 +63,11 @@ async function handleEmailLogin(e) {
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    alert("Email dan password wajib diisi!");
+    Swal.fire({
+      icon: "warning",
+      title: "Form tidak lengkap",
+      text: "Email dan password wajib diisi!",
+    });
     return;
   }
 
@@ -59,11 +75,22 @@ async function handleEmailLogin(e) {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const user = result.user;
     console.log("Login Email sukses:", user);
-    alert(`✅ Selamat datang ${user.email}`);
-    window.location.href = "admin.html";
+
+    Swal.fire({
+      icon: "success",
+      title: "Selamat Datang!",
+      text: `✅ Halo ${user.email}`,
+      confirmButtonText: "Lanjut",
+    }).then(() => {
+      window.location.href = "../admin/index.html";
+    });
   } catch (error) {
     console.error("Login Email gagal:", error);
-    alert("❌ Login gagal, periksa kembali email atau password Anda.");
+    Swal.fire({
+      icon: "error",
+      title: "Login Gagal",
+      text: "❌ Periksa kembali email atau password Anda.",
+    });
   }
 }
 

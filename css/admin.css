@@ -32,13 +32,44 @@ body {
 }
 
 /* =============================
+   Header
+============================= */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0px;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.main-header .left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.main-header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+header .logo {
+  width: 180px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* =============================
    Auth Buttons
 ============================= */
 .auth-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 20px;
 }
 
 .auth-btn {
@@ -87,12 +118,76 @@ body {
 }
 
 /* =============================
+   Toolbar (Filter + Export)
+============================= */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+/* === Filter Bar Wrapper === */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-family: "Poppins", sans-serif;
+  margin-bottom: 10px;
+}
+
+.filter-bar label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.filter-bar select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.filter-bar select:hover {
+  border-color: #888;
+}
+.filter-bar select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+/* Responsive Filter Bar */
+@media (max-width: 600px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .filter-bar label {
+    font-size: 13px;
+  }
+  .filter-bar select {
+    width: 100%;
+  }
+}
+
+/* =============================
    Export Buttons
 ============================= */
 .export-buttons {
   display: flex;
   gap: 12px;
-  margin: 16px 0;
 }
 
 .export-buttons button {
@@ -109,54 +204,45 @@ body {
   color: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
-
-/* efek hover umum */
 .export-buttons button:hover {
   transform: translateY(-2px);
 }
-
-/* Excel */
 .export-buttons button:first-child {
   background-color: #1d6f42;
 }
 .export-buttons button:first-child:hover {
   background-color: #155d35;
 }
-
-/* PDF */
 .export-buttons button:last-child {
   background-color: #d32f2f;
 }
 .export-buttons button:last-child:hover {
   background-color: #b71c1c;
 }
-
-/* Icon biar ukurannya konsisten */
 .export-buttons i {
   font-size: 1rem;
 }
+
 /* =============================
    Note Area (Admin)
 ============================= */
 .noteArea {
   width: 100%;
   min-height: 50px;
-  max-height: 120px; /* biar ga kebablasan tinggi */
+  max-height: 120px;
   padding: 8px 10px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.9rem;
   font-family: inherit;
   line-height: 1.4;
-  resize: vertical; /* user bisa tarik ke bawah kalau perlu */
+  resize: vertical;
   background: #f9fafb;
   transition: all 0.2s ease;
-  box-sizing: border-box;
 }
-
 .noteArea:focus {
   outline: none;
-  border-color: #2563eb; /* warna biru accent */
+  border-color: #2563eb;
   background: #fff;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
@@ -166,7 +252,6 @@ body {
 ============================= */
 .table-wrapper {
   overflow-x: auto;
-  margin-top: 10px;
 }
 
 #ticketsTable {
@@ -179,11 +264,9 @@ body {
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 #ticketsTable thead {
   background: #f9fafb;
 }
-
 #ticketsTable th,
 #ticketsTable td {
   padding: 12px 14px;
@@ -191,29 +274,23 @@ body {
   vertical-align: top;
   border-bottom: 1px solid var(--border);
 }
-
 #ticketsTable th {
   font-weight: 600;
   color: #374151;
 }
-
 #ticketsTable tbody tr:nth-child(even) {
   background: #fafafa;
 }
-
 #ticketsTable tbody tr:hover {
   background: #f1f5f9;
 }
-
 #ticketsTable td.loading {
   text-align: center;
   color: var(--muted);
   padding: 16px;
 }
 
-/* =============================
-   Form Control dalam Cell
-============================= */
+/* Form Control */
 .assignSelect,
 .statusSelect {
   width: 100%;
@@ -224,20 +301,16 @@ body {
   font-size: 0.9rem;
 }
 
-/* =============================
-   Status with Dot
-============================= */
+/* Status with Dot */
 .status-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .statusSelect {
   flex: 1;
   max-width: 180px;
 }
-
 .dot {
   width: 14px;
   height: 14px;
@@ -245,9 +318,9 @@ body {
 }
 
 /* =============================
-   Responsiveness Desktop-Tablet
+   Responsiveness
 ============================= */
-@media (max-width: 1024px) {
+@media (max-width: 1024px), (max-width: 600px) {
   #ticketsTable,
   #ticketsTable thead,
   #ticketsTable tbody,
@@ -319,120 +392,31 @@ body {
 }
 
 /* =============================
-   Mobile Card View Tiket
+   Responsive Header Fix
 ============================= */
-@media (max-width: 600px) {
-  #ticketsTable,
-  #ticketsTable thead,
-  #ticketsTable tbody,
-  #ticketsTable th,
-  #ticketsTable td,
-  #ticketsTable tr {
-    display: block;
-    width: 100%;
+@media (max-width: 1024px) {
+  .main-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
   }
 
-  #ticketsTable thead {
-    display: none;
-  }
-
-  #ticketsTable tr {
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--card);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    padding: 12px;
-  }
-
-  #ticketsTable td {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    border: none;
-  }
-
-  #ticketsTable td::before {
-    content: attr(data-label);
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    min-width: 90px;
-    flex-shrink: 0;
-  }
-
-  #ticketsTable td {
-    flex: 1;
-    font-size: 0.9rem;
-    color: #111827;
-    word-break: break-word;
-  }
-
-  #ticketsTable tr td:first-child {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--accent);
-    margin-bottom: 6px;
-  }
-}
-
-/* === Filter Bar Wrapper === */
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* jarak antar elemen */
-  padding: 12px 16px;
-  background: #f9f9f9; /* warna latar lembut */
-  border: 1px solid #ddd; /* garis tipis */
-  border-radius: 10px; /* sudut membulat */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  margin: 15px 0;
-  font-family: "Poppins", sans-serif;
-}
-
-/* === Label === */
-.filter-bar label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-/* === Select Box === */
-.filter-bar select {
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.filter-bar select:hover {
-  border-color: #888;
-}
-
-.filter-bar select:focus {
-  outline: none;
-  border-color: #4a90e2; /* warna fokus */
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
-
-/* === Responsive: untuk HP kecil === */
-@media (max-width: 600px) {
-  .filter-bar {
+  .main-header .left {
     flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
+    align-items: flex-start;
   }
 
-  .filter-bar label {
-    font-size: 13px;
+  .main-header .left img {
+    width: 150px;
   }
 
-  .filter-bar select {
-    width: 100%;
+  .main-header h1 {
+    font-size: 1.2rem;
+    margin-top: 6px;
+    text-align: left;
+  }
+
+  .main-header .auth-buttons {
+    margin-left: auto;
   }
 }

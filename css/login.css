@@ -19,7 +19,7 @@ body {
 }
 
 .login-box h2 {
-  margin-bottom: 30px;
+  margin: 15px 0px;
 }
 
 .login-box form {
@@ -45,6 +45,15 @@ body {
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
 }
 
+#loginEmailBtn {
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+#loginEmailBtn:hover {
+  background: #0461c6;
+}
 /* Button styling */
 button {
   margin-top: 5px;
@@ -52,28 +61,29 @@ button {
   width: 100%;
   border: none;
   border-radius: 6px;
-  background: #007bff;
-  color: white;
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.3s ease;
 }
 
-button:hover {
-  background: #0056b3;
-}
-
 .google-btn {
-  background: #db4437;
+  background: #ef0e09;
+  color: white;
 }
 
 .google-btn:hover {
-  background: #b03125;
+  background: #c70805;
 }
 
 hr {
   margin: 20px 0;
   border: none;
   border-top: 1px solid #eee;
+}
+
+.login-box .logo {
+  width: 180px; /* atur sesuai ukuran logo */
+  height: auto;
+  object-fit: contain;
 }

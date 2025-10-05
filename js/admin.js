@@ -45,7 +45,7 @@ const filterSelect = document.getElementById("filterActionBy");
 // Redirect ke login.html
 if (goLoginBtn) {
   goLoginBtn.addEventListener("click", () => {
-    window.location.href = "login.html";
+    window.location.href = "../login/index.html";
   });
 }
 
@@ -66,23 +66,47 @@ const IT_NAMES = [
 // Global data cache
 let allTickets = [];
 
-// ==================== 🔹 LOGIN / LOGOUT ====================
+// ====================  LOGIN  ====================
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
+
+    Swal.fire({
+      icon: "success",
+      title: "Login Berhasil",
+      text: "Selamat datang kembali!",
+      showConfirmButton: false,
+      timer: 1800,
+    });
   } catch (err) {
-    alert("❌ Login gagal: " + err.message);
+    Swal.fire({
+      icon: "error",
+      title: "Login Gagal",
+      text: err.message,
+    });
   }
 });
-// Logout (cukup 1x, jangan ditulis lagi di bawah)
+
+// ==================== LOGOUT ====================
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
       await signOut(auth);
-      alert("Anda telah logout");
-      window.location.replace("login.html");
+
+      Swal.fire({
+        icon: "info",
+        title: "Logout Berhasil",
+        text: "Anda telah keluar dari sistem.",
+        confirmButtonText: "OK",
+      }).then(() => {
+        window.location.replace("../login/index.html");
+      });
     } catch (err) {
-      alert("❌ Gagal logout: " + err.message);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Logout",
+        text: err.message,
+      });
     }
   });
 }
@@ -319,6 +343,3 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
-
-
-

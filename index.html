@@ -7,6 +7,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" type="image/png" href="../imgs/meitech.png" />
 
     <!-- NOTE:
        - Saat ini file menggunakan EmailJS UMD build (window.emailjs).
@@ -18,16 +19,17 @@
   <body>
     <main class="container">
       <header>
+        <img src="imgs/meitech-logo.png" alt="Company Logo" class="logo" />
         <h1>IT Ticketing — Lapor Permasalahan</h1>
-        <p>
+        <!--<p>
           Isi form di bawah untuk membuat tiket. Semua data tersimpan ke
           Firebase dan akan dikirim ke email penerima.
-        </p>
+        </p>-->
       </header>
 
       <form id="ticketForm" class="card" autocomplete="on">
         <label for="inventory"
-          >Kode Inventory
+          ><span class="required">Kode Inventory</span>
           <input
             type="text"
             name="inventory"
@@ -37,7 +39,7 @@
           />
         </label>
         <label for="device">
-          Jenis Perangkat
+          <span class="required">Jenis Perangkat</span>
           <select name="device" id="device" required>
             <option value="PC">PC</option>
             <option value="Laptop">Laptop</option>
@@ -51,7 +53,7 @@
         </label>
 
         <label for="name"
-          >Nama Lengkap
+          ><span class="required">Nama Lengkap</span>
           <input
             type="text"
             name="name"
@@ -63,7 +65,7 @@
         </label>
 
         <label for="user_email"
-          >Email
+          ><span class="required">Email</span>
           <input
             type="email"
             name="user_email"
@@ -75,7 +77,7 @@
         </label>
 
         <label for="department"
-          >Departemen
+          ><span class="required">Departemen</span>
           <select name="department" id="department" required>
             <option value="Management">Management</option>
             <option value="IT">IT</option>
@@ -92,7 +94,7 @@
 
         <!-- 🔹 Lokasi Baru -->
         <label for="location">
-          Lokasi
+          <span class="required">Lokasi</span>
           <select name="location" id="location" required>
             <option value="White Office">White Office</option>
             <option value="Blue Office">Blue Office</option>
@@ -107,7 +109,7 @@
         </label>
 
         <label for="priority"
-          >Prioritas
+          ><span class="required">Prioritas</span>
           <select name="priority" id="priority" required>
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -116,7 +118,7 @@
         </label>
 
         <label for="subject"
-          >Ringkasan Masalah
+          ><span class="required">Ringkasan Masalah</span>
           <input
             type="text"
             name="subject"
@@ -128,7 +130,7 @@
         </label>
 
         <label for="message"
-          >Deskripsi Lengkap
+          ><span class="required">Deskripsi Lengkap</span>
           <textarea
             name="message"
             id="message"
@@ -147,10 +149,7 @@
       </form>
 
       <footer>
-        <small>
-          Template ini menggunakan Firebase (Firestore) dan EmailJS untuk
-          pengiriman email. Konfigurasi diperlukan — lihat README di repo.
-        </small>
+        <small> Copyright &copy; 2025 71001-04-8314 </small>
       </footer>
     </main>
 
