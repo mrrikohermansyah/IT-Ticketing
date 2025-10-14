@@ -43,6 +43,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 const filterSelect = document.getElementById("filterActionBy");
 const goLoginBtn = document.getElementById("goLoginBtn");
+const userInfo = document.getElementById("userInfo");
 
 // Redirect ke login.html
 if (goLoginBtn) {
@@ -51,10 +52,10 @@ if (goLoginBtn) {
   });
 }
 
-// 🔹 Event filter
-filterSelect.addEventListener("change", () => {
-  applyFilter();
-});
+// Filter event
+if (filterSelect) {
+  filterSelect.addEventListener("change", () => applyFilter());
+}
 
 // IT whitelist
 const IT_NAMES = [
@@ -66,9 +67,7 @@ const IT_NAMES = [
 
 // Global data cache
 let allTickets = [];
-
-// ==================== 🔹 Flag Logout ====================
-let isLoggingOut = false;
+let isLoggingOut = false; // Flag Logout
 
 // ==================== 🔹 LOGIN ====================
 if (loginBtn) {
@@ -204,15 +203,9 @@ function applyFilter() {
       <td>
         <div class="status-wrapper">
           <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${
-              d.status_ticket === "Open" ? "selected" : ""
-            }>Open</option>
-            <option value="Close" ${
-              d.status_ticket === "Close" ? "selected" : ""
-            }>Close</option>
-            <option value="Close with note" ${
-              d.status_ticket === "Close with note" ? "selected" : ""
-            }>Close with note</option>
+            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
+            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
           </select>
           <span class="dot" style="background-color:${statusColor}"></span>
         </div>
@@ -253,7 +246,7 @@ function applyFilter() {
       }
     });
 
-    // Note area
+    // Note area listener
     const noteArea = tr.querySelector(".noteArea");
     if (noteArea) {
       noteArea.addEventListener("change", (e) =>
@@ -268,6 +261,12 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
+
+    // 🔹 tampilkan info user
+    if (userInfo) {
+      userInfo.style.display = "inline-block";
+      userInfo.textContent = user.displayName || user.email || "Unknown User";
+    }
 
     const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
     onSnapshot(q, (snapshot) => {
@@ -340,6 +339,7 @@ function exportToPDF() {
   doc.save("tickets.pdf");
 }
 
+// Event export PDF
 document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) {
