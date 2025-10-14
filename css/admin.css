@@ -482,6 +482,21 @@ header .logo {
   background-color: #b02a37;
 }
 
+/* Tombol Delete full-width di HP */
+@media (max-width: 600px) {
+  .delete-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    font-size: 1rem;
+    border-radius: 10px;
+    margin-top: 8px;
+    text-align: center;
+  }
+}
+
+
+
 
 
 
