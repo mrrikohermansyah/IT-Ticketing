@@ -124,8 +124,10 @@ form.addEventListener("submit", async (e) => {
     await Swal.fire({
       icon: "success",
       title: "Ticket Submitted!",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#2563eb", // warna biru agar senada
       html: `
-        <p><b>Ticket ID:</b> ${id}</p>
+        <!--<p><b>Ticket ID:</b> ${id}</p>-->
         <p>Thank you! The IT team will review your ticket shortly.</p>
       `,
       timer: 3000,
@@ -151,3 +153,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = "❌ Error: " + err.message;
   }
 });
+
