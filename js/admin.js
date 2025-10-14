@@ -41,6 +41,7 @@ const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const ticketsBody = document.getElementById("ticketsBody");
 const filterSelect = document.getElementById("filterActionBy");
+const goLoginBtn = document.getElementById("goLoginBtn");
 
 // Redirect ke login.html
 if (goLoginBtn) {
@@ -49,9 +50,8 @@ if (goLoginBtn) {
   });
 }
 
-// 🔹 Tambahkan event listener di sini
+// 🔹 Event filter
 filterSelect.addEventListener("change", () => {
-  //console.log("Filter dipilih:", filterSelect.value);
   applyFilter();
 });
 
@@ -66,31 +66,37 @@ const IT_NAMES = [
 // Global data cache
 let allTickets = [];
 
-// ====================  LOGIN  ====================
-loginBtn.addEventListener("click", async () => {
-  try {
-    await signInWithPopup(auth, provider);
+// ==================== 🔹 Flag Logout ====================
+let isLoggingOut = false;
 
-    Swal.fire({
-      icon: "success",
-      title: "Login Berhasil",
-      text: "Selamat datang kembali!",
-      showConfirmButton: false,
-      timer: 1800,
-    });
-  } catch (err) {
-    Swal.fire({
-      icon: "error",
-      title: "Login Gagal",
-      text: err.message,
-    });
-  }
-});
+// ====================  LOGIN  ====================
+if (loginBtn) {
+  loginBtn.addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, provider);
+
+      Swal.fire({
+        icon: "success",
+        title: "Login Berhasil",
+        text: "Selamat datang kembali!",
+        showConfirmButton: false,
+        timer: 1800,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Login Gagal",
+        text: err.message,
+      });
+    }
+  });
+}
 
 // ==================== LOGOUT ====================
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
+      isLoggingOut = true; // tandai sedang logout manual
       await signOut(auth);
 
       Swal.fire({
@@ -102,6 +108,7 @@ if (logoutBtn) {
         window.location.replace("../login/index.html");
       });
     } catch (err) {
+      isLoggingOut = false; // reset kalau gagal
       Swal.fire({
         icon: "error",
         title: "Gagal Logout",
@@ -123,10 +130,9 @@ function hitungDurasi(createdAt, updatedAt) {
   const start = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   const end = updatedAt.toDate ? updatedAt.toDate() : new Date(updatedAt);
   const menit = Math.floor((end - start) / 60000);
-  return isNaN(menit) ? "-" : `${menit} Menit`;
+  return isNaN(menit) ? "-" : `${menit} menit`;
 }
 
-// mapping device → code
 function mapDeviceToCode(device) {
   if (["PC", "Laptop", "Printer", "Projector"].includes(device)) return "HW";
   if (device === "Jaringan") return "NW";
@@ -147,18 +153,6 @@ function applyFilter() {
       ? allTickets.filter((t) => !t.action_by)
       : allTickets.filter((t) => t.action_by === selected);
 
-  // 🔍 Debug log
-  //console.log("=== DEBUG FILTER ===");
-  //console.log("Selected:", selected);
-  //console.log(
-  //  "All Tickets action_by:",
-  //  allTickets.map((t) => t.action_by)
-  // );
-  // console.log(
-  //  "Filtered Tickets:",
-  //  filtered.map((t) => t.action_by)
-  //);
-
   if (filtered.length === 0) {
     ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
     return;
@@ -173,8 +167,6 @@ function applyFilter() {
         : "red";
 
     const sentAt = formatTimestamp(d.createdAt || d.sent_at);
-
-    // gunakan d.code jika sudah tersimpan, fallback ke mapping otomatis dari device
     const codeValue = d.code || mapDeviceToCode(d.device);
 
     const tr = document.createElement("tr");
@@ -234,7 +226,6 @@ function applyFilter() {
     `;
     ticketsBody.appendChild(tr);
 
-    // ---------- Listeners ----------
     tr.querySelector(".assignSelect").addEventListener("change", (e) =>
       updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
     );
@@ -263,7 +254,6 @@ onAuthStateChanged(auth, (user) => {
         allTickets.push({ id: docSnap.id, ...docSnap.data() })
       );
 
-      // Isi filter dengan IT whitelist
       const names = [
         ...new Set(
           allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))
@@ -279,18 +269,16 @@ onAuthStateChanged(auth, (user) => {
       applyFilter();
     });
   } else {
-    // 🔹 redirect ke login kalau belum login
-    window.location.replace("../login/index.html");
-    // loginBtn.style.display = "inline-block";
-    //logoutBtn.style.display = "none";
-    //ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
+    if (!isLoggingOut) {
+      window.location.replace("../login/index.html");
+    }
   }
 });
 
 // ==================== 🔹 Export PDF ====================
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("l", "pt", "a4"); // landscape
+  const doc = new jsPDF("l", "pt", "a4");
 
   doc.setFontSize(14);
   doc.text("Daftar Tiket IT", 40, 40);
@@ -298,35 +286,28 @@ function exportToPDF() {
   const table = document.getElementById("ticketsTable");
   if (!table) return;
 
-  // === Ambil header ===
   const headers = Array.from(table.querySelectorAll("thead th")).map(
     (th) => th.innerText
   );
 
-  // === Ambil isi baris (tbody) ===
   const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) => {
     return Array.from(tr.querySelectorAll("td")).map((td, idx) => {
-      // Khusus kolom Action By (index 12)
       if (idx === 12) {
         const select = td.querySelector("select");
         return select ? select.value || "-" : td.innerText;
       }
-      // Khusus kolom Status Ticket (index 13)
       if (idx === 13) {
         const select = td.querySelector("select");
         return select ? select.value || "-" : td.innerText;
       }
-      // Khusus kolom Note (index 14)
       if (idx === 14) {
         const textarea = td.querySelector("textarea");
         return textarea ? textarea.value || "-" : td.innerText;
       }
-      // Default ambil teks
       return td.innerText;
     });
   });
 
-  // Buat tabel ke PDF
   doc.autoTable({
     head: [headers],
     body: rows,
@@ -345,5 +326,3 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
-
-
