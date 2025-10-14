@@ -1,11 +1,14 @@
-// js/admin.js (rapi & siap pakai)
+// ======================================================
+// 🔹 js/admin.js — Clean & Organized Version
+// ======================================================
 
-// ==================== 🔹 Import Firebase SDK ====================
+// ==================== 🔹 Firebase Imports ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
   collection,
   updateDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
@@ -31,7 +34,7 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// ==================== 🔹 Init Firebase ====================
+// ==================== 🔹 Initialize Firebase ====================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -45,31 +48,23 @@ const filterSelect = document.getElementById("filterActionBy");
 const goLoginBtn = document.getElementById("goLoginBtn");
 const userInfo = document.getElementById("userInfo");
 
-// Redirect ke login.html
+// ==================== 🔹 Constants ====================
+const IT_NAMES = ["Riko Hermansyah", "Abdurahman Hakim", "Moch Wahyu Nugroho", "Ade Reinalwi"];
+let allTickets = [];
+let isLoggingOut = false;
+
+// ======================================================
+// 🔹 LOGIN / LOGOUT HANDLING
+// ======================================================
+
+// Redirect ke login page manual
 if (goLoginBtn) {
   goLoginBtn.addEventListener("click", () => {
     window.location.href = "../login/index.html";
   });
 }
 
-// Filter event
-if (filterSelect) {
-  filterSelect.addEventListener("change", () => applyFilter());
-}
-
-// IT whitelist
-const IT_NAMES = [
-  "Riko Hermansyah",
-  "Abdurahman Hakim",
-  "Moch Wahyu Nugroho",
-  "Ade Reinalwi",
-];
-
-// Global data cache
-let allTickets = [];
-let isLoggingOut = false; // Flag Logout
-
-// ==================== 🔹 LOGIN ====================
+// Login with Google
 if (loginBtn) {
   loginBtn.addEventListener("click", async () => {
     try {
@@ -91,12 +86,13 @@ if (loginBtn) {
   });
 }
 
-// ==================== 🔹 LOGOUT ====================
+// Logout user
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
       isLoggingOut = true;
       await signOut(auth);
+
       Swal.fire({
         icon: "info",
         title: "Logout Success",
@@ -116,7 +112,10 @@ if (logoutBtn) {
   });
 }
 
-// ==================== 🔹 Helpers ====================
+// ======================================================
+// 🔹 HELPER FUNCTIONS
+// ======================================================
+
 function formatTimestamp(ts) {
   if (!ts) return "-";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -139,11 +138,14 @@ function mapDeviceToCode(device) {
   return "OT";
 }
 
-// ==================== 🔹 Apply Filter & Render Rows ====================
+// ======================================================
+// 🔹 APPLY FILTER & RENDER TABLE
+// ======================================================
+
 function applyFilter() {
   ticketsBody.innerHTML = "";
-  const selected = filterSelect.value || "all";
 
+  const selected = filterSelect.value || "all";
   const filtered =
     selected === "all"
       ? allTickets
@@ -152,7 +154,7 @@ function applyFilter() {
       : allTickets.filter((t) => t.action_by === selected);
 
   if (filtered.length === 0) {
-    ticketsBody.innerHTML = `<tr><td colspan="15">There's no ticket with this filter</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="16">There's no ticket with this filter</td></tr>`;
     return;
   }
 
@@ -194,9 +196,7 @@ function applyFilter() {
           <option value="">-- Pilih --</option>
           ${IT_NAMES.map(
             (it) =>
-              `<option value="${it}" ${
-                d.action_by === it ? "selected" : ""
-              }>${it}</option>`
+              `<option value="${it}" ${d.action_by === it ? "selected" : ""}>${it}</option>`
           ).join("")}
         </select>
       </td>
@@ -205,7 +205,9 @@ function applyFilter() {
           <select class="statusSelect" data-id="${d.id}">
             <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
             <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
-            <option value="Close with note" ${d.status_ticket === "Close with note" ? "selected" : ""}>Close with note</option>
+            <option value="Close with note" ${
+              d.status_ticket === "Close with note" ? "selected" : ""
+            }>Close with note</option>
           </select>
           <span class="dot" style="background-color:${statusColor}"></span>
         </div>
@@ -213,40 +215,54 @@ function applyFilter() {
       <td>
         ${
           d.status_ticket === "Close with note"
-            ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`
+            ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${
+                d.note || ""
+              }</textarea>`
             : "-"
         }
+      </td>
+      <td>
+        <button class="delete-btn" data-id="${d.id}">
+          <i class="fa-solid fa-trash"></i>
+        </button>
       </td>
     `;
 
     ticketsBody.appendChild(tr);
 
-    // Assign action_by
+    // ========== Event Listeners per baris ==========
+
+    // Update action_by
     tr.querySelector(".assignSelect").addEventListener("change", (e) =>
       updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
     );
 
-    // Status change
+    // Update status_ticket
     tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
       const newStatus = e.target.value;
+
       await updateDoc(doc(db, "tickets", d.id), {
         status_ticket: newStatus,
         updatedAt: serverTimestamp(),
       });
 
-      // Update kolom Note dinamis
-      const noteCell = tr.querySelector("td:last-child");
+      // Update kolom Note
+      const noteCell = tr.querySelector("td:nth-last-child(2)");
       if (newStatus === "Close with note") {
-        noteCell.innerHTML = `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`;
-        noteCell.querySelector(".noteArea").addEventListener("change", (e) =>
-          updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
-        );
+        noteCell.innerHTML = `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${
+          d.note || ""
+        }</textarea>`;
+        noteCell
+          .querySelector(".noteArea")
+          .addEventListener("change", (e) =>
+            updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
+          );
       } else {
         noteCell.innerHTML = "-";
       }
     });
 
-    // Note area listener
+    // Note listener
     const noteArea = tr.querySelector(".noteArea");
     if (noteArea) {
       noteArea.addEventListener("change", (e) =>
@@ -256,13 +272,51 @@ function applyFilter() {
   });
 }
 
-// ==================== 🔹 Monitor Login State ====================
+// ======================================================
+// 🔹 DELETE BUTTON HANDLING
+// ======================================================
+
+ticketsBody.addEventListener("click", async (e) => {
+  if (e.target.closest(".delete-btn")) {
+    const btn = e.target.closest(".delete-btn");
+    const ticketId = btn.dataset.id;
+
+    const confirm = await Swal.fire({
+      title: "Hapus tiket ini?",
+      text: "Tindakan ini tidak dapat dibatalkan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        await deleteDoc(doc(db, "tickets", ticketId));
+        Swal.fire("Terhapus!", "Tiket telah dihapus.", "success");
+      } catch (err) {
+        console.error("Error deleting document:", err);
+        Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data.", "error");
+      }
+    }
+  }
+});
+
+// ======================================================
+// 🔹 MONITOR LOGIN STATE
+// ======================================================
+
 onAuthStateChanged(auth, (user) => {
+  if (!user && !isLoggingOut) {
+    return window.location.replace("../login/index.html");
+  }
+
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
 
-    // 🔹 tampilkan info user
     if (userInfo) {
       userInfo.style.display = "inline-block";
       userInfo.textContent = user.displayName || user.email || "Unknown User";
@@ -270,10 +324,10 @@ onAuthStateChanged(auth, (user) => {
 
     const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
     onSnapshot(q, (snapshot) => {
-      allTickets = [];
-      snapshot.forEach((docSnap) =>
-        allTickets.push({ id: docSnap.id, ...docSnap.data() })
-      );
+      allTickets = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
 
       const names = [
         ...new Set(
@@ -291,14 +345,13 @@ onAuthStateChanged(auth, (user) => {
 
       applyFilter();
     });
-  } else {
-    if (!isLoggingOut) {
-      window.location.replace("../login/index.html");
-    }
   }
 });
 
-// ==================== 🔹 Export PDF ====================
+// ======================================================
+// 🔹 EXPORT TO PDF
+// ======================================================
+
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("l", "pt", "a4");
@@ -315,7 +368,7 @@ function exportToPDF() {
 
   const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
     Array.from(tr.querySelectorAll("td")).map((td, idx) => {
-      if (idx === 12 || idx === 13) {
+      if ([12, 13].includes(idx)) {
         const select = td.querySelector("select");
         return select ? select.value || "-" : td.innerText;
       }
@@ -339,10 +392,12 @@ function exportToPDF() {
   doc.save("tickets.pdf");
 }
 
-// Event export PDF
+// ======================================================
+// 🔹 EVENT EXPORT PDF
+// ======================================================
+
 document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
-  if (btnExport) {
-    btnExport.addEventListener("click", exportToPDF);
-  }
+  if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
