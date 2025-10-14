@@ -24,18 +24,23 @@ const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
 const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
-// ==================== 🔹 Init Firebase & Firestore ====================
+// ==================== 🔹 Initialize Firebase & Firestore ====================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ==================== 🔹 Init EmailJS ====================
+// ==================== 🔹 Initialize EmailJS ====================
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
-// ==================== 🔹 DOM Element ====================
+// ==================== 🔹 DOM Elements ====================
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
 
-// ==================== 🔹 Kirim Email ====================
+// ==================== 🔹 Redirect to Admin Page ====================
+document.getElementById("adminBtn").addEventListener("click", () => {
+  window.location.href = "admin/index.html";
+});
+
+// ==================== 🔹 Send Email ====================
 async function sendEmail(payload) {
   try {
     const res = await emailjs.send(
@@ -43,20 +48,15 @@ async function sendEmail(payload) {
       EMAILJS_TEMPLATE_ID,
       payload
     );
-    console.log("✅ Email terkirim:", res.status);
+    console.log("✅ Email sent:", res.status);
     return res;
   } catch (err) {
-    console.error("❌ Email gagal:", err);
-    throw new Error("Gagal mengirim email.");
+    console.error("❌ Email failed:", err);
+    throw new Error("Failed to send email.");
   }
 }
 
-// ==================== Ke Halaman Admin ==================
-document.getElementById("adminBtn").addEventListener("click", function () {
-  window.location.href = "admin/index.html";
-});
-
-// ==================== 🔹 Simpan ke Firestore ====================
+// ==================== 🔹 Save to Firestore ====================
 async function saveToFirestore(doc) {
   const col = collection(db, "tickets");
   const ref = await addDoc(col, doc);
@@ -66,21 +66,20 @@ async function saveToFirestore(doc) {
 // ==================== 🔹 Submit Handler ====================
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-
   if (!form.checkValidity()) return form.reportValidity();
 
-  statusEl.textContent = "Mengirim tiket...";
+  statusEl.textContent = "Submitting ticket...";
 
   const data = new FormData(form);
   const device = data.get("device");
 
-  // Tentukan kode tiket
+  // Determine ticket code
   let code = "OT";
   if (["PC", "Laptop", "Printer", "Projector"].includes(device)) code = "HW";
   else if (device === "Jaringan") code = "NW";
   else if (["MSOffice", "Software"].includes(device)) code = "SW";
 
-  // Buat data dokumen untuk Firestore
+  // Prepare document data
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
     device,
@@ -101,31 +100,54 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // Simpan ke Firestore
+    // Save to Firestore
     const id = await saveToFirestore(docData);
 
-    // Tentukan warna prioritas untuk EmailJS
+    // Priority color mapping
     const priorityColor =
       {
-        High: "#dc3545", // merah
-        Medium: "#ffc107", // kuning
-        Low: "#28a745", // hijau
-      }[docData.priority] || "#007bff"; // default biru
+        High: "#dc3545", // red
+        Medium: "#ffc107", // yellow
+        Low: "#28a745", // green
+      }[docData.priority] || "#007bff"; // blue default
 
-    // Kirim email notifikasi
+    // Send email notification
     await sendEmail({
       ticketId: id,
       ...docData,
-      priority_color: priorityColor, // 🔹 tambahan penting
-      sent_at: new Date().toLocaleString("id-ID"),
+      priority_color: priorityColor,
+      sent_at: new Date().toLocaleString("en-US"),
       recipient: STATIC_RECIPIENT_EMAIL,
     });
 
-    statusEl.textContent = "✅ Tiket berhasil dikirim!";
+    // ✅ Auto-close success popup
+    await Swal.fire({
+      icon: "success",
+      title: "Ticket Submitted!",
+      html: `
+        <p><b>Ticket ID:</b> ${id}</p>
+        <p>Thank you! The IT team will review your ticket shortly.</p>
+      `,
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+    });
+
+    statusEl.textContent = "✅ Ticket successfully submitted!";
     form.reset();
   } catch (err) {
     console.error(err);
-    statusEl.textContent = "❌ Terjadi kesalahan: " + err.message;
+
+    // ❌ Auto-close error popup
+    await Swal.fire({
+      icon: "error",
+      title: "Submission Failed",
+      text: err.message || "Something went wrong. Please try again.",
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+    });
+
+    statusEl.textContent = "❌ Error: " + err.message;
   }
 });
-
