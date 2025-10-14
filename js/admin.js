@@ -279,9 +279,11 @@ onAuthStateChanged(auth, (user) => {
       applyFilter();
     });
   } else {
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
-    ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
+    // 🔹 redirect ke login kalau belum login
+    window.location.replace("../login/index.html");
+    // loginBtn.style.display = "inline-block";
+    //logoutBtn.style.display = "none";
+    //ticketsBody.innerHTML = `<tr><td colspan="15">Silakan login untuk melihat tiket</td></tr>`;
   }
 });
 
@@ -343,3 +345,4 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
