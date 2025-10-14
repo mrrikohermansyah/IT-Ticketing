@@ -190,7 +190,7 @@ function applyFilter() {
       <td>${d.user_email || "-"}</td>
       <td>${d.department || "-"}</td>
       <td>${d.priority || "-"}</td>
-      <td>${d.subject || "-"}</td>
+      <td style="display:none">${d.subject || "-"}</td>
       <td>
         <select class="assignSelect" data-id="${d.id}">
           <option value="">-- Pilih --</option>
@@ -326,3 +326,4 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
