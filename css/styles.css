@@ -83,6 +83,10 @@ button[type="reset"] {
   color: #111;
 }
 
+button[type="reset"]:hover {
+  background-color: #c7c3c3;
+}
+
 .tickets ul {
   list-style: none;
   padding: 0;
@@ -135,4 +139,13 @@ button[type="reset"] {
 #adminBtn:hover {
   background-color: rgb(179, 12, 12);
 }
+
+button[type="submit"] {
+  background-color: #2563eb;
+}
+
+button[type="submit"]:hover {
+  background-color: #0236a7;
+}
+
 
