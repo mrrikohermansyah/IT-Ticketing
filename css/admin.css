@@ -427,3 +427,11 @@ header .logo {
   display: none;
 }
 
+.user-info {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+
+
