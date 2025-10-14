@@ -116,7 +116,7 @@ async function exportToExcel() {
 
       if (colNumber === 1 && cell.value instanceof Date) {
         cell.numFmt = "dd/mm/yyyy";
-        cell.alignment = { vertical: "top", horizontal: "right" }; // 🔹 tanggal rata kanan
+        cell.alignment = { vertical: "top", horizontal: "right" };
       }
       if (colNumber === 3 || colNumber === 8) {
         cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
@@ -124,26 +124,13 @@ async function exportToExcel() {
     });
   });
 
-  // ===== TEBAL KELILING TABEL =====
-  let lastRow = sheet.lastRow.number;
-  const firstRow = headerRow.number;
-  for (let r = firstRow; r <= lastRow; r++) {
-    for (let c = 1; c <= 8; c++) {
-      const cell = sheet.getCell(r, c);
-      if (r === firstRow) cell.border.top = { style: "thick" };
-      if (r === lastRow) cell.border.bottom = { style: "thick" };
-      if (c === 1) cell.border.left = { style: "thick" };
-      if (c === 8) cell.border.right = { style: "thick" };
-    }
-  }
-
-  // ===== TAMBAHKAN 2 BARIS KOSONG DI BAWAH (NYATU DENGAN TABEL) =====
+  // ===== TAMBAHKAN 2 BARIS KOSONG DI BAWAH =====
   for (let i = 0; i < 2; i++) {
     const extraRow = sheet.addRow(["", "", "", "", "", "", "", ""]);
     extraRow.eachCell((cell, colNumber) => {
       cell.font = { name: "Arial", size: 10 };
       cell.border = {
-        top: { style: "hair" },
+        top: { style: "hair" },   // bukan tebal
         bottom: { style: "hair" },
         left: { style: "hair" },
         right: { style: "hair" },
@@ -153,11 +140,17 @@ async function exportToExcel() {
     });
   }
 
-  // border bawah tebal di baris terakhir tambahan
-  lastRow = sheet.lastRow.number;
-  for (let c = 1; c <= 8; c++) {
-    const cell = sheet.getCell(lastRow, c);
-    cell.border = { ...cell.border, bottom: { style: "thick" } };
+  // ===== TEBAL KELILING TABEL =====
+  const lastRow = sheet.lastRow.number;
+  const firstRow = headerRow.number;
+  for (let r = firstRow; r <= lastRow; r++) {
+    for (let c = 1; c <= 8; c++) {
+      const cell = sheet.getCell(r, c);
+      if (r === firstRow) cell.border.top = { style: "thick" };
+      if (r === lastRow) cell.border.bottom = { style: "thick" };
+      if (c === 1) cell.border.left = { style: "thick" };
+      if (c === 8) cell.border.right = { style: "thick" };
+    }
   }
 
   // ===== ATUR LEBAR KOLOM =====
