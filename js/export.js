@@ -12,12 +12,18 @@ async function exportToExcel() {
   title.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
   title.font = { name: "Times New Roman", italic: true, size: 18 };
   title.alignment = { horizontal: "center", vertical: "middle" };
-  title.border = {
-    top: { style: "thick" },
-    left: { style: "thick" },
-    bottom: { style: "thick" },
-    right: { style: "thick" },
-  };
+
+  // 🔹 border tebal keliling A2:H2
+  for (let col = 1; col <= 8; col++) {
+    const cell = sheet.getCell(2, col);
+    if (col === 1) cell.border = { left: { style: "thick" } };
+    if (col === 8) cell.border = { right: { style: "thick" } };
+    cell.border = {
+      ...cell.border,
+      top: { style: "thick" },
+      bottom: { style: "thick" },
+    };
+  }
 
   // ===== BARIS PERIOD =====
   const now = new Date();
@@ -55,29 +61,19 @@ async function exportToExcel() {
     vertical: "middle",
     wrapText: true,
   };
-  headerRow.eachCell((cell, colNumber) => {
+  headerRow.eachCell((cell) => {
     cell.border = {
-      top: { style: "hair" },
-      left: { style: "hair" },
-      bottom: { style: "hair" },
-      right: { style: "hair" },
+      top: { style: "thick" },
+      left: { style: "thick" },
+      bottom: { style: "thick" },
+      right: { style: "thick" },
     };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
       fgColor: { argb: "FFEFEFEF" },
     };
-    // header kolom tanggal rata kanan
-    if (colNumber === 1) {
-      cell.alignment = {
-        vertical: "middle",
-        horizontal: "right",
-        wrapText: true,
-      };
-    }
   });
-
-  // 🔹 TINGGI BARIS HEADER
   sheet.getRow(headerRow.number).height = 69 * 0.75;
 
   // ===== ISI DATA DARI TABEL HTML =====
@@ -96,7 +92,7 @@ async function exportToExcel() {
           : td.innerText.trim();
       }
 
-      // ===== FORMAT TANGGAL =====
+      // Format tanggal
       if (i === 0 && value) {
         const cleanDate = value.split(",")[0].trim();
         const parts = cleanDate.split("/");
@@ -109,7 +105,7 @@ async function exportToExcel() {
         }
       }
 
-      // ===== TAMBAHKAN “Bintan / ” UNTUK KOLOM LOKASI =====
+      // Lokasi → tambah "Bintan /"
       if (i === 3 && value) {
         value = "Bintan / " + value;
       }
@@ -127,32 +123,30 @@ async function exportToExcel() {
         bottom: { style: "hair" },
         right: { style: "hair" },
       };
-
-      // Default rata atas & kiri
       cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
 
-      // Kolom tanggal = format tanggal + rata kanan
-      if (colNumber === 1 && cell.value) {
-        if (cell.value instanceof Date) {
-          cell.numFmt = "dd/mm/yyyy";
-        }
-        cell.alignment = {
-          vertical: "middle",
-          horizontal: "right",
-          wrapText: true,
-        };
+      if (colNumber === 1 && cell.value instanceof Date) {
+        cell.numFmt = "dd/mm/yyyy";
+        cell.alignment = { vertical: "top", horizontal: "right" }; // 🔹 tanggal rata kanan
       }
-
-      // Kolom ke-3 (Kode) & kolom ke-8 (Kendali Mutu) rata tengah
       if (colNumber === 3 || colNumber === 8) {
-        cell.alignment = {
-          vertical: "middle",
-          horizontal: "center",
-          wrapText: true,
-        };
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
       }
     });
   });
+
+  // ===== TEBAL KELILING TABEL =====
+  const lastRow = sheet.lastRow.number;
+  const firstRow = headerRow.number;
+  for (let r = firstRow; r <= lastRow; r++) {
+    for (let c = 1; c <= 8; c++) {
+      const cell = sheet.getCell(r, c);
+      if (r === firstRow) cell.border.top = { style: "thick" };
+      if (r === lastRow) cell.border.bottom = { style: "thick" };
+      if (c === 1) cell.border.left = { style: "thick" };
+      if (c === 8) cell.border.right = { style: "thick" };
+    }
+  }
 
   // ===== ATUR LEBAR KOLOM =====
   const pxToChar = (px) => Math.round(px / 7);
@@ -160,21 +154,6 @@ async function exportToExcel() {
   widthsPx.forEach((px, i) => {
     sheet.getColumn(i + 1).width = pxToChar(px);
   });
-
-  // ===== BORDER LUAR TEBAL UNTUK TABEL =====
-  const lastRow = sheet.lastRow.number;
-  const range = sheet.getCell(`A${headerRow.number}:H${lastRow}`)._address; // seluruh range header+isi
-  const [start, end] = range.split(":");
-
-  for (let r = headerRow.number; r <= lastRow; r++) {
-    for (let c = 1; c <= 8; c++) {
-      const cell = sheet.getCell(r, c);
-      if (r === headerRow.number) cell.border.top = { style: "thick" };
-      if (r === lastRow) cell.border.bottom = { style: "thick" };
-      if (c === 1) cell.border.left = { style: "thick" };
-      if (c === 8) cell.border.right = { style: "thick" };
-    }
-  }
 
   // ===== SIMPAN FILE =====
   const buffer = await workbook.xlsx.writeBuffer();
