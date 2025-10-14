@@ -420,3 +420,10 @@ header .logo {
     margin-left: auto;
   }
 }
+
+/* di file admin.css */
+#ticketsTable th:nth-child(12),
+#ticketsTable td:nth-child(12) {
+  display: none;
+}
+
