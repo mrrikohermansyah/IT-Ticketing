@@ -39,17 +39,17 @@ googleBtn?.addEventListener("click", async () => {
     // Ganti alert dengan SweetAlert2
     Swal.fire({
       icon: "success",
-      title: "Selamat Datang!",
+      title: "Welcome!",
       text: `✅ Halo ${user.displayName}`,
-      confirmButtonText: "Lanjut",
+      confirmButtonText: "Go Ahead!",
     }).then(() => {
       window.location.href = "../admin/index.html";
     });
   } catch (error) {
-    console.error("Login Google gagal:", error);
+    console.error("Login Google Failed:", error);
     Swal.fire({
       icon: "error",
-      title: "Login Gagal",
+      title: "Login Failed",
       text: "❌ " + error.message,
     });
   }
@@ -65,8 +65,8 @@ async function handleEmailLogin(e) {
   if (!email || !password) {
     Swal.fire({
       icon: "warning",
-      title: "Form tidak lengkap",
-      text: "Email dan password wajib diisi!",
+      title: "Complete the Form",
+      text: "Email and Password is Required!.",
     });
     return;
   }
@@ -74,22 +74,22 @@ async function handleEmailLogin(e) {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const user = result.user;
-    console.log("Login Email sukses:", user);
+    console.log("Login Email Success:", user);
 
     Swal.fire({
       icon: "success",
-      title: "Selamat Datang!",
+      title: "Welcome!",
       text: `✅ Halo ${user.email}`,
-      confirmButtonText: "Lanjut",
+      confirmButtonText: "Alright!",
     }).then(() => {
       window.location.href = "../admin/index.html";
     });
   } catch (error) {
-    console.error("Login Email gagal:", error);
+    console.error("Email Login Failed:", error);
     Swal.fire({
       icon: "error",
-      title: "Login Gagal",
-      text: "❌ Periksa kembali email atau password Anda.",
+      title: "Login Failed",
+      text: "❌ Check your Email and Password!.",
     });
   }
 }
@@ -108,4 +108,3 @@ backLink.classList.add("back-link");
 
 // Sisipkan ke container
 document.getElementById("backLinkContainer").appendChild(backLink);
-
