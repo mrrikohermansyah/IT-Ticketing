@@ -1,4 +1,5 @@
 // js/admin.js (rapi & siap pakai)
+
 // ==================== 🔹 Import Firebase SDK ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
@@ -69,12 +70,11 @@ let allTickets = [];
 // ==================== 🔹 Flag Logout ====================
 let isLoggingOut = false;
 
-// ====================  LOGIN  ====================
+// ==================== 🔹 LOGIN ====================
 if (loginBtn) {
   loginBtn.addEventListener("click", async () => {
     try {
       await signInWithPopup(auth, provider);
-
       Swal.fire({
         icon: "success",
         title: "Login Success",
@@ -92,13 +92,12 @@ if (loginBtn) {
   });
 }
 
-// ==================== LOGOUT ====================
+// ==================== 🔹 LOGOUT ====================
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
-      isLoggingOut = true; // tandai sedang logout manual
+      isLoggingOut = true;
       await signOut(auth);
-
       Swal.fire({
         icon: "info",
         title: "Logout Success",
@@ -108,7 +107,7 @@ if (logoutBtn) {
         window.location.replace("../login/index.html");
       });
     } catch (err) {
-      isLoggingOut = false; // reset kalau gagal
+      isLoggingOut = false;
       Swal.fire({
         icon: "error",
         title: "Logout Failed",
@@ -141,7 +140,7 @@ function mapDeviceToCode(device) {
   return "OT";
 }
 
-// ==================== 🔹 Apply Filter & render rows ====================
+// ==================== 🔹 Apply Filter & Render Rows ====================
 function applyFilter() {
   ticketsBody.innerHTML = "";
   const selected = filterSelect.value || "all";
@@ -219,28 +218,48 @@ function applyFilter() {
         </div>
       </td>
       <td>
-  ${
-    d.status_ticket === "Close with note"
-      ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`
-      : "-"
-  }
-</td>
-
+        ${
+          d.status_ticket === "Close with note"
+            ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`
+            : "-"
+        }
+      </td>
     `;
+
     ticketsBody.appendChild(tr);
 
+    // Assign action_by
     tr.querySelector(".assignSelect").addEventListener("change", (e) =>
       updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
     );
-    tr.querySelector(".statusSelect").addEventListener("change", (e) =>
-      updateDoc(doc(db, "tickets", d.id), {
-        status_ticket: e.target.value,
+
+    // Status change
+    tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
+      const newStatus = e.target.value;
+      await updateDoc(doc(db, "tickets", d.id), {
+        status_ticket: newStatus,
         updatedAt: serverTimestamp(),
-      })
-    );
-    tr.querySelector(".noteArea").addEventListener("change", (e) =>
-      updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
-    );
+      });
+
+      // Update kolom Note dinamis
+      const noteCell = tr.querySelector("td:last-child");
+      if (newStatus === "Close with note") {
+        noteCell.innerHTML = `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`;
+        noteCell.querySelector(".noteArea").addEventListener("change", (e) =>
+          updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
+        );
+      } else {
+        noteCell.innerHTML = "-";
+      }
+    });
+
+    // Note area
+    const noteArea = tr.querySelector(".noteArea");
+    if (noteArea) {
+      noteArea.addEventListener("change", (e) =>
+        updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
+      );
+    }
   });
 }
 
@@ -263,8 +282,10 @@ onAuthStateChanged(auth, (user) => {
         ),
       ];
 
-      filterSelect.innerHTML = `<option value="all">-- All --</option>
-                                <option value="unassigned">-- Not Assigned --</option>`;
+      filterSelect.innerHTML = `
+        <option value="all">-- All --</option>
+        <option value="unassigned">-- Not Assigned --</option>
+      `;
       names.forEach((name) => {
         filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
       });
@@ -293,13 +314,9 @@ function exportToPDF() {
     (th) => th.innerText
   );
 
-  const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) => {
-    return Array.from(tr.querySelectorAll("td")).map((td, idx) => {
-      if (idx === 12) {
-        const select = td.querySelector("select");
-        return select ? select.value || "-" : td.innerText;
-      }
-      if (idx === 13) {
+  const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
+    Array.from(tr.querySelectorAll("td")).map((td, idx) => {
+      if (idx === 12 || idx === 13) {
         const select = td.querySelector("select");
         return select ? select.value || "-" : td.innerText;
       }
@@ -308,8 +325,8 @@ function exportToPDF() {
         return textarea ? textarea.value || "-" : td.innerText;
       }
       return td.innerText;
-    });
-  });
+    })
+  );
 
   doc.autoTable({
     head: [headers],
@@ -329,5 +346,3 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
-
-
