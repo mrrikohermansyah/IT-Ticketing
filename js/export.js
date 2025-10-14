@@ -12,6 +12,12 @@ async function exportToExcel() {
   title.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
   title.font = { name: "Times New Roman", italic: true, size: 18 };
   title.alignment = { horizontal: "center", vertical: "middle" };
+  title.border = {
+    top: { style: "thick" },
+    left: { style: "thick" },
+    bottom: { style: "thick" },
+    right: { style: "thick" },
+  };
 
   // ===== BARIS PERIOD =====
   const now = new Date();
@@ -51,10 +57,10 @@ async function exportToExcel() {
   };
   headerRow.eachCell((cell, colNumber) => {
     cell.border = {
-      top: { style: "dotted" },
-      left: { style: "dotted" },
-      bottom: { style: "dotted" },
-      right: { style: "dotted" },
+      top: { style: "hair" },
+      left: { style: "hair" },
+      bottom: { style: "hair" },
+      right: { style: "hair" },
     };
     cell.fill = {
       type: "pattern",
@@ -71,7 +77,7 @@ async function exportToExcel() {
     }
   });
 
-  // 🔹 TINGGI BARIS HEADER = 69 pixel (≈ 52 point)
+  // 🔹 TINGGI BARIS HEADER
   sheet.getRow(headerRow.number).height = 69 * 0.75;
 
   // ===== ISI DATA DARI TABEL HTML =====
@@ -116,10 +122,10 @@ async function exportToExcel() {
     row.eachCell((cell, colNumber) => {
       cell.font = { name: "Arial", size: 10 };
       cell.border = {
-        top: { style: "dotted" },
-        left: { style: "dotted" },
-        bottom: { style: "dotted" },
-        right: { style: "dotted" },
+        top: { style: "hair" },
+        left: { style: "hair" },
+        bottom: { style: "hair" },
+        right: { style: "hair" },
       };
 
       // Default rata atas & kiri
@@ -148,12 +154,27 @@ async function exportToExcel() {
     });
   });
 
-  // ===== ATUR LEBAR KOLOM (pixel → karakter) =====
+  // ===== ATUR LEBAR KOLOM =====
   const pxToChar = (px) => Math.round(px / 7);
   const widthsPx = [80, 113, 86, 181, 487, 126, 126, 124];
   widthsPx.forEach((px, i) => {
     sheet.getColumn(i + 1).width = pxToChar(px);
   });
+
+  // ===== BORDER LUAR TEBAL UNTUK TABEL =====
+  const lastRow = sheet.lastRow.number;
+  const range = sheet.getCell(`A${headerRow.number}:H${lastRow}`)._address; // seluruh range header+isi
+  const [start, end] = range.split(":");
+
+  for (let r = headerRow.number; r <= lastRow; r++) {
+    for (let c = 1; c <= 8; c++) {
+      const cell = sheet.getCell(r, c);
+      if (r === headerRow.number) cell.border.top = { style: "thick" };
+      if (r === lastRow) cell.border.bottom = { style: "thick" };
+      if (c === 1) cell.border.left = { style: "thick" };
+      if (c === 8) cell.border.right = { style: "thick" };
+    }
+  }
 
   // ===== SIMPAN FILE =====
   const buffer = await workbook.xlsx.writeBuffer();
