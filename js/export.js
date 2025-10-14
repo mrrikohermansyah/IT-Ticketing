@@ -49,18 +49,26 @@ async function exportToExcel() {
     vertical: "middle",
     wrapText: true,
   };
-  headerRow.eachCell((cell) => {
+  headerRow.eachCell((cell, colNumber) => {
     cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" },
+      top: { style: "dotted" },
+      left: { style: "dotted" },
+      bottom: { style: "dotted" },
+      right: { style: "dotted" },
     };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
       fgColor: { argb: "FFEFEFEF" },
     };
+    // header kolom tanggal rata kanan
+    if (colNumber === 1) {
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: "right",
+        wrapText: true,
+      };
+    }
   });
 
   // 🔹 TINGGI BARIS HEADER = 69 pixel (≈ 52 point)
@@ -108,18 +116,25 @@ async function exportToExcel() {
     row.eachCell((cell, colNumber) => {
       cell.font = { name: "Arial", size: 10 };
       cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
+        top: { style: "dotted" },
+        left: { style: "dotted" },
+        bottom: { style: "dotted" },
+        right: { style: "dotted" },
       };
 
       // Default rata atas & kiri
       cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
 
-      // Kolom tanggal = format tanggal
-      if (colNumber === 1 && cell.value instanceof Date) {
-        cell.numFmt = "dd/mm/yyyy";
+      // Kolom tanggal = format tanggal + rata kanan
+      if (colNumber === 1 && cell.value) {
+        if (cell.value instanceof Date) {
+          cell.numFmt = "dd/mm/yyyy";
+        }
+        cell.alignment = {
+          vertical: "middle",
+          horizontal: "right",
+          wrapText: true,
+        };
       }
 
       // Kolom ke-3 (Kode) & kolom ke-8 (Kendali Mutu) rata tengah
