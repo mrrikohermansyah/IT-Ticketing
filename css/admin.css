@@ -38,11 +38,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0px;
+  padding: 12px 0;
   background: #f9fafb;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
   border-radius: 10px;
+  margin-bottom: 20px;
 }
 
 .main-header .left {
@@ -129,7 +129,7 @@ header .logo {
   margin-bottom: 15px;
 }
 
-/* === Filter Bar Wrapper === */
+/* Filter Bar */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -200,8 +200,8 @@ header .logo {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
   color: #fff;
+  transition: background 0.2s ease, transform 0.1s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 .export-buttons button:hover {
@@ -256,17 +256,19 @@ header .logo {
 
 #ticketsTable {
   width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  min-width: 100%;
   background: var(--card);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
 #ticketsTable thead {
   background: #f9fafb;
 }
+
 #ticketsTable th,
 #ticketsTable td {
   padding: 12px 14px;
@@ -274,16 +276,20 @@ header .logo {
   vertical-align: top;
   border-bottom: 1px solid var(--border);
 }
+
 #ticketsTable th {
   font-weight: 600;
   color: #374151;
 }
+
 #ticketsTable tbody tr:nth-child(even) {
   background: #fafafa;
 }
+
 #ticketsTable tbody tr:hover {
   background: #f1f5f9;
 }
+
 #ticketsTable td.loading {
   text-align: center;
   color: var(--muted);
@@ -421,36 +427,34 @@ header .logo {
   }
 }
 
-/* di file admin.css */
+/* =============================
+   Custom Admin Hide Columns
+============================= */
 #ticketsTable th:nth-child(12),
 #ticketsTable td:nth-child(12) {
   display: none;
 }
 
+/* =============================
+   User Info Responsive
+============================= */
 .user-info {
   font-size: 0.9rem;
   font-weight: 500;
   color: #333;
-  word-wrap: break-word; /* kalau nama/email panjang */
+  word-wrap: break-word;
 }
 
-/* Tablet */
 @media (max-width: 768px) {
   .user-info {
     font-size: 0.8rem;
   }
 }
 
-/* HP kecil */
 @media (max-width: 480px) {
   .user-info {
     font-size: 0.75rem;
-    display: block; /* biar turun ke bawah kalau kepanjangan */
-    text-align: right; /* bisa kanan, tergantung layout */
+    display: block;
+    text-align: right;
   }
 }
-
-
-
-
-
