@@ -123,7 +123,7 @@ function hitungDurasi(createdAt, updatedAt) {
   const start = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   const end = updatedAt.toDate ? updatedAt.toDate() : new Date(updatedAt);
   const menit = Math.floor((end - start) / 60000);
-  return isNaN(menit) ? "-" : `${menit} menit`;
+  return isNaN(menit) ? "-" : `${menit} Menit`;
 }
 
 // mapping device → code
@@ -345,4 +345,5 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
 
