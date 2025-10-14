@@ -1,4 +1,6 @@
-// ==================== 🔹 Import Firebase SDK ====================
+// =========================================================
+// 🔹 Import Firebase SDK
+// =========================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
@@ -7,7 +9,9 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// ==================== 🔹 Firebase Config ====================
+// =========================================================
+// 🔹 Firebase Configuration
+// =========================================================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -18,55 +22,71 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// ==================== 🔹 EmailJS Config ====================
+// =========================================================
+// 🔹 EmailJS Configuration
+// =========================================================
 const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
 const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
 const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
-// ==================== 🔹 Initialize Firebase & Firestore ====================
+// =========================================================
+// 🔹 Initialize Firebase & EmailJS
+// =========================================================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// ==================== 🔹 Initialize EmailJS ====================
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
-// ==================== 🔹 DOM Elements ====================
+// =========================================================
+// 🔹 DOM Elements
+// =========================================================
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
 
-// ==================== 🔹 Redirect to Admin Page ====================
+// =========================================================
+// 🔹 Redirect to Admin Page
+// =========================================================
 document.getElementById("adminBtn").addEventListener("click", () => {
   window.location.href = "admin/index.html";
 });
 
-// ==================== 🔹 Send Email ====================
+// =========================================================
+// 🔹 Send Email via EmailJS
+// =========================================================
 async function sendEmail(payload) {
   try {
-    const res = await emailjs.send(
+    const response = await emailjs.send(
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
       payload
     );
-    console.log("✅ Email sent:", res.status);
-    return res;
-  } catch (err) {
-    console.error("❌ Email failed:", err);
-    throw new Error("Failed to send email.");
+    console.log("✅ Email sent successfully:", response.status);
+    return response;
+  } catch (error) {
+    console.error("❌ Email sending failed:", error);
+    throw new Error("Failed to send email notification.");
   }
 }
 
-// ==================== 🔹 Save to Firestore ====================
+// =========================================================
+// 🔹 Save Ticket to Firestore
+// =========================================================
 async function saveToFirestore(doc) {
-  const col = collection(db, "tickets");
-  const ref = await addDoc(col, doc);
-  return ref.id;
+  const colRef = collection(db, "tickets");
+  const docRef = await addDoc(colRef, doc);
+  return docRef.id;
 }
 
-// ==================== 🔹 Submit Handler ====================
+// =========================================================
+// 🔹 Form Submit Handler
+// =========================================================
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!form.checkValidity()) return form.reportValidity();
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
 
   statusEl.textContent = "Submitting ticket...";
 
@@ -101,56 +121,56 @@ form.addEventListener("submit", async (e) => {
 
   try {
     // Save to Firestore
-    const id = await saveToFirestore(docData);
+    const ticketId = await saveToFirestore(docData);
 
-    // Priority color mapping
+    // Map priority to color
     const priorityColor =
       {
         High: "#dc3545", // red
         Medium: "#ffc107", // yellow
         Low: "#28a745", // green
-      }[docData.priority] || "#007bff"; // blue default
+      }[docData.priority] || "#007bff"; // default blue
 
     // Send email notification
     await sendEmail({
-      ticketId: id,
+      ticketId,
       ...docData,
       priority_color: priorityColor,
       sent_at: new Date().toLocaleString("en-US"),
       recipient: STATIC_RECIPIENT_EMAIL,
     });
 
-    // ✅ Auto-close success popup
+    // ✅ Show success popup
     await Swal.fire({
       icon: "success",
       title: "Ticket Submitted!",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#2563eb", // warna biru agar senada
       html: `
-        <!--<p><b>Ticket ID:</b> ${id}</p>-->
         <p>Thank you! The IT team will review your ticket shortly.</p>
       `,
+      confirmButtonText: "OK",
+      confirmButtonColor: "#2563eb",
       timer: 3000,
       timerProgressBar: true,
-      showConfirmButton: false,
+      allowOutsideClick: false,
     });
 
     statusEl.textContent = "✅ Ticket successfully submitted!";
     form.reset();
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
-    // ❌ Auto-close error popup
+    // ❌ Show error popup
     await Swal.fire({
       icon: "error",
       title: "Submission Failed",
-      text: err.message || "Something went wrong. Please try again.",
+      text: error.message || "Something went wrong. Please try again.",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#dc3545",
       timer: 4000,
       timerProgressBar: true,
-      showConfirmButton: false,
+      allowOutsideClick: false,
     });
 
-    statusEl.textContent = "❌ Error: " + err.message;
+    statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
