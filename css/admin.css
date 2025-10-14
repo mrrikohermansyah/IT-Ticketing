@@ -445,16 +445,27 @@ header .logo {
   word-wrap: break-word;
 }
 
+/* Tablet */
 @media (max-width: 768px) {
   .user-info {
     font-size: 0.8rem;
   }
 }
 
+/* HP kecil */
 @media (max-width: 480px) {
+  .auth-buttons {
+    flex-direction: column;
+    align-items: flex-end; /* tetap rata kanan */
+  }
+
   .user-info {
     font-size: 0.75rem;
-    display: block;
+    order: -1;        /* dipaksa tampil paling atas */
+    margin-bottom: 6px;
     text-align: right;
+    width: 100%;
   }
 }
+
+
