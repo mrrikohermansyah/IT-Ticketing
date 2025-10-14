@@ -51,6 +51,11 @@ async function sendEmail(payload) {
   }
 }
 
+// ==================== Ke Halaman Admin ==================
+document.getElementById("adminBtn").addEventListener("click", function () {
+  window.location.href = "admin/index.html";
+});
+
 // ==================== 🔹 Simpan ke Firestore ====================
 async function saveToFirestore(doc) {
   const col = collection(db, "tickets");
@@ -123,3 +128,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = "❌ Terjadi kesalahan: " + err.message;
   }
 });
+
