@@ -219,10 +219,13 @@ function applyFilter() {
         </div>
       </td>
       <td>
-        <textarea class="noteArea" data-id="${
-          d.id
-        }" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>
-      </td>
+  ${
+    d.status_ticket === "Close with note"
+      ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>`
+      : "-"
+  }
+</td>
+
     `;
     ticketsBody.appendChild(tr);
 
@@ -326,4 +329,5 @@ document.addEventListener("DOMContentLoaded", () => {
     btnExport.addEventListener("click", exportToPDF);
   }
 });
+
 
