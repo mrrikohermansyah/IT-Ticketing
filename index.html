@@ -7,7 +7,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="icon" type="image/png" href="imgs/meitech.png" />
+    <link rel="icon" type="image/png" href="../imgs/meitech.png" />
 
     <!-- NOTE:
        - Saat ini file menggunakan EmailJS UMD build (window.emailjs).
@@ -20,7 +20,7 @@
     <main class="container">
       <header>
         <img src="imgs/meitech-logo.png" alt="Company Logo" class="logo" />
-        <h1>IT Ticketing — Lapor Permasalahan</h1>
+        <h1>IT Ticketing — Report Problems</h1>
         <!--<p>
           Isi form di bawah untuk membuat tiket. Semua data tersimpan ke
           Firebase dan akan dikirim ke email penerima.
@@ -29,37 +29,37 @@
 
       <form id="ticketForm" class="card" autocomplete="on">
         <label for="inventory"
-          ><span class="required">Kode Inventory</span>
+          ><span class="required">Inventory Code</span>
           <input
             type="text"
             name="inventory"
             id="inventory"
             required
-            placeholder="Cth: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll"
+            placeholder="E.g: PCPRO-MEB001 / PC24001MEB / PRN24001MEB, dll"
           />
         </label>
         <label for="device">
-          <span class="required">Jenis Perangkat</span>
+          <span class="required">Device Type</span>
           <select name="device" id="device" required>
             <option value="PC">PC</option>
             <option value="Laptop">Laptop</option>
             <option value="Printer">Printer</option>
-            <option value="Jaringan">Jaringan</option>
+            <option value="Jaringan">Network</option>
             <option value="MSOffice">MS Office</option>
-            <option value="Software">Software Lain</option>
+            <option value="Software">Software</option>
             <option value="Projector">Projector</option>
-            <option value="Lainlain">Lain-lain</option>
+            <option value="Lainlain">Etc.</option>
           </select>
         </label>
 
         <label for="name"
-          ><span class="required">Nama Lengkap</span>
+          ><span class="required">Full Name</span>
           <input
             type="text"
             name="name"
             id="name"
             required
-            placeholder="Nama Anda"
+            placeholder="Your Name"
             required
           />
         </label>
@@ -71,33 +71,34 @@
             name="user_email"
             id="user_email"
             required
-            placeholder="email@perushaan.com"
+            placeholder="email@company.com"
             required
           />
         </label>
 
         <label for="department"
-          ><span class="required">Departemen</span>
+          ><span class="required">Department</span>
           <select name="department" id="department" required>
             <option value="Management">Management</option>
             <option value="IT">IT</option>
             <option value="HR">HR</option>
             <option value="Finance">Finance</option>
             <option value="Engineer">Engineer</option>
-            <option value="Painting">Painting</option>
             <option value="QC">QC</option>
             <option value="Completion">Completion</option>
             <option value="HSE">HSE</option>
             <option value="Clinic">Clinic</option>
-            <option value="Other">Lainnya</option>
+            <option value="Other">Etc.</option>
           </select>
         </label>
 
         <!-- 🔹 Lokasi Baru -->
         <label for="location">
-          <span class="required">Lokasi</span>
+          <span class="required">Location</span>
           <select name="location" id="location" required>
             <option value="White Office">White Office</option>
+            <option value="White Office">White Office 2nd Fl</option>
+            <option value="White Office">White Office 3rd Fl</option>
             <option value="Blue Office">Blue Office</option>
             <option value="Green Office">Green Office</option>
             <option value="Red Office">Red Office</option>
@@ -105,12 +106,21 @@
             <option value="Clinic">Clinic</option>
             <option value="HSE Yard">HSE Yard</option>
             <option value="Control Room">Control Room</option>
+            <option value="Security">Security</option>
             <option value="Welding School">Welding School</option>
+            <option value="Multi Purposes Building">
+              Multi Purposes Building
+            </option>
+            <option value="Workshop9">Workshop 9</option>
+            <option value="Workshop10">Workshop 10</option>
+            <option value="Workshop11">Workshop 11</option>
+            <option value="Workshop12">Workshop 12</option>
+            <option value="etc">Etc.</option>
           </select>
         </label>
 
         <label for="priority"
-          ><span class="required">Prioritas</span>
+          ><span class="required">Priority</span>
           <select name="priority" id="priority" required>
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -119,32 +129,32 @@
         </label>
 
         <label for="subject"
-          ><span class="required">Ringkasan Masalah</span>
+          ><span class="required">Problems Summary</span>
           <input
             type="text"
             name="subject"
             id="subject"
             required
-            placeholder="Ringkasan singkat"
+            placeholder="Summary"
             required
           />
         </label>
 
         <label for="message"
-          ><span class="required">Deskripsi Lengkap</span>
+          ><span class="required">Description Details</span>
           <textarea
             name="message"
             id="message"
             rows="6"
             required
-            placeholder="Jelaskan masalah secara detail..."
+            placeholder="Explain your problems..."
           ></textarea>
         </label>
 
         <div class="actions">
-          <button type="submit" id="submitBtn">Kirim Tiket</button>
+          <button type="submit" id="submitBtn">Send Ticket</button>
           <button type="reset">Reset</button>
-          <button type="admin" id="adminBtn">Admin</button>
+          <button type="admin" id="adminBtn">Admin Page</button>
         </div>
 
         <div id="status" role="status" aria-live="polite"></div>
@@ -164,6 +174,3 @@
     <script type="module" src="js/app.js"></script>
   </body>
 </html>
-
-
-
