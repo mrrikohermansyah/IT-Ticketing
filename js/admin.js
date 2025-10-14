@@ -77,15 +77,15 @@ if (loginBtn) {
 
       Swal.fire({
         icon: "success",
-        title: "Login Berhasil",
-        text: "Selamat datang kembali!",
+        title: "Login Success",
+        text: "Welcome Back!",
         showConfirmButton: false,
         timer: 1800,
       });
     } catch (err) {
       Swal.fire({
         icon: "error",
-        title: "Login Gagal",
+        title: "Login Failed",
         text: err.message,
       });
     }
@@ -101,8 +101,8 @@ if (logoutBtn) {
 
       Swal.fire({
         icon: "info",
-        title: "Logout Berhasil",
-        text: "Anda telah keluar dari sistem.",
+        title: "Logout Success",
+        text: "You're Logged Out",
         confirmButtonText: "OK",
       }).then(() => {
         window.location.replace("../login/index.html");
@@ -111,7 +111,7 @@ if (logoutBtn) {
       isLoggingOut = false; // reset kalau gagal
       Swal.fire({
         icon: "error",
-        title: "Gagal Logout",
+        title: "Logout Failed",
         text: err.message,
       });
     }
@@ -130,7 +130,7 @@ function hitungDurasi(createdAt, updatedAt) {
   const start = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
   const end = updatedAt.toDate ? updatedAt.toDate() : new Date(updatedAt);
   const menit = Math.floor((end - start) / 60000);
-  return isNaN(menit) ? "-" : `${menit} menit`;
+  return isNaN(menit) ? "-" : `${menit} Menit`;
 }
 
 function mapDeviceToCode(device) {
@@ -154,7 +154,7 @@ function applyFilter() {
       : allTickets.filter((t) => t.action_by === selected);
 
   if (filtered.length === 0) {
-    ticketsBody.innerHTML = `<tr><td colspan="15">Tidak ada tiket untuk filter ini.</td></tr>`;
+    ticketsBody.innerHTML = `<tr><td colspan="15">There's no ticket with this filter</td></tr>`;
     return;
   }
 
@@ -221,7 +221,7 @@ function applyFilter() {
       <td>
         <textarea class="noteArea" data-id="${
           d.id
-        }" rows="2" placeholder="Tulis catatan...">${d.note || ""}</textarea>
+        }" rows="2" placeholder="Write your note...">${d.note || ""}</textarea>
       </td>
     `;
     ticketsBody.appendChild(tr);
@@ -260,8 +260,8 @@ onAuthStateChanged(auth, (user) => {
         ),
       ];
 
-      filterSelect.innerHTML = `<option value="all">-- Semua --</option>
-                                <option value="unassigned">-- Belum di-assign --</option>`;
+      filterSelect.innerHTML = `<option value="all">-- All --</option>
+                                <option value="unassigned">-- Not Assigned --</option>`;
       names.forEach((name) => {
         filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
       });
@@ -281,7 +281,7 @@ function exportToPDF() {
   const doc = new jsPDF("l", "pt", "a4");
 
   doc.setFontSize(14);
-  doc.text("Daftar Tiket IT", 40, 40);
+  doc.text("List IT Tickets", 40, 40);
 
   const table = document.getElementById("ticketsTable");
   if (!table) return;
