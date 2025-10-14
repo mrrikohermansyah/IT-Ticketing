@@ -282,23 +282,23 @@ ticketsBody.addEventListener("click", async (e) => {
     const ticketId = btn.dataset.id;
 
     const confirm = await Swal.fire({
-      title: "Hapus tiket ini?",
-      text: "Tindakan ini tidak dapat dibatalkan.",
+      title: "Delete this ticket?",
+      text: "You cannot undo this action!.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, hapus!",
-      cancelButtonText: "Batal",
+      confirmButtonText: "Yes, Delete!",
+      cancelButtonText: "Cancel",
     });
 
     if (confirm.isConfirmed) {
       try {
         await deleteDoc(doc(db, "tickets", ticketId));
-        Swal.fire("Terhapus!", "Tiket telah dihapus.", "success");
+        Swal.fire("Deleted!", "Ticket Deleted!.", "success");
       } catch (err) {
         console.error("Error deleting document:", err);
-        Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data.", "error");
+        Swal.fire("Failed!", "Delete Data Failed.", "error");
       }
     }
   }
@@ -400,4 +400,5 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
