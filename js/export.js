@@ -27,9 +27,7 @@ async function exportToExcel() {
 
   // ===== BARIS PERIOD =====
   const now = new Date();
-  const periodText = `${now.getFullYear()}-${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}`;
+  const periodText = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   sheet.getCell("E4").value = "Period :";
   sheet.getCell("E4").font = { name: "Arial", size: 10 };
@@ -56,11 +54,7 @@ async function exportToExcel() {
 
   const headerRow = sheet.addRow(headers);
   headerRow.font = { bold: true, name: "Arial", size: 10 };
-  headerRow.alignment = {
-    horizontal: "center",
-    vertical: "middle",
-    wrapText: true,
-  };
+  headerRow.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
   headerRow.eachCell((cell) => {
     cell.border = {
       top: { style: "thick" },
@@ -68,11 +62,7 @@ async function exportToExcel() {
       bottom: { style: "thick" },
       right: { style: "thick" },
     };
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFEFEFEF" },
-    };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFEFEF" } };
   });
   sheet.getRow(headerRow.number).height = 69 * 0.75;
 
@@ -100,8 +90,7 @@ async function exportToExcel() {
           const [d, m, y] = parts;
           const fullYear = y.length === 2 ? "20" + y : y;
           const dateObj = new Date(`${fullYear}-${m}-${d}`);
-          value =
-            dateObj instanceof Date && !isNaN(dateObj) ? dateObj : cleanDate;
+          value = dateObj instanceof Date && !isNaN(dateObj) ? dateObj : cleanDate;
         }
       }
 
@@ -136,7 +125,7 @@ async function exportToExcel() {
   });
 
   // ===== TEBAL KELILING TABEL =====
-  const lastRow = sheet.lastRow.number;
+  let lastRow = sheet.lastRow.number;
   const firstRow = headerRow.number;
   for (let r = firstRow; r <= lastRow; r++) {
     for (let c = 1; c <= 8; c++) {
@@ -146,6 +135,29 @@ async function exportToExcel() {
       if (c === 1) cell.border.left = { style: "thick" };
       if (c === 8) cell.border.right = { style: "thick" };
     }
+  }
+
+  // ===== TAMBAHKAN 2 BARIS KOSONG DI BAWAH (NYATU DENGAN TABEL) =====
+  for (let i = 0; i < 2; i++) {
+    const extraRow = sheet.addRow(["", "", "", "", "", "", "", ""]);
+    extraRow.eachCell((cell, colNumber) => {
+      cell.font = { name: "Arial", size: 10 };
+      cell.border = {
+        top: { style: "hair" },
+        bottom: { style: "hair" },
+        left: { style: "hair" },
+        right: { style: "hair" },
+      };
+      if (colNumber === 1) cell.border.left = { style: "thick" };
+      if (colNumber === 8) cell.border.right = { style: "thick" };
+    });
+  }
+
+  // border bawah tebal di baris terakhir tambahan
+  lastRow = sheet.lastRow.number;
+  for (let c = 1; c <= 8; c++) {
+    const cell = sheet.getCell(lastRow, c);
+    cell.border = { ...cell.border, bottom: { style: "thick" } };
   }
 
   // ===== ATUR LEBAR KOLOM =====
