@@ -431,7 +431,26 @@ header .logo {
   font-size: 0.9rem;
   font-weight: 500;
   color: #333;
+  word-wrap: break-word; /* kalau nama/email panjang */
 }
+
+/* Tablet */
+@media (max-width: 768px) {
+  .user-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* HP kecil */
+@media (max-width: 480px) {
+  .user-info {
+    font-size: 0.75rem;
+    display: block; /* biar turun ke bawah kalau kepanjangan */
+    text-align: right; /* bisa kanan, tergantung layout */
+  }
+}
+
+
 
 
 
