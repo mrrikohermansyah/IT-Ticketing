@@ -304,9 +304,28 @@ ticketsBody.addEventListener("click", async (e) => {
         <option value="Etc." ${val === "Etc." ? "selected" : ""}>Etc.</option>
       </select>
     `;
-        } else {
-          td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
-        }
+        } else if (field === "location") {
+  td.innerHTML = `
+    <select class="edit-input" data-field="location" style="width:100%;">
+      <option value="">-- Pilih Lokasi --</option>
+      <option value="White Office 2nd Fl" ${val === "White Office 2nd Fl" ? "selected" : ""}>White Office 2nd Fl</option>
+      <option value="White Office 3rd Fl" ${val === "White Office 3rd Fl" ? "selected" : ""}>White Office 3rd Fl</option>
+      <option value="Blue Office" ${val === "Blue Office" ? "selected" : ""}>Blue Office</option>
+      <option value="Green Office" ${val === "Green Office" ? "selected" : ""}>Green Office</option>
+      <option value="Red Office" ${val === "Red Office" ? "selected" : ""}>Red Office</option>
+      <option value="HRD" ${val === "HRD" ? "selected" : ""}>HRD</option>
+      <option value="Clinic" ${val === "Clinic" ? "selected" : ""}>Clinic</option>
+      <option value="HSE Yard" ${val === "HSE Yard" ? "selected" : ""}>HSE Yard</option>
+      <option value="Dark Room" ${val === "Dark Room" ? "selected" : ""}>Dark Room</option>
+      <option value="Control Room" ${val === "Control Room" ? "selected" : ""}>Control Room</option>
+      <option value="Security" ${val === "Security" ? "selected" : ""}>Security</option>
+      <option value="Welding School" ${val === "Welding School" ? "selected" : ""}>Welding School</option>
+    </select>
+  `;
+} else {
+  td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
+}
+
       });
       return;
     }
@@ -513,4 +532,5 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
