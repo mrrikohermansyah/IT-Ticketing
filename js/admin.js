@@ -266,6 +266,44 @@ ticketsBody.addEventListener("click", async (e) => {
               ).join("")}
             </select>
           `;
+        } else if (field === "priority") {
+          td.innerHTML = `
+      <select class="edit-input" data-field="priority" style="width:100%;">
+        <option value="Low" ${val === "Low" ? "selected" : ""}>Low</option>
+        <option value="Medium" ${
+          val === "Medium" ? "selected" : ""
+        }>Medium</option>
+        <option value="High" ${val === "High" ? "selected" : ""}>High</option>
+      </select>
+    `;
+        } else if (field === "department") {
+          td.innerHTML = `
+      <select class="edit-input" data-field="department" style="width:100%;">
+        <option value="Management" ${
+          val === "Management" ? "selected" : ""
+        }>Management</option>
+        <option value="IT" ${val === "IT" ? "selected" : ""}>IT</option>
+        <option value="HR" ${val === "HR" ? "selected" : ""}>HR</option>
+        <option value="Finance" ${
+          val === "Finance" ? "selected" : ""
+        }>Finance</option>
+        <option value="Engineer" ${
+          val === "Engineer" ? "selected" : ""
+        }>Engineer</option>
+        <option value="QC" ${val === "QC" ? "selected" : ""}>QC</option>
+        <option value="Completion" ${
+          val === "Completion" ? "selected" : ""
+        }>Completion</option>
+        <option value="HSE" ${val === "HSE" ? "selected" : ""}>HSE</option>
+        <option value="Clinic" ${
+          val === "Clinic" ? "selected" : ""
+        }>Clinic</option>
+        <option value="Vendor" ${
+          val === "Vendor" ? "selected" : ""
+        }>Vendor</option>
+        <option value="Etc." ${val === "Etc." ? "selected" : ""}>Etc.</option>
+      </select>
+    `;
         } else {
           td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
         }
