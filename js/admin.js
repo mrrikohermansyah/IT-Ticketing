@@ -9,6 +9,7 @@ import {
   collection,
   updateDoc,
   deleteDoc,
+  getDoc,
   doc,
   query,
   orderBy,
@@ -371,15 +372,26 @@ ticketsBody.addEventListener("click", async (e) => {
       updates[el.dataset.field] = el.value;
     });
 
-    // ✅ Hanya update updatedAt kalau status_ticket diubah ke Close atau Close with note
-    const statusField = row.querySelector(
-      '[data-field="status_ticket"] select'
-    );
-    const statusValue = statusField ? statusField.value : null;
+    // ✅ Hitung ulang durasi hanya jika status tiket berubah ke "Close" atau "Close with note"
+const statusField = row.querySelector('[data-field="status_ticket"] select');
+const statusValue = statusField ? statusField.value : null;
 
-    if (statusValue === "Close" || statusValue === "Close with note") {
-      updates.updatedAt = serverTimestamp();
-    }
+// ambil data lama dari Firestore (agar bisa bandingkan status sebelumnya)
+const docRef = doc(db, "tickets", ticketId);
+const oldDataSnap = await getDoc(docRef);
+const oldData = oldDataSnap.exists() ? oldDataSnap.data() : {};
+
+// cek perubahan status
+const oldStatus = oldData.status_ticket || "Open";
+const newStatus = statusValue || oldStatus;
+
+// update updatedAt hanya jika status berubah ke close
+if (
+  (oldStatus !== newStatus) &&
+  (newStatus === "Close" || newStatus === "Close with note")
+) {
+  updates.updatedAt = serverTimestamp();
+}
 
     const confirmSave = await Swal.fire({
       title: "Simpan Perubahan?",
@@ -588,4 +600,5 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
