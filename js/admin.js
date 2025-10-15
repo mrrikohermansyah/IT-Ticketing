@@ -1,5 +1,5 @@
 // ======================================================
-// 🔹 js/admin.js — Clean & Organized Version
+// 🔹 js/admin.js — Row Editing with Save & Cancel
 // ======================================================
 
 // ==================== 🔹 Firebase Imports ====================
@@ -28,7 +28,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
   projectId: "itticketing-f926e",
-  storageBucket: "itticketing-f926e.firebasestorage.app",
+  storageBucket: "itticketing-f926e.appspot.com",
   messagingSenderId: "896370077103",
   appId: "1:896370077103:web:1d692e88b611bff838935a",
   measurementId: "G-TJCHPXG7D5",
@@ -55,21 +55,19 @@ const IT_NAMES = [
   "Moch Wahyu Nugroho",
   "Ade Reinalwi",
 ];
+
 let allTickets = [];
 let isLoggingOut = false;
 
 // ======================================================
 // 🔹 LOGIN / LOGOUT HANDLING
 // ======================================================
-
-// Redirect ke login page manual
 if (goLoginBtn) {
   goLoginBtn.addEventListener("click", () => {
     window.location.href = "../login/index.html";
   });
 }
 
-// Login with Google
 if (loginBtn) {
   loginBtn.addEventListener("click", async () => {
     try {
@@ -82,22 +80,16 @@ if (loginBtn) {
         timer: 1800,
       });
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Login Failed",
-        text: err.message,
-      });
+      Swal.fire({ icon: "error", title: "Login Failed", text: err.message });
     }
   });
 }
 
-// Logout user
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
       isLoggingOut = true;
       await signOut(auth);
-
       Swal.fire({
         icon: "info",
         title: "Logout Success",
@@ -108,11 +100,7 @@ if (logoutBtn) {
       });
     } catch (err) {
       isLoggingOut = false;
-      Swal.fire({
-        icon: "error",
-        title: "Logout Failed",
-        text: err.message,
-      });
+      Swal.fire({ icon: "error", title: "Logout Failed", text: err.message });
     }
   });
 }
@@ -120,7 +108,6 @@ if (logoutBtn) {
 // ======================================================
 // 🔹 HELPER FUNCTIONS
 // ======================================================
-
 function formatTimestamp(ts) {
   if (!ts) return "-";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -146,7 +133,6 @@ function mapDeviceToCode(device) {
 // ======================================================
 // 🔹 APPLY FILTER & RENDER TABLE
 // ======================================================
-
 function applyFilter() {
   ticketsBody.innerHTML = "";
 
@@ -175,190 +161,217 @@ function applyFilter() {
     const codeValue = d.code || mapDeviceToCode(d.device);
 
     const tr = document.createElement("tr");
+    tr.dataset.id = d.id;
     tr.innerHTML = `
-      <td>${sentAt}</td>
-      <td>${d.inventory || "-"}</td>
+      <td class="readonly">${sentAt}</td>
+      <td class="editable" data-field="inventory">${d.inventory || "-"}</td>
       <td>${codeValue || "-"}</td>
-      <td>${d.location || "-"}</td>
-      <td>${d.message || "-"}</td>
-      <td>${d.name || "-"}</td>
+      <td class="editable" data-field="location">${d.location || "-"}</td>
+      <td class="editable" data-field="message">${d.message || "-"}</td>
+      <td class="editable" data-field="name">${d.name || "-"}</td>
       <td>${hitungDurasi(d.createdAt, d.updatedAt)}</td>
-      <td>${
-        d.status_ticket === "Open"
-          ? "Continue"
-          : d.status_ticket === "Close"
-          ? "Finish"
-          : d.status_ticket === "Close with note"
-          ? "Finish (note)"
-          : "-"
-      }</td>
-      <td>${d.user_email || "-"}</td>
-      <td>${d.department || "-"}</td>
-      <td>${d.priority || "-"}</td>
+      <td><span class="status-text">${
+        d.status_ticket
+      }</span><span class="dot" style="background-color:${statusColor}"></span></td>
+      <td class="editable" data-field="user_email">${d.user_email || "-"}</td>
+      <td class="editable" data-field="department">${d.department || "-"}</td>
+      <td class="editable" data-field="priority">${d.priority || "-"}</td>
       <td style="display:none">${d.subject || "-"}</td>
+      <td class="editable" data-field="action_by">${d.action_by || "-"}</td>
+      <td class="editable" data-field="status_ticket">${
+        d.status_ticket || "-"
+      }</td>
+      <td class="editable" data-field="note">${d.note || "-"}</td>
       <td>
-        <select class="assignSelect" data-id="${d.id}">
-          <option value="">-- Pilih --</option>
-          ${IT_NAMES.map(
-            (it) =>
-              `<option value="${it}" ${
-                d.action_by === it ? "selected" : ""
-              }>${it}</option>`
-          ).join("")}
-        </select>
-      </td>
-      <td>
-        <div class="status-wrapper">
-          <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${
-              d.status_ticket === "Open" ? "selected" : ""
-            }>Open</option>
-            <option value="Close" ${
-              d.status_ticket === "Close" ? "selected" : ""
-            }>Close</option>
-            <option value="Close with note" ${
-              d.status_ticket === "Close with note" ? "selected" : ""
-            }>Close with note</option>
-          </select>
-          <span class="dot" style="background-color:${statusColor}"></span>
+        <div class="action-buttons">
+          <button class="table-btn update-btn" data-id="${d.id}">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <button class="table-btn delete-btn" data-id="${d.id}">
+            <i class="fa-solid fa-trash"></i>
+          </button>
         </div>
       </td>
-      <td>
-        ${
-          d.status_ticket === "Close with note"
-            ? `<textarea class="noteArea" data-id="${
-                d.id
-              }" rows="2" placeholder="Write your note...">${
-                d.note || ""
-              }</textarea>`
-            : "-"
-        }
-      </td>
-      <td>
-  <button class="update-btn" data-id="${d.id}">
-    <i class="fa-solid fa-pen"></i> Update
-  </button>
-</td>
-      <td>
-        <button class="delete-btn" data-id="${d.id}">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </td>
     `;
-
     ticketsBody.appendChild(tr);
-
-    // ========== Event Listeners per baris ==========
-
-    // Update action_by
-    tr.querySelector(".assignSelect").addEventListener("change", (e) =>
-      updateDoc(doc(db, "tickets", d.id), { action_by: e.target.value })
-    );
-
-    // Update status_ticket
-    tr.querySelector(".statusSelect").addEventListener("change", async (e) => {
-      const newStatus = e.target.value;
-
-      await updateDoc(doc(db, "tickets", d.id), {
-        status_ticket: newStatus,
-        updatedAt: serverTimestamp(),
-      });
-
-      // Update kolom Note
-      const noteCell = tr.querySelector("td:nth-last-child(2)");
-      if (newStatus === "Close with note") {
-        noteCell.innerHTML = `<textarea class="noteArea" data-id="${
-          d.id
-        }" rows="2" placeholder="Write your note...">${
-          d.note || ""
-        }</textarea>`;
-        noteCell
-          .querySelector(".noteArea")
-          .addEventListener("change", (e) =>
-            updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
-          );
-      } else {
-        noteCell.innerHTML = "-";
-      }
-    });
-
-    // Note listener
-    const noteArea = tr.querySelector(".noteArea");
-    if (noteArea) {
-      noteArea.addEventListener("change", (e) =>
-        updateDoc(doc(db, "tickets", d.id), { note: e.target.value })
-      );
-    }
   });
 }
 
 // ======================================================
-// 🔹 UPDATE BUTTON HANDLING
+// 🔹 UPDATE BUTTON HANDLING (Save + Cancel with SweetAlert2)
 // ======================================================
 ticketsBody.addEventListener("click", async (e) => {
-  if (e.target.closest(".update-btn")) {
-    const btn = e.target.closest(".update-btn");
-    const ticketId = btn.dataset.id;
-    const row = btn.closest("tr");
+  const btnUpdate = e.target.closest(".update-btn");
+  const btnCancel = e.target.closest(".cancel-btn");
 
-    // ambil data terbaru dari row
-    const assign = row.querySelector(".assignSelect")?.value || "";
-    const status = row.querySelector(".statusSelect")?.value || "";
-    const note = row.querySelector(".noteArea")?.value || "";
+  // masuk mode edit
+  if (btnUpdate) {
+    const row = btnUpdate.closest("tr");
+    const ticketId = row.dataset.id;
+    const isEditing = row.classList.contains("editing");
+
+    // masuk mode edit
+    if (!isEditing) {
+      // simpan data lama biar bisa batal
+      row.dataset.original = JSON.stringify(
+        Object.fromEntries(
+          [...row.querySelectorAll(".editable")].map((td) => [
+            td.dataset.field,
+            td.innerText === "-" ? "" : td.innerText,
+          ])
+        )
+      );
+
+      row.classList.add("editing");
+      btnUpdate.innerHTML = `<i class="fa-solid fa-check"></i>`;
+      btnUpdate.classList.add("save-btn");
+
+      // tambahkan tombol batal
+      const actionDiv = row.querySelector(".action-buttons");
+      actionDiv.insertAdjacentHTML(
+        "beforeend",
+        `<button class="table-btn cancel-btn"><i class="fa-solid fa-xmark"></i></button>`
+      );
+
+      // ubah field jadi input/select, tapi keep ukuran table
+      row.querySelectorAll(".editable").forEach((td) => {
+        const field = td.dataset.field;
+        const val = td.innerText === "-" ? "" : td.innerText;
+
+        if (field === "message" || field === "note") {
+          td.innerHTML = `<textarea class="edit-input" data-field="${field}" style="width:100%;">${val}</textarea>`;
+        } else if (field === "status_ticket") {
+          td.innerHTML = `
+            <select class="edit-input" data-field="status_ticket" style="width:100%;">
+              <option value="Open" ${
+                val === "Open" ? "selected" : ""
+              }>Open</option>
+              <option value="Close" ${
+                val === "Close" ? "selected" : ""
+              }>Close</option>
+              <option value="Close with note" ${
+                val === "Close with note" ? "selected" : ""
+              }>Close with note</option>
+            </select>
+          `;
+        } else if (field === "action_by") {
+          td.innerHTML = `
+            <select class="edit-input" data-field="action_by" style="width:100%;">
+              <option value="">-- Pilih --</option>
+              ${IT_NAMES.map(
+                (it) =>
+                  `<option value="${it}" ${
+                    val === it ? "selected" : ""
+                  }>${it}</option>`
+              ).join("")}
+            </select>
+          `;
+        } else {
+          td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
+        }
+      });
+      return;
+    }
+
+    // jika save ditekan
+    const updates = {};
+    row.querySelectorAll(".edit-input").forEach((el) => {
+      updates[el.dataset.field] = el.value;
+    });
+    updates.updatedAt = serverTimestamp();
+
+    const confirmSave = await Swal.fire({
+      title: "Simpan Perubahan?",
+      text: "Data akan diperbarui di database",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Simpan",
+      cancelButtonText: "Batal",
+    });
+
+    if (!confirmSave.isConfirmed) return;
 
     try {
-      await updateDoc(doc(db, "tickets", ticketId), {
-        action_by: assign,
-        status_ticket: status,
-        note: note,
-        updatedAt: serverTimestamp(),
-      });
-
+      await updateDoc(doc(db, "tickets", ticketId), updates);
       Swal.fire({
         icon: "success",
         title: "Update Berhasil",
-        text: "Data tiket sudah diperbarui",
+        text: "Data berhasil diperbarui",
         timer: 1800,
         showConfirmButton: false,
       });
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Update Gagal",
-        text: err.message,
+
+      row.classList.remove("editing");
+      btnUpdate.innerHTML = `<i class="fa-solid fa-pen"></i>`;
+      btnUpdate.classList.remove("save-btn");
+      row.querySelector(".cancel-btn")?.remove();
+
+      // tampilkan kembali hasil update
+      row.querySelectorAll(".editable").forEach((td) => {
+        const field = td.dataset.field;
+        td.innerText = updates[field] || "-";
       });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Update Gagal", text: err.message });
     }
+  }
+
+  // batal edit
+  if (btnCancel) {
+    const row = btnCancel.closest("tr");
+    const original = JSON.parse(row.dataset.original);
+
+    const confirmCancel = await Swal.fire({
+      title: "Batalkan Edit?",
+      text: "Perubahan tidak akan disimpan",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Batalkan",
+      cancelButtonText: "Kembali",
+    });
+
+    if (!confirmCancel.isConfirmed) return;
+
+    row.classList.remove("editing");
+    row.querySelector(
+      ".update-btn"
+    ).innerHTML = `<i class="fa-solid fa-pen"></i>`;
+    row.querySelector(".update-btn").classList.remove("save-btn");
+    btnCancel.remove();
+
+    // restore data lama
+    row.querySelectorAll(".editable").forEach((td) => {
+      const field = td.dataset.field;
+      td.innerText = original[field] || "-";
+    });
   }
 });
 
 // ======================================================
 // 🔹 DELETE BUTTON HANDLING
 // ======================================================
-
 ticketsBody.addEventListener("click", async (e) => {
-  if (e.target.closest(".delete-btn")) {
-    const btn = e.target.closest(".delete-btn");
-    const ticketId = btn.dataset.id;
+  const btn = e.target.closest(".delete-btn");
+  if (!btn) return;
 
-    const confirm = await Swal.fire({
-      title: "Delete this ticket?",
-      text: "You cannot undo this action!.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, Delete!",
-      cancelButtonText: "Cancel",
-    });
+  const ticketId = btn.dataset.id;
+  const confirm = await Swal.fire({
+    title: "Delete this ticket?",
+    text: "You cannot undo this action!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, Delete!",
+    cancelButtonText: "Cancel",
+  });
 
-    if (confirm.isConfirmed) {
-      try {
-        await deleteDoc(doc(db, "tickets", ticketId));
-        Swal.fire("Deleted!", "Ticket Deleted!.", "success");
-      } catch (err) {
-        console.error("Error deleting document:", err);
-        Swal.fire("Failed!", "Delete Data Failed.", "error");
-      }
+  if (confirm.isConfirmed) {
+    try {
+      await deleteDoc(doc(db, "tickets", ticketId));
+      Swal.fire("Deleted!", "Ticket Deleted!.", "success");
+    } catch (err) {
+      Swal.fire("Failed!", "Delete Data Failed.", "error");
     }
   }
 });
@@ -366,7 +379,6 @@ ticketsBody.addEventListener("click", async (e) => {
 // ======================================================
 // 🔹 MONITOR LOGIN STATE
 // ======================================================
-
 onAuthStateChanged(auth, (user) => {
   if (!user && !isLoggingOut) {
     return window.location.replace("../login/index.html");
@@ -398,6 +410,7 @@ onAuthStateChanged(auth, (user) => {
         <option value="all">-- All --</option>
         <option value="unassigned">-- Not Assigned --</option>
       `;
+
       names.forEach((name) => {
         filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
       });
@@ -410,11 +423,9 @@ onAuthStateChanged(auth, (user) => {
 // ======================================================
 // 🔹 EXPORT TO PDF
 // ======================================================
-
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("l", "pt", "a4");
-
   doc.setFontSize(14);
   doc.text("List IT Tickets", 40, 40);
 
@@ -424,19 +435,8 @@ function exportToPDF() {
   const headers = Array.from(table.querySelectorAll("thead th")).map(
     (th) => th.innerText
   );
-
   const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
-    Array.from(tr.querySelectorAll("td")).map((td, idx) => {
-      if ([12, 13].includes(idx)) {
-        const select = td.querySelector("select");
-        return select ? select.value || "-" : td.innerText;
-      }
-      if (idx === 14) {
-        const textarea = td.querySelector("textarea");
-        return textarea ? textarea.value || "-" : td.innerText;
-      }
-      return td.innerText;
-    })
+    Array.from(tr.querySelectorAll("td")).map((td) => td.innerText)
   );
 
   doc.autoTable({
@@ -450,10 +450,6 @@ function exportToPDF() {
 
   doc.save("tickets.pdf");
 }
-
-// ======================================================
-// 🔹 EVENT EXPORT PDF
-// ======================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
