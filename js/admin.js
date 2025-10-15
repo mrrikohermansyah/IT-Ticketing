@@ -150,15 +150,20 @@ function applyFilter() {
   }
 
   filtered.forEach((d) => {
-    const statusColor =
-      d.status_ticket === "Close"
-        ? "green"
-        : d.status_ticket === "Close with note"
-        ? "orange"
-        : "red";
-
     const sentAt = formatTimestamp(d.createdAt || d.sent_at);
     const codeValue = d.code || mapDeviceToCode(d.device);
+
+    // 🔹 Tentukan teks & warna untuk QA dan Status Ticket
+    const qaText =
+      d.status_ticket === "Close" || d.status_ticket === "Close with note"
+        ? "Finish"
+        : "Continue";
+
+    let statusColor = "";
+    if (d.status_ticket === "Close") statusColor = "green";
+    else if (d.status_ticket === "Close with note") statusColor = "orange";
+    else if (d.status_ticket === "Open") statusColor = "red";
+    else statusColor = "black";
 
     const tr = document.createElement("tr");
     tr.dataset.id = d.id;
@@ -170,18 +175,24 @@ function applyFilter() {
       <td class="editable" data-field="message">${d.message || "-"}</td>
       <td class="editable" data-field="name">${d.name || "-"}</td>
       <td>${hitungDurasi(d.createdAt, d.updatedAt)}</td>
-      <td><span class="status-text">${
-        d.status_ticket
-      }</span><span class="dot" style="background-color:${statusColor}"></span></td>
+
+      <!-- 🔹 Kolom QA -->
+      <td>${qaText}</td>
+
       <td class="editable" data-field="user_email">${d.user_email || "-"}</td>
       <td class="editable" data-field="department">${d.department || "-"}</td>
       <td class="editable" data-field="priority">${d.priority || "-"}</td>
       <td style="display:none">${d.subject || "-"}</td>
       <td class="editable" data-field="action_by">${d.action_by || "-"}</td>
-      <td class="editable" data-field="status_ticket">${
-        d.status_ticket || "-"
-      }</td>
+
+      <!-- 🔹 Kolom Status Ticket dengan warna -->
+      <td class="editable" data-field="status_ticket" style="color:${statusColor}; font-weight:600;">
+        ${d.status_ticket || "-"}
+      </td>
+
       <td class="editable" data-field="note">${d.note || "-"}</td>
+
+      <!-- 🔹 Action Button -->
       <td>
         <div class="action-buttons">
           <button class="table-btn update-btn" data-id="${d.id}">
@@ -305,28 +316,51 @@ ticketsBody.addEventListener("click", async (e) => {
       </select>
     `;
         } else if (field === "location") {
-  td.innerHTML = `
+          td.innerHTML = `
     <select class="edit-input" data-field="location" style="width:100%;">
       <option value="">-- Pilih Lokasi --</option>
-      <option value="White Office" ${val === "White Office" ? "selected" : ""}>White Office</option>
-      <option value="White Office 2nd Fl" ${val === "White Office 2nd Fl" ? "selected" : ""}>White Office 2nd Fl</option>
-      <option value="White Office 3rd Fl" ${val === "White Office 3rd Fl" ? "selected" : ""}>White Office 3rd Fl</option>
-      <option value="Blue Office" ${val === "Blue Office" ? "selected" : ""}>Blue Office</option>
-      <option value="Green Office" ${val === "Green Office" ? "selected" : ""}>Green Office</option>
-      <option value="Red Office" ${val === "Red Office" ? "selected" : ""}>Red Office</option>
+      <option value="White Office" ${
+        val === "White Office" ? "selected" : ""
+      }>White Office</option>
+      <option value="White Office 2nd Fl" ${
+        val === "White Office 2nd Fl" ? "selected" : ""
+      }>White Office 2nd Fl</option>
+      <option value="White Office 3rd Fl" ${
+        val === "White Office 3rd Fl" ? "selected" : ""
+      }>White Office 3rd Fl</option>
+      <option value="Blue Office" ${
+        val === "Blue Office" ? "selected" : ""
+      }>Blue Office</option>
+      <option value="Green Office" ${
+        val === "Green Office" ? "selected" : ""
+      }>Green Office</option>
+      <option value="Red Office" ${
+        val === "Red Office" ? "selected" : ""
+      }>Red Office</option>
       <option value="HRD" ${val === "HRD" ? "selected" : ""}>HRD</option>
-      <option value="Clinic" ${val === "Clinic" ? "selected" : ""}>Clinic</option>
-      <option value="HSE Yard" ${val === "HSE Yard" ? "selected" : ""}>HSE Yard</option>
-      <option value="Dark Room" ${val === "Dark Room" ? "selected" : ""}>Dark Room</option>
-      <option value="Control Room" ${val === "Control Room" ? "selected" : ""}>Control Room</option>
-      <option value="Security" ${val === "Security" ? "selected" : ""}>Security</option>
-      <option value="Welding School" ${val === "Welding School" ? "selected" : ""}>Welding School</option>
+      <option value="Clinic" ${
+        val === "Clinic" ? "selected" : ""
+      }>Clinic</option>
+      <option value="HSE Yard" ${
+        val === "HSE Yard" ? "selected" : ""
+      }>HSE Yard</option>
+      <option value="Dark Room" ${
+        val === "Dark Room" ? "selected" : ""
+      }>Dark Room</option>
+      <option value="Control Room" ${
+        val === "Control Room" ? "selected" : ""
+      }>Control Room</option>
+      <option value="Security" ${
+        val === "Security" ? "selected" : ""
+      }>Security</option>
+      <option value="Welding School" ${
+        val === "Welding School" ? "selected" : ""
+      }>Welding School</option>
     </select>
   `;
-} else {
-  td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
-}
-
+        } else {
+          td.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${val}" style="width:100%;">`;
+        }
       });
       return;
     }
@@ -336,7 +370,16 @@ ticketsBody.addEventListener("click", async (e) => {
     row.querySelectorAll(".edit-input").forEach((el) => {
       updates[el.dataset.field] = el.value;
     });
-    //updates.updatedAt = serverTimestamp();
+
+    // ✅ Hanya update updatedAt kalau status_ticket diubah ke Close atau Close with note
+    const statusField = row.querySelector(
+      '[data-field="status_ticket"] select'
+    );
+    const statusValue = statusField ? statusField.value : null;
+
+    if (statusValue === "Close" || statusValue === "Close with note") {
+      updates.updatedAt = serverTimestamp();
+    }
 
     const confirmSave = await Swal.fire({
       title: "Simpan Perubahan?",
@@ -364,7 +407,7 @@ ticketsBody.addEventListener("click", async (e) => {
       btnUpdate.classList.remove("save-btn");
       row.querySelector(".cancel-btn")?.remove();
 
-      // tampilkan kembali hasil update
+      // tampilkan kembali hasil update di tabel
       row.querySelectorAll(".editable").forEach((td) => {
         const field = td.dataset.field;
         td.innerText = updates[field] || "-";
@@ -470,7 +513,9 @@ onAuthStateChanged(auth, (user) => {
 
         const names = [
           ...new Set(
-            allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))
+            allTickets
+              .map((t) => t.action_by)
+              .filter((n) => IT_NAMES.includes(n))
           ),
         ];
 
@@ -533,7 +578,3 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
-
-
-
-
