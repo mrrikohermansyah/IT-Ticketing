@@ -49,7 +49,12 @@ const goLoginBtn = document.getElementById("goLoginBtn");
 const userInfo = document.getElementById("userInfo");
 
 // ==================== 🔹 Constants ====================
-const IT_NAMES = ["Riko Hermansyah", "Abdurahman Hakim", "Moch Wahyu Nugroho", "Ade Reinalwi"];
+const IT_NAMES = [
+  "Riko Hermansyah",
+  "Abdurahman Hakim",
+  "Moch Wahyu Nugroho",
+  "Ade Reinalwi",
+];
 let allTickets = [];
 let isLoggingOut = false;
 
@@ -196,15 +201,21 @@ function applyFilter() {
           <option value="">-- Pilih --</option>
           ${IT_NAMES.map(
             (it) =>
-              `<option value="${it}" ${d.action_by === it ? "selected" : ""}>${it}</option>`
+              `<option value="${it}" ${
+                d.action_by === it ? "selected" : ""
+              }>${it}</option>`
           ).join("")}
         </select>
       </td>
       <td>
         <div class="status-wrapper">
           <select class="statusSelect" data-id="${d.id}">
-            <option value="Open" ${d.status_ticket === "Open" ? "selected" : ""}>Open</option>
-            <option value="Close" ${d.status_ticket === "Close" ? "selected" : ""}>Close</option>
+            <option value="Open" ${
+              d.status_ticket === "Open" ? "selected" : ""
+            }>Open</option>
+            <option value="Close" ${
+              d.status_ticket === "Close" ? "selected" : ""
+            }>Close</option>
             <option value="Close with note" ${
               d.status_ticket === "Close with note" ? "selected" : ""
             }>Close with note</option>
@@ -215,12 +226,19 @@ function applyFilter() {
       <td>
         ${
           d.status_ticket === "Close with note"
-            ? `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${
+            ? `<textarea class="noteArea" data-id="${
+                d.id
+              }" rows="2" placeholder="Write your note...">${
                 d.note || ""
               }</textarea>`
             : "-"
         }
       </td>
+      <td>
+  <button class="update-btn" data-id="${d.id}">
+    <i class="fa-solid fa-pen"></i> Update
+  </button>
+</td>
       <td>
         <button class="delete-btn" data-id="${d.id}">
           <i class="fa-solid fa-trash"></i>
@@ -249,7 +267,9 @@ function applyFilter() {
       // Update kolom Note
       const noteCell = tr.querySelector("td:nth-last-child(2)");
       if (newStatus === "Close with note") {
-        noteCell.innerHTML = `<textarea class="noteArea" data-id="${d.id}" rows="2" placeholder="Write your note...">${
+        noteCell.innerHTML = `<textarea class="noteArea" data-id="${
+          d.id
+        }" rows="2" placeholder="Write your note...">${
           d.note || ""
         }</textarea>`;
         noteCell
@@ -271,6 +291,45 @@ function applyFilter() {
     }
   });
 }
+
+// ======================================================
+// 🔹 UPDATE BUTTON HANDLING
+// ======================================================
+ticketsBody.addEventListener("click", async (e) => {
+  if (e.target.closest(".update-btn")) {
+    const btn = e.target.closest(".update-btn");
+    const ticketId = btn.dataset.id;
+    const row = btn.closest("tr");
+
+    // ambil data terbaru dari row
+    const assign = row.querySelector(".assignSelect")?.value || "";
+    const status = row.querySelector(".statusSelect")?.value || "";
+    const note = row.querySelector(".noteArea")?.value || "";
+
+    try {
+      await updateDoc(doc(db, "tickets", ticketId), {
+        action_by: assign,
+        status_ticket: status,
+        note: note,
+        updatedAt: serverTimestamp(),
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Update Berhasil",
+        text: "Data tiket sudah diperbarui",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Update Gagal",
+        text: err.message,
+      });
+    }
+  }
+});
 
 // ======================================================
 // 🔹 DELETE BUTTON HANDLING
@@ -400,5 +459,3 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
-
-
