@@ -522,14 +522,39 @@ header .logo {
   min-height: 80px;
 }
 
+/* ==========================
+   🔹 Custom Select Styling
+========================== */
 .edit-input {
   width: 100%;
-  padding: 4px 6px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db; /* abu-abu netral */
+  border-radius: 6px;
+  background-color: #ffffff;
   font-size: 0.9rem;
-  box-sizing: border-box;
+  font-family: "Inter", Arial, sans-serif;
+  color: #374151; /* abu gelap */
+  appearance: none; /* hilangin default arrow browser */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.edit-input textarea {
-  resize: vertical;
-  min-height: 40px;
+.edit-input:focus {
+  border-color: #2563eb; /* biru */
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+/* 🔹 Tambahkan ikon dropdown custom */
+.edit-input {
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%236b7280' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  padding-right: 30px;
+}
+
+.edit-input option {
+  padding: 8px;
 }
