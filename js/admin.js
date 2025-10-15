@@ -308,6 +308,7 @@ ticketsBody.addEventListener("click", async (e) => {
   td.innerHTML = `
     <select class="edit-input" data-field="location" style="width:100%;">
       <option value="">-- Pilih Lokasi --</option>
+      <option value="White Office" ${val === "White Office" ? "selected" : ""}>White Office</option>
       <option value="White Office 2nd Fl" ${val === "White Office 2nd Fl" ? "selected" : ""}>White Office 2nd Fl</option>
       <option value="White Office 3rd Fl" ${val === "White Office 3rd Fl" ? "selected" : ""}>White Office 3rd Fl</option>
       <option value="Blue Office" ${val === "Blue Office" ? "selected" : ""}>Blue Office</option>
@@ -532,5 +533,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
 
