@@ -336,7 +336,7 @@ ticketsBody.addEventListener("click", async (e) => {
     row.querySelectorAll(".edit-input").forEach((el) => {
       updates[el.dataset.field] = el.value;
     });
-    updates.updatedAt = serverTimestamp();
+    //updates.updatedAt = serverTimestamp();
 
     const confirmSave = await Swal.fire({
       title: "Simpan Perubahan?",
@@ -533,6 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
 
 
