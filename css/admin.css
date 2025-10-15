@@ -495,6 +495,53 @@ header .logo {
   }
 }
 
+/* ================================
+   Buttons Style
+================================ */
+.update-btn {
+  background-color: #2563eb; /* biru */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.update-btn:hover {
+  background-color: #1d4ed8; /* biru lebih gelap */
+}
+
+.delete-btn {
+  background-color: #e53935; /* merah */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.delete-btn:hover {
+  background-color: #c62828;
+}
+
+/* biar tombol sejajar rapi */
+td button {
+  margin: 2px;
+}
+
+
 
 
 
