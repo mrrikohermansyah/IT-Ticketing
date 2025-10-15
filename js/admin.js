@@ -415,7 +415,7 @@ ticketsBody.addEventListener("click", async (e) => {
 });
 
 // ======================================================
-// 🔹 MONITOR LOGIN STATE
+// 🔹 MONITOR LOGIN STATE (Dengan Akses Admin Terbatas)
 // ======================================================
 onAuthStateChanged(auth, (user) => {
   if (!user && !isLoggingOut) {
@@ -423,38 +423,58 @@ onAuthStateChanged(auth, (user) => {
   }
 
   if (user) {
+    const allowedAdmins = [
+      "mr.rikohermansyah@gmail.com",
+      "devi.armanda@meitech-ekabintan.com",
+      "wahyu.nugroho@meitech-ekabintan.com",
+      "abdurahman.hakim@meitech-ekabintan.com",
+      "riko.hermansyah@meitech-ekabintan.com",
+    ];
+
+    // --- tampilkan nama login
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
-
     if (userInfo) {
       userInfo.style.display = "inline-block";
       userInfo.textContent = user.displayName || user.email || "Unknown User";
     }
 
-    const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
-      allTickets = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
+    // ✅ hanya admin yang boleh lihat data ticket
+    if (allowedAdmins.includes(user.email)) {
+      const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snapshot) => {
+        allTickets = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
 
-      const names = [
-        ...new Set(
-          allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))
-        ),
-      ];
+        const names = [
+          ...new Set(
+            allTickets.map((t) => t.action_by).filter((n) => IT_NAMES.includes(n))
+          ),
+        ];
 
-      filterSelect.innerHTML = `
-        <option value="all">-- All --</option>
-        <option value="unassigned">-- Not Assigned --</option>
-      `;
+        filterSelect.innerHTML = `
+          <option value="all">-- All --</option>
+          <option value="unassigned">-- Not Assigned --</option>
+        `;
 
-      names.forEach((name) => {
-        filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
+        names.forEach((name) => {
+          filterSelect.innerHTML += `<option value="${name}">${name}</option>`;
+        });
+
+        applyFilter();
       });
-
-      applyFilter();
-    });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Access Denied",
+        text: "You are not authorized to view tickets.",
+      }).then(() => {
+        signOut(auth);
+        window.location.replace("../login/index.html");
+      });
+    }
   }
 });
 
@@ -493,3 +513,4 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
