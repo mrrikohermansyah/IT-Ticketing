@@ -544,6 +544,16 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ======================================================
+// 🔹 FILTER HANDLING — supaya dropdown "Action By" berfungsi
+// ======================================================
+if (filterSelect) {
+  filterSelect.addEventListener("change", () => {
+    applyFilter();
+  });
+}
+
+
+// ======================================================
 // 🔹 EXPORT TO PDF
 // ======================================================
 function exportToPDF() {
@@ -578,3 +588,4 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
