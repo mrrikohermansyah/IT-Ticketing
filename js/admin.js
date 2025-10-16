@@ -291,25 +291,28 @@ ticketsBody.addEventListener("click", async (e) => {
         } else if (field === "department") {
           td.innerHTML = `
       <select class="edit-input" data-field="department" style="width:100%;">
+        <option value="Clinic" ${
+        val === "Clinic" ? "selected" : ""
+      }>Clinic</option>
+      <option value="Completion" ${
+        val === "Completion" ? "selected" : ""
+      }>Completion</option>
+      <option value="Document Control" ${
+        val === "Document Control" ? "selected" : ""
+      }>Document Control</option>
+      <option value="Engineer" ${
+        val === "Engineer" ? "selected" : ""
+      }>Engineer</option>
+      <option value="Finance" ${
+        val === "Finance" ? "selected" : ""
+      }>Finance</option>
+      <option value="HR" ${val === "HR" ? "selected" : ""}>HR</option>
+      <option value="HSE" ${val === "HSE" ? "selected" : ""}>HSE</option>
+      <option value="IT" ${val === "IT" ? "selected" : ""}>IT</option>
         <option value="Management" ${
           val === "Management" ? "selected" : ""
         }>Management</option>
-        <option value="IT" ${val === "IT" ? "selected" : ""}>IT</option>
-        <option value="HR" ${val === "HR" ? "selected" : ""}>HR</option>
-        <option value="Finance" ${
-          val === "Finance" ? "selected" : ""
-        }>Finance</option>
-        <option value="Engineer" ${
-          val === "Engineer" ? "selected" : ""
-        }>Engineer</option>
         <option value="QC" ${val === "QC" ? "selected" : ""}>QC</option>
-        <option value="Completion" ${
-          val === "Completion" ? "selected" : ""
-        }>Completion</option>
-        <option value="HSE" ${val === "HSE" ? "selected" : ""}>HSE</option>
-        <option value="Clinic" ${
-          val === "Clinic" ? "selected" : ""
-        }>Clinic</option>
         <option value="Vendor" ${
           val === "Vendor" ? "selected" : ""
         }>Vendor</option>
@@ -600,5 +603,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExport = document.getElementById("btnExportPDF");
   if (btnExport) btnExport.addEventListener("click", exportToPDF);
 });
+
 
 
