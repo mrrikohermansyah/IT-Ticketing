@@ -89,6 +89,9 @@ form.addEventListener("submit", async (e) => {
   }
 
   statusEl.textContent = "Submitting ticket...";
+  setTimeout(() => {
+    statusEl.textContent = "";
+  }, 2000);
 
   const data = new FormData(form);
   const device = data.get("device");
@@ -154,7 +157,7 @@ form.addEventListener("submit", async (e) => {
       allowOutsideClick: false,
     });
 
-    statusEl.textContent = "✅ Ticket successfully submitted!";
+    //statusEl.textContent = "✅ Ticket successfully submitted!";
     form.reset();
   } catch (error) {
     console.error(error);
@@ -174,3 +177,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
