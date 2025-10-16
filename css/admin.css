@@ -129,6 +129,22 @@ header .logo {
 }
 
 /* ----- Filter Bar ----- */
+.filter-bar button {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #4a90e2;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.filter-bar button:hover {
+  background: #357ab8;
+}
+
 .filter-bar {
   display: flex;
   align-items: center;
@@ -146,7 +162,8 @@ header .logo {
   font-weight: 600;
   color: #333;
 }
-.filter-bar select {
+.filter-bar select,
+.filter-bar input[type="date"] {
   padding: 8px 12px;
   font-size: 14px;
   border: 1px solid #ccc;
@@ -155,10 +172,12 @@ header .logo {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
-.filter-bar select:hover {
+.filter-bar select:hover,
+.filter-bar input[type="date"]:hover {
   border-color: #888;
 }
-.filter-bar select:focus {
+.filter-bar select:focus,
+.filter-bar input[type="date"]:focus {
   outline: none;
   border-color: #4a90e2;
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
@@ -174,7 +193,8 @@ header .logo {
   .filter-bar label {
     font-size: 13px;
   }
-  .filter-bar select {
+  .filter-bar select,
+  .filter-bar input[type="date"] {
     width: 100%;
   }
 }
