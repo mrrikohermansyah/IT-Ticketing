@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable
+// ✅ Universal handler for "Etc." (Lainlain) dropdowns — FIX iOS RESET BUG
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -97,7 +97,9 @@ window.addEventListener("DOMContentLoaded", () => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
 
-    const createInput = () => {
+    const parent = selectEl.parentElement;
+
+    const switchToInput = () => {
       const input = document.createElement("input");
       input.type = "text";
       input.name = id;
@@ -110,47 +112,34 @@ window.addEventListener("DOMContentLoaded", () => {
       input.style.borderRadius = "6px";
       input.style.border = "1px solid #ccc";
       input.style.marginTop = "5px";
-      return input;
-    };
 
-    const switchToInput = () => {
-      const input = createInput();
+      // 🔹 tunda penggantian agar Safari tak rerender
+      setTimeout(() => {
+        selectEl.style.display = "none";
+        parent.appendChild(input);
+        input.focus({ preventScroll: false });
+      }, 200);
 
-      // 🔹 Ganti dilakukan setelah Safari menutup native picker
-      // gunakan microtask + dua frame + delay agar benar-benar stabil
-      Promise.resolve().then(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            selectEl.style.display = "none";
-            selectEl.insertAdjacentElement("afterend", input);
-            // Fokus setelah DOM settle agar keyboard muncul
-            setTimeout(() => {
-              input.focus({ preventScroll: false });
-            }, 120);
-          });
-        });
-      });
-
-      // 🔹 Saat input blur & kosong, kembalikan select
+      // 🔹 handle blur balik ke select kalau kosong
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
-          input.remove();
+          parent.removeChild(input);
           selectEl.style.display = "";
           selectEl.value = "";
         }
       });
     };
 
-    // 🔹 Event handler utama
-    selectEl.addEventListener("change", (e) => {
-      const val = e.target.value.toLowerCase();
-      if (val === "lainlain" || val === "etc.") {
-        // iOS Safari butuh jeda kecil sebelum modifikasi DOM
-        setTimeout(() => {
+    const attachListener = () => {
+      selectEl.addEventListener("change", (e) => {
+        const val = e.target.value?.toLowerCase();
+        if (val === "lainlain" || val === "etc" || val === "etc.") {
           switchToInput();
-        }, 300);
-      }
-    });
+        }
+      });
+    };
+
+    attachListener();
   });
 });
 
@@ -308,5 +297,6 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
