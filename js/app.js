@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 "Etc." / "Lain-lain" dropdown handler — fully stable for iOS & Android
+// 🔹 Stable "Etc." handler — Safari iOS Safe (tanpa reset)
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -96,17 +96,18 @@ window.addEventListener("DOMContentLoaded", () => {
   selects.forEach((id) => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
+
     const parent = selectEl.parentElement;
 
-    const switchToInput = () => {
-      // Pastikan dropdown sudah menutup sebelum replace
-      setTimeout(() => {
-        const input = document.createElement("input");
+    const createInput = () => {
+      let input = parent.querySelector(`#${id}-custom`);
+      if (!input) {
+        input = document.createElement("input");
         input.type = "text";
+        input.id = `${id}-custom`;
         input.name = id;
-        input.id = id;
-        input.required = true;
         input.placeholder = `Please specify other ${id}`;
+        input.required = true;
         input.classList.add("fade-in-input");
         Object.assign(input.style, {
           width: "100%",
@@ -114,50 +115,33 @@ window.addEventListener("DOMContentLoaded", () => {
           borderRadius: "6px",
           border: "1px solid #ccc",
           marginTop: "5px",
+          display: "none",
         });
 
-        selectEl.replaceWith(input);
+        parent.appendChild(input);
 
-        // ✅ Fokus otomatis dengan iOS-safe trick
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            const tmp = document.createElement("input");
-            tmp.style.position = "absolute";
-            tmp.style.opacity = "0";
-            document.body.appendChild(tmp);
-            tmp.focus();
-            tmp.remove();
-            input.focus({ preventScroll: false });
-          }, 100);
-        });
-
-        // Kembalikan ke select kalau user tidak isi
         input.addEventListener("blur", () => {
           if (!input.value.trim()) {
-            input.replaceWith(selectEl);
+            input.style.display = "none";
+            selectEl.style.display = "";
             selectEl.value = "";
-            attachListener();
           }
         });
-      }, 250); // tunggu iOS tutup picker sepenuhnya
+      }
+      return input;
     };
 
     const attachListener = () => {
-      // Dengarkan event pointerup agar Safari sempat commit value
-      selectEl.addEventListener("pointerup", () => {
-        setTimeout(() => {
-          const val = selectEl.value?.toLowerCase?.() || "";
-          if (val === "lainlain" || val === "etc" || val === "etc.") {
-            switchToInput();
-          }
-        }, 150);
-      });
-
-      // Cadangan untuk Android / desktop biasa
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
         if (val === "lainlain" || val === "etc" || val === "etc.") {
-          switchToInput();
+          const input = createInput();
+          // tunggu dropdown close baru show input
+          setTimeout(() => {
+            selectEl.style.display = "none";
+            input.style.display = "block";
+            input.focus();
+          }, 200);
         }
       });
     };
@@ -165,6 +149,7 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
+
 
 
 // =========================================================
@@ -320,6 +305,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
