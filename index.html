@@ -64,15 +64,25 @@
           />
         </label>
 
+        <label for="user_phone">
+          <span class="required">Phone</span>
+          <input
+            type="tel"
+            name="user_phone"
+            id="user_phone"
+            required
+            placeholder="+62 812 3456 7890"
+            pattern="^\+?[0-9\s\-]{9,15}$"
+          />
+        </label>
+
         <label for="user_email"
-          ><span class="required">Email</span>
+          ><span>Email (Optional)</span>
           <input
             type="email"
             name="user_email"
             id="user_email"
-            required
             placeholder="email@company.com"
-            required
           />
         </label>
 
@@ -88,6 +98,7 @@
             <option value="HSE">HSE</option>
             <option value="IT">IT</option>
             <option value="Management">Management</option>
+            <option value="Procurement">Procurement</option>
             <option value="QC">QC</option>
             <option value="Vendor">Vendor</option>
             <option value="Other">Etc.</option>
@@ -177,17 +188,8 @@
     <script type="module" src="js/app.js"></script>
   </body>
   <!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Your Script -->
-<script type="module" src="app.js"></script>
-
+  <!-- Your Script -->
+  <script type="module" src="app.js"></script>
 </html>
-
-
-
-
-
-
-
-
