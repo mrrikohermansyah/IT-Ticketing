@@ -87,81 +87,66 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// =========================================================
-// ✅ FIX SAFARI iOS "RESET TO --CHOOSE--" BUG (Final Tested)
-// =========================================================
-document.querySelectorAll("select").forEach((selectEl) => {
-  const id = selectEl.id;
+document.addEventListener("DOMContentLoaded", () => {
+  const deviceSelect = document.getElementById("device");
 
-  // Buat input tersembunyi di bawahnya
-  const input = document.createElement("input");
-  input.type = "text";
-  input.id = `${id}-input`;
-  input.name = selectEl.name;
-  input.required = false;
-  input.placeholder = "Please specify other...";
-  input.classList.add("fade-in-input");
-  input.style.width = "100%";
-  input.style.marginTop = "6px";
-  input.style.padding = "8px";
-  input.style.border = "1px solid #d1d5db";
-  input.style.borderRadius = "6px";
-  input.style.fontSize = "0.9rem";
-  input.style.backgroundColor = "white";
-  input.style.opacity = "0";
-  input.style.visibility = "hidden";
-  input.style.pointerEvents = "none";
-  input.style.transition = "opacity 0.25s ease";
+  if (!deviceSelect) return;
 
-  selectEl.insertAdjacentElement("afterend", input);
+  // Buat container pembungkus agar posisi input bisa ditumpuk di atas select
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "relative";
+  wrapper.style.width = "100%";
 
-  // Event saat user pilih opsi
-  selectEl.addEventListener("change", () => {
-    const val = selectEl.value?.toLowerCase();
+  // Bungkus select dengan wrapper
+  deviceSelect.parentNode.insertBefore(wrapper, deviceSelect);
+  wrapper.appendChild(deviceSelect);
 
-    if (val === "lainlain" || val === "etc" || val === "other") {
-      // Transisi keluar select
-      selectEl.style.transition = "opacity 0.25s ease";
-      selectEl.style.opacity = "0";
+  // Buat input tersembunyi di atas select (absolute)
+  const otherInput = document.createElement("input");
+  otherInput.type = "text";
+  otherInput.id = "otherDevice";
+  otherInput.placeholder = "Please specify other device...";
+  otherInput.required = false;
 
-      // Setelah transisi selesai, sembunyikan
-      setTimeout(() => {
-        selectEl.style.visibility = "hidden";
-        selectEl.style.pointerEvents = "none";
-        selectEl.required = false;
+  Object.assign(otherInput.style, {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    width: "100%",
+    padding: "8px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    fontSize: "0.9rem",
+    background: "white",
+    display: "none",
+    zIndex: "2",
+  });
 
-        // Tampilkan input dengan fade-in
-        input.style.visibility = "visible";
-        input.style.pointerEvents = "auto";
-        input.required = true;
-        requestAnimationFrame(() => {
-          input.style.opacity = "1";
-        });
+  wrapper.appendChild(otherInput);
 
-        // Fokus otomatis dengan delay agar iOS tidak reset
-        setTimeout(() => input.focus(), 400);
-      }, 250);
+  // Saat pilih "Lainlain"
+  deviceSelect.addEventListener("change", (e) => {
+    const value = e.target.value.toLowerCase();
+
+    if (value === "lainlain" || value === "etc" || value === "other") {
+      otherInput.style.display = "block";
+      otherInput.required = true;
+      // Jangan ubah select, biarkan tetap agar iOS tidak reset
+      setTimeout(() => otherInput.focus(), 250); // delay agar iOS tidak menutup keyboard
+    } else {
+      otherInput.style.display = "none";
+      otherInput.required = false;
+      otherInput.value = "";
     }
   });
 
-  // Event saat user keluar dari input
-  input.addEventListener("blur", () => {
-    if (!input.value.trim()) {
-      // Transisi keluar input
-      input.style.opacity = "0";
-
-      setTimeout(() => {
-        input.style.visibility = "hidden";
-        input.style.pointerEvents = "none";
-        input.required = false;
-
-        // Balikkan select
-        selectEl.style.visibility = "visible";
-        selectEl.style.pointerEvents = "auto";
-        selectEl.style.opacity = "1";
-        selectEl.required = true;
-        selectEl.value = "";
-      }, 250);
+  // Saat user keluar dari input
+  otherInput.addEventListener("blur", () => {
+    if (!otherInput.value.trim()) {
+      otherInput.style.display = "none";
+      otherInput.required = false;
+      otherInput.value = "";
+      deviceSelect.value = "";
     }
   });
 });
