@@ -90,60 +90,50 @@ document.addEventListener("DOMContentLoaded", () => {
 // =========================================================
 // ✅ FIX SAFARI iOS "RESET TO --CHOOSE--" BUG (Final Tested)
 // =========================================================
-window.addEventListener("DOMContentLoaded", () => {
-  const selects = ["device", "location", "department"];
+// 🔹 Ganti select lain/other jadi input manual (tanpa replace)
+document.querySelectorAll("select").forEach((selectEl) => {
+  selectEl.addEventListener("change", (e) => {
+    const val = e.target.value?.toLowerCase();
 
-  selects.forEach((id) => {
-    const selectEl = document.getElementById(id);
-    if (!selectEl) return;
+    if (val === "lainlain" || val === "etc" || val === "other") {
+      // sembunyikan select
+      selectEl.style.display = "none";
 
-    const parent = selectEl.parentElement;
+      // buat input kalau belum ada
+      let input = document.querySelector(`#${selectEl.id}-input`);
+      if (!input) {
+        input = document.createElement("input");
+        input.type = "text";
+        input.id = `${selectEl.id}-input`;
+        input.name = selectEl.name;
+        input.required = true;
+        input.placeholder = "Masukkan perangkat lainnya...";
+        input.classList.add("fade-in-input");
+        input.style.width = "100%";
+        input.style.marginTop = "0px";
+        input.style.padding = "8px";
+        input.style.border = "1px solid #d1d5db";
+        input.style.borderRadius = "6px";
+        input.style.fontSize = "0.9rem";
+        input.style.backgroundColor = "white";
 
-    const switchToInput = () => {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = id;
-      input.id = id;
-      input.required = true;
-      input.placeholder = `Please specify other ${id}`;
-      input.classList.add("fade-in-input");
-      input.style.width = "100%";
-      input.style.padding = "8px";
-      input.style.borderRadius = "6px";
-      input.style.border = "1px solid #ccc";
-      input.style.marginTop = "5px";
+        selectEl.insertAdjacentElement("afterend", input);
+      } else {
+        input.style.display = "block";
+      }
 
-      // ✅ tunda eksekusi 1 frame supaya Safari tidak reset form
-      requestAnimationFrame(() => {
-        selectEl.style.visibility = "hidden";
-        parent.appendChild(input);
+      // fokus otomatis
+      setTimeout(() => input.focus(), 150);
 
-        // ✅ beri delay kecil agar keyboard langsung muncul di iOS
-        setTimeout(() => {
-          input.focus({ preventScroll: false });
-        }, 50);
-      });
-
-      // ✅ jika user keluar tanpa isi → balikin ke dropdown
+      // jika input dikosongkan dan kehilangan fokus → balik ke select
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
-          parent.removeChild(input);
-          selectEl.style.visibility = "visible";
+          input.style.display = "none";
+          selectEl.style.display = "block";
           selectEl.value = "";
         }
       });
-    };
-
-    const attachListener = () => {
-      selectEl.addEventListener("change", (e) => {
-        const val = e.target.value?.toLowerCase();
-        if (val === "lainlain" || val === "etc" || val === "etc.") {
-          switchToInput();
-        }
-      });
-    };
-
-    attachListener();
+    }
   });
 });
 
@@ -300,3 +290,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
