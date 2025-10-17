@@ -118,7 +118,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
         // jangan langsung fokus → tunggu user tap manual
         // tambahkan pesan halus agar jelas
-        input.placeholder = "Tap here to type your custom value...";
+        input.placeholder = "...";
 
         // blur listener dengan sedikit delay agar tidak langsung balik
         setTimeout(() => {
@@ -300,4 +300,5 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
