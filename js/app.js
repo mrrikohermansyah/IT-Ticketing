@@ -151,7 +151,11 @@ document.addEventListener("DOMContentLoaded", () => {
     selects.forEach((id) => {
       const selectEl = document.getElementById(id);
       const inputEl = document.getElementById(`${id}_other`);
-      if (inputEl && inputEl.style.display === "block" && inputEl.value.trim()) {
+      if (
+        inputEl &&
+        inputEl.style.display === "block" &&
+        inputEl.value.trim()
+      ) {
         const hidden = document.createElement("input");
         hidden.type = "hidden";
         hidden.name = id;
@@ -161,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
 
 // =========================================================
 // 🔹 Send Email via EmailJS
@@ -297,11 +300,3 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
-
-
-
-
-
-
-
