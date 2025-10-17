@@ -88,83 +88,107 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// ✅ "Etc." handler — Works on Desktop, iOS, Android
+// 💪 Super-stable "Etc." handler — No reset, No stuck, iOS/Android/PC safe
 // =========================================================
-
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("ticketForm");
   const selects = ["device", "location", "department"];
+  const form = document.getElementById("ticketForm");
 
   selects.forEach((id) => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
-    const parent = selectEl.parentElement;
 
-    // 🔹 Buat input tersembunyi
+    selectEl.removeAttribute("required"); // kita handle manual
+
+    const parent = selectEl.parentElement;
     const input = document.createElement("input");
     input.type = "text";
     input.name = `${id}_other`;
     input.id = `${id}_other`;
     input.placeholder = `Please specify other ${id}`;
-    input.style.cssText =
-      "display:none;width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-top:5px;";
+    Object.assign(input.style, {
+      width: "100%",
+      padding: "8px",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+      marginTop: "5px",
+      display: "none",
+    });
     parent.appendChild(input);
 
-    // 🔹 Saat user pilih "Etc."
+    let lastValue = ""; // untuk cegah trigger berulang
+
     selectEl.addEventListener("change", (e) => {
       const val = e.target.value.toLowerCase();
+
+      // Hindari trigger ulang
+      if (val === lastValue) return;
+      lastValue = val;
+
       if (val === "lainlain" || val === "etc" || val === "etc.") {
-        // 🩵 clone untuk menghindari bug validasi Chrome
-        const clone = selectEl.cloneNode(true);
-        clone.style.display = "none";
-        selectEl.replaceWith(clone);
-
         // tampilkan input
-        input.style.display = "block";
-        input.required = true;
-        setTimeout(() => input.focus(), 100);
-
-        // simpan referensi baru
-        selects[selects.indexOf(id)] = clone.id;
+        setTimeout(() => {
+          selectEl.style.display = "none";
+          input.style.display = "block";
+          input.value = ""; // reset isinya biar fresh
+          input.focus();
+        }, 150); // kasih delay supaya dropdown tertutup penuh
+      } else if (!val) {
+        // kalau user balik ke choose, pastikan semua bersih
+        input.style.display = "none";
+        selectEl.style.display = "";
       }
     });
 
-    // 🔹 Saat blur tanpa isi → kembalikan select
+    // kalau user keluar tanpa isi → balik ke select
     input.addEventListener("blur", () => {
       if (!input.value.trim()) {
-        input.required = false;
         input.style.display = "none";
-
-        // kembalikan select asli
-        const newSelect = document.getElementById(id);
-        newSelect.style.display = "";
-        newSelect.required = true;
-        newSelect.value = "";
+        selectEl.style.display = "";
+        selectEl.value = ""; // reset value agar bisa pilih lagi
+        lastValue = ""; // reset status terakhir
       }
     });
   });
 
   // =========================================================
-  // 🔹 Saat submit, ambil input jika aktif
+  // 🚀 Manual validation + merge value for EmailJS/Firebase
   // =========================================================
   form.addEventListener("submit", (e) => {
-    selects.forEach((id) => {
+    let valid = true;
+
+    ["device", "location", "department"].forEach((id) => {
       const selectEl = document.getElementById(id);
       const inputEl = document.getElementById(`${id}_other`);
-      if (
-        inputEl &&
-        inputEl.style.display === "block" &&
-        inputEl.value.trim()
-      ) {
-        const hidden = document.createElement("input");
-        hidden.type = "hidden";
-        hidden.name = id;
-        hidden.value = inputEl.value.trim();
-        form.appendChild(hidden);
+      let value = "";
+
+      if (inputEl && inputEl.style.display === "block") {
+        value = inputEl.value.trim();
+      } else if (selectEl) {
+        value = selectEl.value;
       }
+
+      // Validasi
+      if (!value) {
+        valid = false;
+        selectEl.focus();
+      }
+
+      // Pastikan value tetap terkirim
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = id;
+      hidden.value = value;
+      form.appendChild(hidden);
     });
+
+    if (!valid) {
+      e.preventDefault();
+      alert("Please complete all required fields before submitting.");
+    }
   });
 });
+
 
 // =========================================================
 // 🔹 Send Email via EmailJS
@@ -300,3 +324,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
