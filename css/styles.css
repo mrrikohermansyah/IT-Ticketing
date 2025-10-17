@@ -212,3 +212,8 @@ select option {
     font-size: 1.2rem;
   }
 }
+
+.fade-in-input {
+  transition: opacity 0.25s ease;
+}
+
