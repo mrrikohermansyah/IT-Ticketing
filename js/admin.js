@@ -211,42 +211,51 @@ function applyFilter() {
     const tr = document.createElement("tr");
     tr.dataset.id = d.id;
     tr.innerHTML = `
-      <td class="readonly date">${sentAt}</td>
-      <td class="editable" data-field="inventory">${d.inventory || "-"}</td>
-      <td>${codeValue || "-"}</td>
-      <td class="editable" data-field="location">${d.location || "-"}</td>
-      <td class="editable" data-field="message">${d.message || "-"}</td>
-      <td class="editable" data-field="name">${d.name || "-"}</td>
-      <td>${hitungDurasi(d.createdAt, d.updatedAt)}</td>
-
-      <!-- 🔹 Kolom QA -->
-      <td>${qaText}</td>
-
-      <td class="editable" data-field="user_email">${d.user_email || "-"}</td>
-      <td class="editable" data-field="department">${d.department || "-"}</td>
-      <td class="editable" data-field="priority">${d.priority || "-"}</td>
-      <td style="display:none">${d.subject || "-"}</td>
-      <td class="editable" data-field="action_by">${d.action_by || "-"}</td>
-
-      <!-- 🔹 Kolom Status Ticket dengan warna -->
-      <td class="editable" data-field="status_ticket" style="color:${statusColor}; font-weight:600;">
-        ${d.status_ticket || "-"}
-      </td>
-
-      <td class="editable" data-field="note">${d.note || "-"}</td>
-
-      <!-- 🔹 Action Button -->
-      <td>
-        <div class="action-buttons">
-          <button class="table-btn update-btn" data-id="${d.id}">
-            <i class="fa-solid fa-pen"></i>
-          </button>
-          <button class="table-btn delete-btn" data-id="${d.id}">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      </td>
-    `;
+  <td class="readonly date" data-label="Created At">${sentAt}</td>
+  <td class="editable" data-field="inventory" data-label="Inventory">${
+    d.inventory || "-"
+  }</td>
+  <td data-label="Code">${codeValue || "-"}</td>
+  <td class="editable" data-field="location" data-label="Location">${
+    d.location || "-"
+  }</td>
+  <td class="editable" data-field="message" data-label="Message">${
+    d.message || "-"
+  }</td>
+  <td class="editable" data-field="name" data-label="Name">${d.name || "-"}</td>
+  <td data-label="Duration">${hitungDurasi(d.createdAt, d.updatedAt)}</td>
+  <td data-label="QA">${qaText}</td>
+  <td class="editable" data-field="user_email" data-label="User Email">${
+    d.user_email || "-"
+  }</td>
+  <td class="editable" data-field="user_phone" data-label="User Phone">${
+    d.user_phone || "-"
+  }</td>
+  <td class="editable" data-field="department" data-label="Department">${
+    d.department || "-"
+  }</td>
+  <td class="editable" data-field="priority" data-label="Priority">${
+    d.priority || "-"
+  }</td>
+  <td style="display:none" data-label="Subject">${d.subject || "-"}</td>
+  <td class="editable" data-field="action_by" data-label="Action By">${
+    d.action_by || "-"
+  }</td>
+  <td class="editable" data-field="status_ticket" data-label="Status Ticket" style="color:${statusColor}; font-weight:600;">
+    ${d.status_ticket || "-"}
+  </td>
+  <td class="editable" data-field="note" data-label="Note">${d.note || "-"}</td>
+  <td data-label="Actions">
+    <div class="action-buttons">
+      <button class="table-btn update-btn" data-id="${d.id}">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button class="table-btn delete-btn" data-id="${d.id}">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </td>
+`;
     ticketsBody.appendChild(tr);
   });
 }
@@ -637,6 +646,14 @@ document.getElementById("resetFilters").addEventListener("click", () => {
   document.getElementById("filterActionBy").value = "all";
   document.getElementById("filterDate").value = "";
   applyFilter(); // tampilkan semua row
+});
+
+const switchBtn = document.getElementById("switchViewBtn");
+switchBtn.addEventListener("click", () => {
+  document.body.classList.toggle("table-view");
+  switchBtn.textContent = document.body.classList.contains("table-view")
+    ? "📋 Card View"
+    : "🔄 Table View";
 });
 
 // ======================================================
