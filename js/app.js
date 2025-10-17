@@ -51,6 +51,99 @@ document.getElementById("adminBtn").addEventListener("click", () => {
 });
 
 // =========================================================
+// 🔹 Tooltip (follow cursor)
+// =========================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const tooltip = document.createElement("div");
+  tooltip.className = "custom-tooltip";
+  document.body.appendChild(tooltip);
+
+  document.querySelectorAll("[data-tip]").forEach((el) => {
+    el.addEventListener("mousemove", (e) => {
+      const text = el.getAttribute("data-tip");
+      tooltip.textContent = text;
+      tooltip.style.top = e.pageY + 15 + "px";
+      tooltip.style.left = e.pageX + 15 + "px";
+      tooltip.style.opacity = 1;
+    });
+
+    el.addEventListener("mouseleave", () => {
+      tooltip.style.opacity = 0;
+    });
+  });
+
+  // =========================================================
+  // 🔹 Universal "Etc." dropdown handler → berubah jadi input
+  // =========================================================
+  window.addEventListener("load", () => {
+    // Daftar select yang mau pakai fitur ini
+    const selects = ["device", "location", "department"];
+
+    selects.forEach((id) => {
+      const selectEl = document.getElementById(id);
+      if (!selectEl) return;
+      const parent = selectEl.parentElement;
+
+      const switchToInput = () => {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = id;
+        input.id = id;
+        input.required = true;
+        input.placeholder = `Please specify other ${id}`;
+        input.classList.add("fade-in-input");
+        input.style.width = "100%";
+        input.style.padding = "8px";
+        input.style.borderRadius = "6px";
+        input.style.border = "1px solid #ccc";
+        input.style.marginTop = "5px";
+
+        parent.replaceChild(input, selectEl);
+        input.focus();
+
+        input.addEventListener("blur", () => {
+          if (!input.value.trim()) {
+            parent.replaceChild(selectEl, input);
+            selectEl.value = "";
+            attachListener();
+          }
+        });
+      };
+
+      const attachListener = () => {
+        selectEl.addEventListener("change", (e) => {
+          const val = e.target.value.toLowerCase();
+          if (val === "lainlain" || val === "etc") {
+            switchToInput();
+          }
+        });
+      };
+
+      attachListener();
+    });
+  });
+
+  // =========================================================
+  // 🔹 Show custom input when "Etc." is selected
+  // =========================================================
+  const deviceSelect = document.getElementById("device");
+  const otherDeviceInput = document.getElementById("otherDevice");
+
+  if (deviceSelect && otherDeviceInput) {
+    deviceSelect.addEventListener("change", () => {
+      if (deviceSelect.value === "Lainlain") {
+        otherDeviceInput.style.display = "block";
+        otherDeviceInput.required = true;
+      } else {
+        otherDeviceInput.style.display = "none";
+        otherDeviceInput.required = false;
+        otherDeviceInput.value = "";
+      }
+    });
+  }
+});
+
+// =========================================================
 // 🔹 Send Email via EmailJS
 // =========================================================
 async function sendEmail(payload) {
@@ -96,19 +189,27 @@ form.addEventListener("submit", async (e) => {
   const data = new FormData(form);
   const device = data.get("device");
 
-  // Determine ticket code
-  let code = "OT";
-  if (["PC", "Laptop", "Printer", "Projector"].includes(device)) code = "HW";
-  else if (device === "Jaringan") code = "NW";
-  else if (["MSOffice", "Software"].includes(device)) code = "SW";
+  // Jika user pilih "Lainlain", ambil nilai dari input tambahan
+  let finalDevice = device;
+  if (device === "Lainlain") {
+    finalDevice = data.get("otherDevice") || "Unspecified Device";
+  }
 
-  // Prepare document data
+  // Tentukan kode tiket
+  let code = "OT";
+  if (["PC", "Laptop", "Printer", "Projector"].includes(finalDevice))
+    code = "HW";
+  else if (finalDevice === "Jaringan") code = "NW";
+  else if (["MSOffice", "Software"].includes(finalDevice)) code = "SW";
+
+  // Data dokumen untuk Firestore
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
-    device,
+    device: finalDevice,
     code,
     name: data.get("name"),
     user_email: data.get("user_email"),
+    user_phone: data.get("user_phone"),
     department: data.get("department"),
     location: data.get("location"),
     priority: data.get("priority"),
@@ -123,18 +224,18 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // Save to Firestore
+    // Simpan ke Firestore
     const ticketId = await saveToFirestore(docData);
 
-    // Map priority to color
+    // Warna berdasarkan prioritas
     const priorityColor =
       {
-        High: "#dc3545", // red
-        Medium: "#ffc107", // yellow
-        Low: "#28a745", // green
-      }[docData.priority] || "#007bff"; // default blue
+        High: "#dc3545",
+        Medium: "#ffc107",
+        Low: "#28a745",
+      }[docData.priority] || "#007bff";
 
-    // Send email notification
+    // Kirim email notifikasi
     await sendEmail({
       ticketId,
       ...docData,
@@ -143,13 +244,11 @@ form.addEventListener("submit", async (e) => {
       recipient: STATIC_RECIPIENT_EMAIL,
     });
 
-    // ✅ Show success popup
+    // ✅ Popup sukses
     await Swal.fire({
       icon: "success",
       title: "Ticket Submitted!",
-      html: `
-        <p>Thank you! The IT team will review your ticket shortly.</p>
-      `,
+      html: `<p>Thank you! The IT team will review your ticket shortly.</p>`,
       confirmButtonText: "OK",
       confirmButtonColor: "#2563eb",
       timer: 3000,
@@ -157,12 +256,13 @@ form.addEventListener("submit", async (e) => {
       allowOutsideClick: false,
     });
 
-    //statusEl.textContent = "✅ Ticket successfully submitted!";
     form.reset();
+    const otherDeviceInput = document.getElementById("otherDevice");
+    if (otherDeviceInput) otherDeviceInput.style.display = "none";
   } catch (error) {
     console.error(error);
 
-    // ❌ Show error popup
+    // ❌ Popup error
     await Swal.fire({
       icon: "error",
       title: "Submission Failed",
@@ -177,4 +277,3 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
