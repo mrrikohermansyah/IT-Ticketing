@@ -100,8 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Gunakan replaceWith agar aman di semua browser
         selectEl.replaceWith(input);
-        input.focus();
+        // ✅ beri jeda kecil agar mobile tidak langsung blur
+      setTimeout(() => input.focus(), 300);
 
+      // ✅ tunda sedikit listener blur agar tidak langsung trigger
+      setTimeout(() => {
         input.addEventListener("blur", () => {
           if (!input.value.trim()) {
             input.replaceWith(selectEl);
@@ -109,7 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
             attachListener();
           }
         });
-      };
+      }, 500);
+    };
 
       const attachListener = () => {
         selectEl.addEventListener("change", (e) => {
@@ -278,3 +282,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
