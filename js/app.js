@@ -87,66 +87,49 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+//drop down
 document.addEventListener("DOMContentLoaded", () => {
-  const deviceSelect = document.getElementById("device");
+  const selectEl = document.getElementById("device");
+  const otherInputId = "deviceOther";
+  let otherInput = null;
 
-  if (!deviceSelect) return;
+  selectEl.addEventListener("change", (e) => {
+    const val = e.target.value.toLowerCase();
+    if (val === "lainlain" || val === "etc.") {
+      // Blur select agar Safari selesai internal focus
+      selectEl.blur();
 
-  // Buat container pembungkus agar posisi input bisa ditumpuk di atas select
-  const wrapper = document.createElement("div");
-  wrapper.style.position = "relative";
-  wrapper.style.width = "100%";
+      setTimeout(() => {
+        // buat input jika belum ada
+        if (!otherInput) {
+          otherInput = document.createElement("input");
+          otherInput.type = "text";
+          otherInput.id = otherInputId;
+          otherInput.name = "device";
+          otherInput.required = true;
+          otherInput.placeholder = "Please specify other device...";
+          // tambahkan style sesuai kamu butuhkan
+          Object.assign(otherInput.style, {
+            width: "100%",
+            marginTop: "5px",
+            padding: "8px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+          });
+          selectEl.parentNode.insertBefore(otherInput, selectEl.nextSibling);
+        }
+        otherInput.style.display = "block";
+        otherInput.focus({ preventScroll: false });
 
-  // Bungkus select dengan wrapper
-  deviceSelect.parentNode.insertBefore(wrapper, deviceSelect);
-  wrapper.appendChild(deviceSelect);
-
-  // Buat input tersembunyi di atas select (absolute)
-  const otherInput = document.createElement("input");
-  otherInput.type = "text";
-  otherInput.id = "otherDevice";
-  otherInput.placeholder = "Please specify other device...";
-  otherInput.required = false;
-
-  Object.assign(otherInput.style, {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    width: "100%",
-    padding: "8px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    fontSize: "0.9rem",
-    background: "white",
-    display: "none",
-    zIndex: "2",
-  });
-
-  wrapper.appendChild(otherInput);
-
-  // Saat pilih "Lainlain"
-  deviceSelect.addEventListener("change", (e) => {
-    const value = e.target.value.toLowerCase();
-
-    if (value === "lainlain" || value === "etc" || value === "other") {
-      otherInput.style.display = "block";
-      otherInput.required = true;
-      // Jangan ubah select, biarkan tetap agar iOS tidak reset
-      setTimeout(() => otherInput.focus(), 250); // delay agar iOS tidak menutup keyboard
-    } else {
-      otherInput.style.display = "none";
-      otherInput.required = false;
-      otherInput.value = "";
-    }
-  });
-
-  // Saat user keluar dari input
-  otherInput.addEventListener("blur", () => {
-    if (!otherInput.value.trim()) {
-      otherInput.style.display = "none";
-      otherInput.required = false;
-      otherInput.value = "";
-      deviceSelect.value = "";
+        // Tambahkan event blur
+        otherInput.addEventListener("blur", () => {
+          if (!otherInput.value.trim()) {
+            otherInput.style.display = "none";
+            // jangan set select.value, karena sering reset
+            // tapi bisa biarkan select tetap "Etc." atau kamu bisa set custom state
+          }
+        });
+      }, 300); // jeda supaya iOS selesai picker close dan event change & blur internalnya
     }
   });
 });
