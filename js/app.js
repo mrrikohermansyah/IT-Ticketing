@@ -81,47 +81,47 @@ window.addEventListener("DOMContentLoaded", () => {
   selects.forEach((id) => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
+
     const parent = selectEl.parentElement;
 
     const switchToInput = () => {
-      // tunggu dropdown benar-benar tertutup
-      setTimeout(() => {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = id;
-        input.id = id;
-        input.required = true;
-        input.placeholder = `Please specify other ${id}`;
-        input.classList.add("fade-in-input");
-        input.style.width = "100%";
-        input.style.padding = "8px";
-        input.style.borderRadius = "6px";
-        input.style.border = "1px solid #ccc";
-        input.style.marginTop = "5px";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = id;
+      input.id = id;
+      input.required = true;
+      input.placeholder = `Please specify other ${id}`;
+      input.classList.add("fade-in-input");
+      input.style.width = "100%";
+      input.style.padding = "8px";
+      input.style.borderRadius = "6px";
+      input.style.border = "1px solid #ccc";
+      input.style.marginTop = "5px";
 
-        selectEl.replaceWith(input);
+      selectEl.replaceWith(input);
 
-        // jangan langsung fokus → tunggu user tap manual
-        // tambahkan pesan halus agar jelas
-        input.placeholder = "Tap here to type your custom value...";
-
-        // blur listener dengan sedikit delay agar tidak langsung balik
+      // ✅ requestAnimationFrame + kecil delay = paling smooth dan bikin keyboard muncul
+      requestAnimationFrame(() => {
         setTimeout(() => {
-          input.addEventListener("blur", () => {
-            if (!input.value.trim()) {
-              input.replaceWith(selectEl);
-              selectEl.value = "";
-              attachListener();
-            }
-          });
-        }, 1000); // beri waktu agar iOS tidak auto blur
-      }, 500); // tunggu dropdown close total
+          input.focus({ preventScroll: true });
+        }, 80);
+      });
+
+      // ✅ jangan langsung blur
+      input.addEventListener("blur", () => {
+        if (!input.value.trim()) {
+          input.replaceWith(selectEl);
+          selectEl.value = "";
+          attachListener();
+        }
+      });
     };
 
     const attachListener = () => {
+      // pakai click agar dianggap user gesture (bukan onchange)
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc" || val === "etc.") {
+        if (val === "lainlain" || val === "etc") {
           switchToInput();
         }
       });
@@ -130,8 +130,6 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
-
-
 
   // =========================================================
   // 🔹 Show custom input when "Etc." is selected
@@ -287,6 +285,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
