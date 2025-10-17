@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 Stable "Etc." handler — Safari iOS Safe (tanpa reset)
+// 🔹 Universal handler for "Etc." dropdowns — iOS Safe (no replaceWith)
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -96,60 +96,47 @@ window.addEventListener("DOMContentLoaded", () => {
   selects.forEach((id) => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
-
     const parent = selectEl.parentElement;
 
-    const createInput = () => {
-      let input = parent.querySelector(`#${id}-custom`);
-      if (!input) {
-        input = document.createElement("input");
-        input.type = "text";
-        input.id = `${id}-custom`;
-        input.name = id;
-        input.placeholder = `Please specify other ${id}`;
-        input.required = true;
-        input.classList.add("fade-in-input");
-        Object.assign(input.style, {
-          width: "100%",
-          padding: "8px",
-          borderRadius: "6px",
-          border: "1px solid #ccc",
-          marginTop: "5px",
-          display: "none",
-        });
+    // buat input tersembunyi dari awal (lebih aman)
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = id;
+    input.id = `${id}_input`;
+    input.required = true;
+    input.placeholder = `Please specify other ${id}`;
+    input.classList.add("fade-in-input");
+    input.style.width = "100%";
+    input.style.padding = "8px";
+    input.style.borderRadius = "6px";
+    input.style.border = "1px solid #ccc";
+    input.style.marginTop = "5px";
+    input.style.display = "none";
+    parent.appendChild(input);
 
-        parent.appendChild(input);
-
-        input.addEventListener("blur", () => {
-          if (!input.value.trim()) {
-            input.style.display = "none";
-            selectEl.style.display = "";
-            selectEl.value = "";
-          }
-        });
+    input.addEventListener("blur", () => {
+      if (!input.value.trim()) {
+        input.style.display = "none";
+        selectEl.style.display = "";
+        selectEl.value = "";
       }
-      return input;
-    };
+    });
 
-    const attachListener = () => {
-      selectEl.addEventListener("change", (e) => {
-        const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc" || val === "etc.") {
-          const input = createInput();
-          // tunggu dropdown close baru show input
-          setTimeout(() => {
-            selectEl.style.display = "none";
-            input.style.display = "block";
-            input.focus();
-          }, 200);
-        }
-      });
-    };
+    selectEl.addEventListener("change", (e) => {
+      const val = e.target.value.toLowerCase();
+      if (val === "lainlain" || val === "etc" || val === "etc.") {
+        // sembunyikan select, tampilkan input
+        selectEl.style.display = "none";
+        input.style.display = "block";
 
-    attachListener();
+        // tunggu dropdown benar-benar close di iOS
+        setTimeout(() => {
+          input.focus();
+        }, 400);
+      }
+    });
   });
 });
-
 
 
 // =========================================================
@@ -305,6 +292,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
