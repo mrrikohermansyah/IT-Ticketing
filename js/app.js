@@ -73,38 +73,36 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================================================
-  // 🔹 Universal handler for "Etc." (Lainlain) dropdowns
-  // =========================================================
-  window.addEventListener("DOMContentLoaded", () => {
-    const selects = ["device", "location", "department"];
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — fixed for iOS
+// =========================================================
+window.addEventListener("DOMContentLoaded", () => {
+  const selects = ["device", "location", "department"];
 
-    selects.forEach((id) => {
-      const selectEl = document.getElementById(id);
-      if (!selectEl) return;
+  selects.forEach((id) => {
+    const selectEl = document.getElementById(id);
+    if (!selectEl) return;
 
-      const parent = selectEl.parentElement;
+    const parent = selectEl.parentElement;
 
-      const switchToInput = () => {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = id;
-        input.id = id;
-        input.required = true;
-        input.placeholder = `Please specify other ${id}`;
-        input.classList.add("fade-in-input");
-        input.style.width = "100%";
-        input.style.padding = "8px";
-        input.style.borderRadius = "6px";
-        input.style.border = "1px solid #ccc";
-        input.style.marginTop = "5px";
+    const switchToInput = () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = id;
+      input.id = id;
+      input.required = true;
+      input.placeholder = `Please specify other ${id}`;
+      input.classList.add("fade-in-input");
+      input.style.width = "100%";
+      input.style.padding = "8px";
+      input.style.borderRadius = "6px";
+      input.style.border = "1px solid #ccc";
+      input.style.marginTop = "5px";
 
-        // ✅ Gunakan replaceWith agar aman di semua browser
-        selectEl.replaceWith(input);
-        // ✅ beri jeda kecil agar mobile tidak langsung blur
-      setTimeout(() => input.focus(), 300);
-
-      // ✅ tunda sedikit listener blur agar tidak langsung trigger
+      // ✅ Ganti elemen setelah popup select benar-benar tertutup
       setTimeout(() => {
+        selectEl.replaceWith(input);
+        input.focus();
+
         input.addEventListener("blur", () => {
           if (!input.value.trim()) {
             input.replaceWith(selectEl);
@@ -112,21 +110,21 @@ document.addEventListener("DOMContentLoaded", () => {
             attachListener();
           }
         });
-      }, 500);
+      }, 250); // ← delay aman untuk iOS Safari
     };
 
-      const attachListener = () => {
-        selectEl.addEventListener("change", (e) => {
-          const val = e.target.value.toLowerCase();
-          if (val === "lainlain" || val === "etc.") {
-            switchToInput();
-          }
-        });
-      };
+    const attachListener = () => {
+      selectEl.addEventListener("change", (e) => {
+        const val = e.target.value.toLowerCase();
+        if (val === "lainlain" || val === "etc" || val === "etc.") {
+          switchToInput();
+        }
+      });
+    };
 
-      attachListener();
-    });
+    attachListener();
   });
+});
 
   // =========================================================
   // 🔹 Show custom input when "Etc." is selected
@@ -282,4 +280,5 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
