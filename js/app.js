@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -85,6 +85,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const parent = selectEl.parentElement;
 
     const switchToInput = () => {
+      // buat elemen input pengganti
       const input = document.createElement("input");
       input.type = "text";
       input.name = id;
@@ -92,37 +93,50 @@ window.addEventListener("DOMContentLoaded", () => {
       input.required = true;
       input.placeholder = `Please specify other ${id}`;
       input.classList.add("fade-in-input");
-      input.style.width = "100%";
-      input.style.padding = "8px";
-      input.style.borderRadius = "6px";
-      input.style.border = "1px solid #ccc";
-      input.style.marginTop = "5px";
+      Object.assign(input.style, {
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        marginTop: "5px",
+      });
 
+      // simpan posisi select sebelumnya biar bisa dikembalikan
+      const oldValue = selectEl.value;
+
+      // ganti select → input
       selectEl.replaceWith(input);
 
-      // ✅ requestAnimationFrame + kecil delay = paling smooth dan bikin keyboard muncul
+      // pakai requestAnimationFrame + delay kecil supaya keyboard muncul di iOS
       requestAnimationFrame(() => {
         setTimeout(() => {
           input.focus({ preventScroll: true });
         }, 80);
       });
 
-      // ✅ jangan langsung blur
+      // kalau user batal (tidak isi)
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
           input.replaceWith(selectEl);
-          selectEl.value = "";
+          selectEl.value = ""; // reset pilihan
           attachListener();
+        }
+      });
+
+      // enter = tetap focus
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          input.blur();
         }
       });
     };
 
     const attachListener = () => {
-      // pakai click agar dianggap user gesture (bukan onchange)
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc") {
-          switchToInput();
+        if (val === "lainlain" || val === "etc" || val === "etc.") {
+          // gunakan event click agar dianggap user gesture di iOS
+          requestAnimationFrame(() => switchToInput());
         }
       });
     };
@@ -130,6 +144,7 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
+
 
   // =========================================================
   // 🔹 Show custom input when "Etc." is selected
@@ -285,6 +300,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
