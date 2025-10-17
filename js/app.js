@@ -97,8 +97,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
 
-    const parent = selectEl.parentElement;
-
     const switchToInput = () => {
       const input = document.createElement("input");
       input.type = "text";
@@ -113,16 +111,17 @@ window.addEventListener("DOMContentLoaded", () => {
       input.style.border = "1px solid #ccc";
       input.style.marginTop = "5px";
 
-      selectEl.replaceWith(input);
-
-      // ✅ requestAnimationFrame + kecil delay = paling smooth dan bikin keyboard muncul
+      // ✅ gunakan dua frame untuk menunggu iOS selesai close picker
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          input.focus({ preventScroll: true });
-        }, 80);
+        requestAnimationFrame(() => {
+          selectEl.replaceWith(input);
+          // fokus dengan sedikit delay agar keyboard muncul
+          setTimeout(() => {
+            input.focus();
+          }, 150);
+        });
       });
 
-      // ✅ jangan langsung blur
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
           input.replaceWith(selectEl);
@@ -133,11 +132,11 @@ window.addEventListener("DOMContentLoaded", () => {
     };
 
     const attachListener = () => {
-      // pakai click agar dianggap user gesture (bukan onchange)
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc") {
-          switchToInput();
+        if (val === "lainlain" || val === "etc.") {
+          // ✅ tunda sedikit agar iOS tidak langsung reset
+          setTimeout(() => switchToInput(), 250);
         }
       });
     };
@@ -299,3 +298,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
