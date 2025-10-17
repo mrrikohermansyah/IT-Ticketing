@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// ✅ Universal handler for "Etc." (Lainlain) dropdowns — FIX iOS RESET BUG
+// ✅ FIX SAFARI iOS "RESET TO --CHOOSE--" BUG (Final Tested)
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -113,18 +113,22 @@ window.addEventListener("DOMContentLoaded", () => {
       input.style.border = "1px solid #ccc";
       input.style.marginTop = "5px";
 
-      // 🔹 tunda penggantian agar Safari tak rerender
-      setTimeout(() => {
-        selectEl.style.display = "none";
+      // ✅ tunda eksekusi 1 frame supaya Safari tidak reset form
+      requestAnimationFrame(() => {
+        selectEl.style.visibility = "hidden";
         parent.appendChild(input);
-        input.focus({ preventScroll: false });
-      }, 200);
 
-      // 🔹 handle blur balik ke select kalau kosong
+        // ✅ beri delay kecil agar keyboard langsung muncul di iOS
+        setTimeout(() => {
+          input.focus({ preventScroll: false });
+        }, 50);
+      });
+
+      // ✅ jika user keluar tanpa isi → balikin ke dropdown
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
           parent.removeChild(input);
-          selectEl.style.display = "";
+          selectEl.style.visibility = "visible";
           selectEl.value = "";
         }
       });
@@ -142,7 +146,6 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
-
 
 // =========================================================
 // 🔹 Show custom input when "Etc." is selected
@@ -297,6 +300,3 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
-
-
