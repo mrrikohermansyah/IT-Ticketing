@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable + auto focus
+// 🔹 "Etc." / "Lain-lain" dropdown handler — fully stable for iOS & Android
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -99,7 +99,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const parent = selectEl.parentElement;
 
     const switchToInput = () => {
-      // Tunggu dropdown benar-benar tertutup di iOS
+      // Pastikan dropdown sudah menutup sebelum replace
       setTimeout(() => {
         const input = document.createElement("input");
         input.type = "text";
@@ -118,36 +118,42 @@ window.addEventListener("DOMContentLoaded", () => {
 
         selectEl.replaceWith(input);
 
-        // ✅ iOS trick: pakai requestAnimationFrame + short timeout
-        // agar dianggap hasil gesture pengguna
+        // ✅ Fokus otomatis dengan iOS-safe trick
         requestAnimationFrame(() => {
           setTimeout(() => {
+            const tmp = document.createElement("input");
+            tmp.style.position = "absolute";
+            tmp.style.opacity = "0";
+            document.body.appendChild(tmp);
+            tmp.focus();
+            tmp.remove();
             input.focus({ preventScroll: false });
-            // Untuk memastikan keyboard muncul
-            const temp = document.createElement("input");
-            temp.style.position = "absolute";
-            temp.style.opacity = "0";
-            document.body.appendChild(temp);
-            temp.focus();
-            temp.remove();
-            input.focus({ preventScroll: false });
-          }, 80);
+          }, 100);
         });
 
-        // ✅ Tambah blur listener dengan delay supaya tidak auto revert
-        setTimeout(() => {
-          input.addEventListener("blur", () => {
-            if (!input.value.trim()) {
-              input.replaceWith(selectEl);
-              selectEl.value = "";
-              attachListener();
-            }
-          });
-        }, 500);
-      }, 200); // delay ini penting biar iOS sempat close picker
+        // Kembalikan ke select kalau user tidak isi
+        input.addEventListener("blur", () => {
+          if (!input.value.trim()) {
+            input.replaceWith(selectEl);
+            selectEl.value = "";
+            attachListener();
+          }
+        });
+      }, 250); // tunggu iOS tutup picker sepenuhnya
     };
 
     const attachListener = () => {
+      // Dengarkan event pointerup agar Safari sempat commit value
+      selectEl.addEventListener("pointerup", () => {
+        setTimeout(() => {
+          const val = selectEl.value?.toLowerCase?.() || "";
+          if (val === "lainlain" || val === "etc" || val === "etc.") {
+            switchToInput();
+          }
+        }, 150);
+      });
+
+      // Cadangan untuk Android / desktop biasa
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
         if (val === "lainlain" || val === "etc" || val === "etc.") {
@@ -159,6 +165,7 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
+
 
 // =========================================================
 // 🔹 Show custom input when "Etc." is selected
@@ -313,6 +320,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
