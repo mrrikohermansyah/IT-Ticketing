@@ -73,15 +73,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================================================
-  // 🔹 Universal "Etc." dropdown handler → berubah jadi input
+  // 🔹 Universal handler for "Etc." (Lainlain) dropdowns
   // =========================================================
-  window.addEventListener("load", () => {
-    // Daftar select yang mau pakai fitur ini
+  window.addEventListener("DOMContentLoaded", () => {
     const selects = ["device", "location", "department"];
 
     selects.forEach((id) => {
       const selectEl = document.getElementById(id);
       if (!selectEl) return;
+
       const parent = selectEl.parentElement;
 
       const switchToInput = () => {
@@ -98,12 +98,13 @@ document.addEventListener("DOMContentLoaded", () => {
         input.style.border = "1px solid #ccc";
         input.style.marginTop = "5px";
 
-        parent.replaceChild(input, selectEl);
+        // ✅ Gunakan replaceWith agar aman di semua browser
+        selectEl.replaceWith(input);
         input.focus();
 
         input.addEventListener("blur", () => {
           if (!input.value.trim()) {
-            parent.replaceChild(selectEl, input);
+            input.replaceWith(selectEl);
             selectEl.value = "";
             attachListener();
           }
@@ -113,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const attachListener = () => {
         selectEl.addEventListener("change", (e) => {
           const val = e.target.value.toLowerCase();
-          if (val === "lainlain" || val === "etc") {
+          if (val === "lainlain" || val === "etc.") {
             switchToInput();
           }
         });
