@@ -97,7 +97,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const selectEl = document.getElementById(id);
     if (!selectEl) return;
 
-    const switchToInput = () => {
+    const createInput = () => {
       const input = document.createElement("input");
       input.type = "text";
       input.name = id;
@@ -110,40 +110,50 @@ window.addEventListener("DOMContentLoaded", () => {
       input.style.borderRadius = "6px";
       input.style.border = "1px solid #ccc";
       input.style.marginTop = "5px";
+      return input;
+    };
 
-      // ✅ gunakan dua frame untuk menunggu iOS selesai close picker
-      requestAnimationFrame(() => {
+    const switchToInput = () => {
+      const input = createInput();
+
+      // 🔹 Ganti dilakukan setelah Safari menutup native picker
+      // gunakan microtask + dua frame + delay agar benar-benar stabil
+      Promise.resolve().then(() => {
         requestAnimationFrame(() => {
-          selectEl.replaceWith(input);
-          // fokus dengan sedikit delay agar keyboard muncul
-          setTimeout(() => {
-            input.focus();
-          }, 150);
+          requestAnimationFrame(() => {
+            selectEl.style.display = "none";
+            selectEl.insertAdjacentElement("afterend", input);
+            // Fokus setelah DOM settle agar keyboard muncul
+            setTimeout(() => {
+              input.focus({ preventScroll: false });
+            }, 120);
+          });
         });
       });
 
+      // 🔹 Saat input blur & kosong, kembalikan select
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
-          input.replaceWith(selectEl);
+          input.remove();
+          selectEl.style.display = "";
           selectEl.value = "";
-          attachListener();
         }
       });
     };
 
-    const attachListener = () => {
-      selectEl.addEventListener("change", (e) => {
-        const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc.") {
-          // ✅ tunda sedikit agar iOS tidak langsung reset
-          setTimeout(() => switchToInput(), 250);
-        }
-      });
-    };
-
-    attachListener();
+    // 🔹 Event handler utama
+    selectEl.addEventListener("change", (e) => {
+      const val = e.target.value.toLowerCase();
+      if (val === "lainlain" || val === "etc.") {
+        // iOS Safari butuh jeda kecil sebelum modifikasi DOM
+        setTimeout(() => {
+          switchToInput();
+        }, 300);
+      }
+    });
   });
 });
+
 
 // =========================================================
 // 🔹 Show custom input when "Etc." is selected
@@ -298,4 +308,5 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
