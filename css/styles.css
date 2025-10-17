@@ -15,36 +15,46 @@ body {
     "Helvetica Neue", Arial;
   background: var(--bg);
   color: #0f172a;
+  min-height: 95vh;
+  overflow: hidden; /* hilangkan scroll */
 }
 
 .container {
-  max-width: 1000px;
-  margin: 36px auto;
-  padding: 16px;
+  max-width: 750px; /* 🔹 diperkecil dari 1000px */
+  margin: 20px auto;
+  padding: 20px; /* 🔹 diperkecil dari 32px */
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 header .logo {
-  width: 180px; /* atur sesuai ukuran logo */
+  width: 150px; /* 🔹 sedikit lebih kecil */
   height: auto;
   object-fit: contain;
 }
 
 header h1 {
   margin: 0 0 6px;
-  font-size: 1.6rem;
+  font-size: 1.4rem; /* 🔹 kecil sedikit */
 }
 
 .card {
   background: var(--card);
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
-  margin-bottom: 18px;
+  padding: 14px; /* 🔹 dari 18px */
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgba(2, 6, 23, 0.06);
+  margin-bottom: 12px; /* 🔹 dari 18px */
 }
 
 form label {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
 }
 
 input[type="text"],
@@ -53,30 +63,32 @@ input[type="tel"],
 select,
 textarea {
   width: 100%;
-  padding: 10px;
+  padding: 8px; /* 🔹 dari 10px */
   border: 1px solid #e6edf3;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
 }
 
 .card textarea {
   resize: none;
+  height: 60px;
 }
 
 .actions {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 button {
   background: var(--accent);
   color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 8px 12px; /* 🔹 dari 10px 14px */
+  border-radius: 8px;
   border: 0;
   cursor: pointer;
+  font-size: 0.9rem;
 }
 
 button[type="reset"] {
@@ -95,12 +107,12 @@ button[type="reset"]:hover {
 }
 
 .tickets li {
-  padding: 10px;
+  padding: 8px;
   border-bottom: 1px dashed #eef2ff;
 }
 
 #status {
-  margin-top: 12px;
+  margin-top: 10px;
   color: var(--muted);
 }
 
@@ -108,15 +120,12 @@ button[type="reset"]:hover {
   form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   label[for="message"],
   textarea,
-  .actions {
-    grid-column: 1 / -1;
-  }
-
+  .actions,
   .tickets {
     grid-column: 1 / -1;
   }
@@ -131,8 +140,8 @@ button[type="reset"]:hover {
   margin-left: auto;
   background-color: red;
   color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 0;
   cursor: pointer;
 }
@@ -147,4 +156,85 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background-color: #0236a7;
+}
+
+.custom-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 9999;
+}
+
+.fade-in-input {
+  animation: fadeInSlide 0.3s ease forwards;
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+@keyframes fadeInSlide {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hanya tampilan awal (saat placeholder terpilih) abu-abu */
+select:invalid {
+  color: #9ca3af;
+}
+
+/* Semua opsi (termasuk placeholder) hitam di dalam dropdown */
+select option {
+  color: #0f172a;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 🔹 Skala container agar tetap proporsional saat zoom */
+.container {
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+}
+
+/* 🔹 Sesuaikan skala berdasarkan tinggi viewport */
+@media (max-height: 900px) {
+  .container {
+    transform: scale(0.95);
+  }
+}
+@media (max-height: 800px) {
+  .container {
+    transform: scale(0.9);
+  }
+}
+@media (max-height: 700px) {
+  .container {
+    transform: scale(0.85);
+  }
+}
+@media (max-height: 600px) {
+  .container {
+    transform: scale(0.8);
+  }
 }
