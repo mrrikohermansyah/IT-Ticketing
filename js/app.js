@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable + auto focus
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -99,7 +99,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const parent = selectEl.parentElement;
 
     const switchToInput = () => {
-      // tunggu dropdown benar-benar tertutup
+      // Tunggu dropdown benar-benar tertutup di iOS
       setTimeout(() => {
         const input = document.createElement("input");
         input.type = "text";
@@ -108,19 +108,33 @@ window.addEventListener("DOMContentLoaded", () => {
         input.required = true;
         input.placeholder = `Please specify other ${id}`;
         input.classList.add("fade-in-input");
-        input.style.width = "100%";
-        input.style.padding = "8px";
-        input.style.borderRadius = "6px";
-        input.style.border = "1px solid #ccc";
-        input.style.marginTop = "5px";
+        Object.assign(input.style, {
+          width: "100%",
+          padding: "8px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          marginTop: "5px",
+        });
 
         selectEl.replaceWith(input);
 
-        // jangan langsung fokus → tunggu user tap manual
-        // tambahkan pesan halus agar jelas
-        input.placeholder = "...";
+        // ✅ iOS trick: pakai requestAnimationFrame + short timeout
+        // agar dianggap hasil gesture pengguna
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            input.focus({ preventScroll: false });
+            // Untuk memastikan keyboard muncul
+            const temp = document.createElement("input");
+            temp.style.position = "absolute";
+            temp.style.opacity = "0";
+            document.body.appendChild(temp);
+            temp.focus();
+            temp.remove();
+            input.focus({ preventScroll: false });
+          }, 80);
+        });
 
-        // blur listener dengan sedikit delay agar tidak langsung balik
+        // ✅ Tambah blur listener dengan delay supaya tidak auto revert
         setTimeout(() => {
           input.addEventListener("blur", () => {
             if (!input.value.trim()) {
@@ -129,8 +143,8 @@ window.addEventListener("DOMContentLoaded", () => {
               attachListener();
             }
           });
-        }, 500); // beri waktu agar iOS tidak auto blur
-      }, 0); // tunggu dropdown close total
+        }, 500);
+      }, 200); // delay ini penting biar iOS sempat close picker
     };
 
     const attachListener = () => {
@@ -145,7 +159,6 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
-
 
 // =========================================================
 // 🔹 Show custom input when "Etc." is selected
@@ -300,5 +313,6 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
