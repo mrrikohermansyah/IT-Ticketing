@@ -1,6 +1,7 @@
-/* ============================= 
-   Variables & Base
-============================= */
+/* ===========================================================
+   admin.css — Default = Card (mobile) view; Switch -> Table view
+   =========================================================== */
+
 :root {
   --bg: #f4f7fb;
   --card: #ffffff;
@@ -8,6 +9,8 @@
   --danger: #e53935;
   --muted: #6b7280;
   --border: #e5e7eb;
+  --radius: 10px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -20,281 +23,152 @@ body {
   background: var(--bg);
   color: #0f172a;
   line-height: 1.5;
-}
-
-/* ============================= 
-   Wrapper
-============================= */
-.container {
-  max-width: 1850px;
-  margin: 0 auto;
   padding: 20px;
+  overflow-x: hidden;
 }
 
-/* ============================= 
-   Header
-============================= */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+/* ================= Header ================= */
 .main-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 12px 12px;
   background: #f9fafb;
   border-bottom: 1px solid var(--border);
   border-radius: 10px;
   margin-bottom: 20px;
 }
-
 .main-header .left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
-.main-header h1 {
-  font-size: 1.4rem;
-  font-weight: 600;
+.tableTitle h1 {
+  font-size: 1.25rem;
   margin: 0;
 }
-
-header .logo {
-  width: 180px;
+.main-header .logo {
+  width: 160px;
+  max-width: 100%;
   height: auto;
   object-fit: contain;
 }
 
-/* ============================= 
-   Auth Buttons
-============================= */
+/* ================= Auth & Buttons ================= */
 .auth-buttons {
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  align-items: center;
 }
-
 .auth-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
   gap: 8px;
-  padding: 10px 16px;
-  font-size: 15px;
-  font-weight: 500;
-  border: none;
+  padding: 8px 12px;
   border-radius: 8px;
+  border: none;
   cursor: pointer;
-  line-height: 1;
-  transition: background 0.2s ease, transform 0.1s ease;
+  font-weight: 600;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
-.auth-btn:hover {
-  transform: translateY(-1px);
-}
-
 .login-btn {
-  background-color: var(--accent);
+  background: var(--accent);
   color: #fff;
 }
-.login-btn:hover {
-  background-color: #1e4fbb;
-}
-
 .logout-btn {
-  background-color: var(--danger);
+  background: var(--danger);
   color: #fff;
 }
-.logout-btn:hover {
-  background-color: #c62828;
-}
 
-.google-logo {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 50%;
-  padding: 2px;
-}
-
-/* ============================= 
-   Toolbar (Filter + Export)
-============================= */
-.toolbar {
+/* ================= Export & Filter ================= */
+.export-buttons {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 15px;
+  margin-left: auto;
 }
-
-/* ----- Filter Bar ----- */
-.filter-bar button {
+.export-buttons button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
   padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
   border-radius: 8px;
-  background: #4a90e2;
-  color: white;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  justify-content: center;
 }
-
-.filter-bar button:hover {
-  background: #357ab8;
+.export-buttons button:first-child {
+  background: #1d6f42;
+}
+.export-buttons button:last-child {
+  background: #d32f2f;
 }
 
 .filter-bar {
   display: flex;
-  align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  font-family: "Poppins", sans-serif;
-  margin-bottom: 10px;
-}
-.filter-bar label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
 }
 .filter-bar select,
-.filter-bar input[type="date"] {
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-.filter-bar select:hover,
-.filter-bar input[type="date"]:hover {
-  border-color: #888;
-}
-.filter-bar select:focus,
-.filter-bar input[type="date"]:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
-
-/* Responsive Filter Bar */
-@media (max-width: 600px) {
-  .filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-  .filter-bar label {
-    font-size: 13px;
-  }
-  .filter-bar select,
-  .filter-bar input[type="date"] {
-    width: 100%;
-  }
-}
-
-/* ----- Export Buttons ----- */
-.export-buttons {
-  display: flex;
-  gap: 12px;
-}
-.export-buttons button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #fff;
-  transition: background 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-.export-buttons button:hover {
-  transform: translateY(-2px);
-}
-.export-buttons button:first-child {
-  background-color: #1d6f42;
-}
-.export-buttons button:first-child:hover {
-  background-color: #155d35;
-}
-.export-buttons button:last-child {
-  background-color: #d32f2f;
-}
-.export-buttons button:last-child:hover {
-  background-color: #b71c1c;
-}
-.export-buttons i {
-  font-size: 1rem;
-}
-
-/* ============================= 
-   Note Area (Admin)
-============================= */
-.noteArea {
-  width: 100%;
-  min-height: 50px;
-  max-height: 120px;
+.filter-bar input[type="date"],
+.filter-bar button {
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  line-height: 1.4;
-  resize: vertical;
-  background: #f9fafb;
-  transition: all 0.2s ease;
-}
-.noteArea:focus {
-  outline: none;
-  border-color: #2563eb;
+  border: 1px solid #ccc;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  cursor: pointer;
+}
+.filter-bar button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
 }
 
-/* ============================= 
-   Table
-============================= */
+/* ================= Table ================= */
 .table-wrapper {
-  overflow-x: auto;
+  width: 100%;
+  overflow-x: hidden;
 }
-
 #ticketsTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
   background: var(--card);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow);
+  table-layout: auto;
 }
-
-#ticketsTable thead {
-  background: #f9fafb;
-}
-
 #ticketsTable th,
 #ticketsTable td {
-  padding: 12px 14px;
+  padding: 5px 5px;
   text-align: left;
-  vertical-align: top;
   border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  word-wrap: break-word;
 }
-
 #ticketsTable th {
   font-weight: 600;
   color: #374151;
+  font-size: 0.85rem;
 }
-
 #ticketsTable tbody tr:nth-child(even) {
   background: #fafafa;
 }
@@ -302,279 +176,228 @@ header .logo {
   background: #f1f5f9;
 }
 
-#ticketsTable td.loading {
-  text-align: center;
-  color: var(--muted);
-  padding: 16px;
-}
-
-/* ----- Form Control ----- */
-.assignSelect,
-.statusSelect {
-  width: 100%;
-  max-width: 200px;
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-/* ----- Status with Dot ----- */
-.status-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.statusSelect {
-  flex: 1;
-  max-width: 180px;
-}
-.dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
-/* ============================= 
-   Buttons
-============================= */
+/* ================= Buttons in Table ================= */
 .action-buttons {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  width: 100%;
+  align-items: center;
 }
-
 .table-btn {
-  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: none;
+  padding: 6px 10px;
   border-radius: 6px;
-  font-size: 14px;
+  border: none;
+  cursor: pointer;
   font-weight: 600;
   color: #fff;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  white-space: nowrap;
+  transition: transform 0.2s ease, background-color 0.3s;
 }
-
+.table-btn:hover {
+  transform: scale(1.05);
+}
 .update-btn {
-  background-color: #2563eb;
+  background: var(--accent);
 }
-.update-btn:hover {
-  background-color: #1d4ed8;
-}
-
-.cancel-btn {
-  background-color: #6b7280;
-}
-.cancel-btn:hover {
-  background-color: #4b5563;
-}
-
 .delete-btn {
-  background-color: #dc2626;
+  background: var(--danger);
 }
-.delete-btn:hover {
-  background-color: #b91c1c;
-}
-
-/* ============================= 
-   Responsiveness
-============================= */
-@media (max-width: 1024px), (max-width: 600px) {
-  #ticketsTable,
-  #ticketsTable thead,
-  #ticketsTable tbody,
-  #ticketsTable th,
-  #ticketsTable td,
-  #ticketsTable tr {
-    display: block;
-    width: 100%;
-  }
-
-  #ticketsTable thead {
-    display: none;
-  }
-
-  #ticketsTable tr {
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--card);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    padding: 12px;
-  }
-
-  #ticketsTable td {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    border: none;
-  }
-
-  #ticketsTable td::before {
-    content: attr(data-label);
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    min-width: 90px;
-    flex-shrink: 0;
-  }
-
-  #ticketsTable td {
-    flex: 1;
-    font-size: 0.9rem;
-    color: #111827;
-    word-break: break-word;
-  }
-
-  #ticketsTable tr td:first-child {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--accent);
-    margin-bottom: 6px;
-  }
+.cancel-btn {
+  background: #6b7280;
 }
 
-@media (max-width: 768px) {
-  #ticketsTable th,
-  #ticketsTable td {
-    padding: 10px;
-    font-size: 0.85rem;
-  }
-  .assignSelect,
-  .statusSelect {
-    max-width: 140px;
-    font-size: 0.85rem;
-  }
-}
-
-/* ============================= 
-   Responsive Header Fix
-============================= */
-@media (max-width: 1024px) {
-  .main-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .main-header .left {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .main-header .left img {
-    width: 150px;
-  }
-  .main-header h1 {
-    font-size: 1.2rem;
-    margin-top: 6px;
-    text-align: left;
-  }
-  .main-header .auth-buttons {
-    margin-left: auto;
-  }
-}
-
-/* ============================= 
-   Custom Admin Hide Columns
-============================= */
-#ticketsTable th:nth-child(12),
-#ticketsTable td:nth-child(12) {
-  display: none;
-}
-
-/* ============================= 
-   User Info Responsive
-============================= */
-.user-info {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #333;
-  word-wrap: break-word;
-}
-
-@media (max-width: 768px) {
-  .user-info {
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .auth-buttons {
-    flex-direction: column;
-    align-items: flex-end;
-  }
-  .user-info {
-    font-size: 0.75rem;
-    order: -1;
-    margin-bottom: 6px;
-    text-align: right;
-    width: 100%;
-  }
-}
-
-/* ============================= 
-   SweetAlert Input Styling
-============================= */
-.sw-field {
+/* ======================================================
+   🔹 EDIT MODE FIELDS
+   ====================================================== */
+.edit-input,
+select.edit-input,
+textarea.edit-input {
   width: 100%;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  font-size: 0.95rem;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.sw-field:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
-}
-
-.sw-field[type="textarea"] {
-  min-height: 80px;
-}
-
-/* ==========================
-   🔹 Custom Select Styling
-========================== */
-.edit-input {
-  width: 100%;
+  max-width: 100%;
   padding: 6px 10px;
-  border: 1px solid #d1d5db; /* abu-abu netral */
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  background-color: #ffffff;
-  font-size: 0.9rem;
-  font-family: "Inter", Arial, sans-serif;
-  color: #374151; /* abu gelap */
-  appearance: none; /* hilangin default arrow browser */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background-color: #fff;
+  transition: all 0.2s ease;
 }
-
 .edit-input:focus {
-  border-color: #2563eb; /* biru */
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
   outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
-
-/* 🔹 Tambahkan ikon dropdown custom */
-.edit-input {
-  background-image: url("data:image/svg+xml;utf8,<svg fill='%236b7280' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+select.edit-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
-  background-size: 16px 16px;
-  padding-right: 30px;
+  background-size: 12px;
+  padding-right: 28px;
+}
+textarea.edit-input {
+  resize: vertical;
+  min-height: 45px;
+}
+.edit-input:hover {
+  border-color: #94a3b8;
 }
 
-.edit-input option {
-  padding: 8px;
+/* 🔹 Column-based width for proportional layout */
+td[data-column="location"] .edit-input {
+  width: 130px;
+}
+td[data-column="management"] .edit-input {
+  width: 130px;
+}
+td[data-column="priority"] .edit-input {
+  width: 110px;
+}
+td[data-column="status"] .edit-input {
+  width: 120px;
+}
+td[data-column="note"] .edit-input {
+  width: 200px;
+}
+
+/* ======================================================
+   🔹 SWITCH VIEW TOGGLE BUTTON
+   ====================================================== */
+.switch-view-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: var(--shadow);
+}
+.switch-view-btn:hover {
+  background: #1e40af;
+}
+
+/* ======================================================
+   🔹 DEFAULT = CARD VIEW (VERTIKAL)
+   ====================================================== */
+body:not(.table-view) #ticketsTable thead {
+  display: none;
+}
+body:not(.table-view) #ticketsTable tr {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+body:not(.table-view) #ticketsTable td {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border: none;
+  padding: 8px 0;
+  text-align: left;
+}
+body:not(.table-view) #ticketsTable td::before {
+  content: attr(data-label);
+  font-weight: 600;
+  color: #374151;
+  flex-basis: 35%;
+  text-align: left;
+}
+body:not(.table-view) #ticketsTable td:last-child {
+  border-bottom: none;
+}
+body:not(.table-view) .action-buttons {
+  justify-content: flex-start;
+}
+
+/* ======================================================
+   🔹 RESPONSIVE
+   ====================================================== */
+@media (max-width: 768px) {
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .filter-bar,
+  .export-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .edit-input,
+  select.edit-input,
+  textarea.edit-input {
+    width: 100% !important;
+  }
+  #ticketsTable td::before {
+    flex-basis: 40%;
+    font-size: 0.9rem;
+  }
+}
+
+/* ======================================================
+   🔹 NO SCROLL HORIZONTAL (FINAL FIX)
+   ====================================================== */
+html,
+body {
+  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+.table-wrapper,
+.container,
+main {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   🔹 Fix: Card view (mobile) rata kiri & sejajar
+   ============================================ */
+body:not(.table-view) #ticketsTable td {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  border: none;
+  text-align: left;
+  flex-wrap: nowrap;
+}
+
+body:not(.table-view) #ticketsTable td::before {
+  content: attr(data-label);
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  min-width: 130px; /* Lebar label */
+  max-width: 160px; /* Biar fleksibel sedikit */
+  flex-shrink: 0; /* Jangan mengecil */
+}
+
+body:not(.table-view) #ticketsTable td span,
+body:not(.table-view) #ticketsTable td div,
+body:not(.table-view) #ticketsTable td p {
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* 🔹 Responsive: biar tetap sejajar tapi tidak melebar */
+@media (max-width: 480px) {
+  body:not(.table-view) #ticketsTable td::before {
+    min-width: 100px;
+    max-width: 120px;
+  }
 }
