@@ -90,49 +90,78 @@ document.addEventListener("DOMContentLoaded", () => {
 // =========================================================
 // ✅ FIX SAFARI iOS "RESET TO --CHOOSE--" BUG (Final Tested)
 // =========================================================
-// 🔹 Ganti select lain/other jadi input manual (tanpa replace)
 document.querySelectorAll("select").forEach((selectEl) => {
-  selectEl.addEventListener("change", (e) => {
-    const val = e.target.value?.toLowerCase();
+  const id = selectEl.id;
+
+  // Buat input tersembunyi di bawahnya
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = `${id}-input`;
+  input.name = selectEl.name;
+  input.required = false;
+  input.placeholder = "Please specify other...";
+  input.classList.add("fade-in-input");
+  input.style.width = "100%";
+  input.style.marginTop = "6px";
+  input.style.padding = "8px";
+  input.style.border = "1px solid #d1d5db";
+  input.style.borderRadius = "6px";
+  input.style.fontSize = "0.9rem";
+  input.style.backgroundColor = "white";
+  input.style.opacity = "0";
+  input.style.visibility = "hidden";
+  input.style.pointerEvents = "none";
+  input.style.transition = "opacity 0.25s ease";
+
+  selectEl.insertAdjacentElement("afterend", input);
+
+  // Event saat user pilih opsi
+  selectEl.addEventListener("change", () => {
+    const val = selectEl.value?.toLowerCase();
 
     if (val === "lainlain" || val === "etc" || val === "other") {
-      // sembunyikan select
-      selectEl.style.display = "none";
+      // Transisi keluar select
+      selectEl.style.transition = "opacity 0.25s ease";
+      selectEl.style.opacity = "0";
 
-      // buat input kalau belum ada
-      let input = document.querySelector(`#${selectEl.id}-input`);
-      if (!input) {
-        input = document.createElement("input");
-        input.type = "text";
-        input.id = `${selectEl.id}-input`;
-        input.name = selectEl.name;
+      // Setelah transisi selesai, sembunyikan
+      setTimeout(() => {
+        selectEl.style.visibility = "hidden";
+        selectEl.style.pointerEvents = "none";
+        selectEl.required = false;
+
+        // Tampilkan input dengan fade-in
+        input.style.visibility = "visible";
+        input.style.pointerEvents = "auto";
         input.required = true;
-        input.placeholder = "Masukkan perangkat lainnya...";
-        input.classList.add("fade-in-input");
-        input.style.width = "100%";
-        input.style.marginTop = "0px";
-        input.style.padding = "8px";
-        input.style.border = "1px solid #d1d5db";
-        input.style.borderRadius = "6px";
-        input.style.fontSize = "0.9rem";
-        input.style.backgroundColor = "white";
+        requestAnimationFrame(() => {
+          input.style.opacity = "1";
+        });
 
-        selectEl.insertAdjacentElement("afterend", input);
-      } else {
-        input.style.display = "block";
-      }
+        // Fokus otomatis dengan delay agar iOS tidak reset
+        setTimeout(() => input.focus(), 400);
+      }, 250);
+    }
+  });
 
-      // fokus otomatis
-      setTimeout(() => input.focus(), 150);
+  // Event saat user keluar dari input
+  input.addEventListener("blur", () => {
+    if (!input.value.trim()) {
+      // Transisi keluar input
+      input.style.opacity = "0";
 
-      // jika input dikosongkan dan kehilangan fokus → balik ke select
-      input.addEventListener("blur", () => {
-        if (!input.value.trim()) {
-          input.style.display = "none";
-          selectEl.style.display = "block";
-          selectEl.value = "";
-        }
-      });
+      setTimeout(() => {
+        input.style.visibility = "hidden";
+        input.style.pointerEvents = "none";
+        input.required = false;
+
+        // Balikkan select
+        selectEl.style.visibility = "visible";
+        selectEl.style.pointerEvents = "auto";
+        selectEl.style.opacity = "1";
+        selectEl.required = true;
+        selectEl.value = "";
+      }, 250);
     }
   });
 });
@@ -290,4 +319,3 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
