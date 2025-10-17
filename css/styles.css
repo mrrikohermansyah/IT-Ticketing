@@ -199,25 +199,34 @@ html,
 body {
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow-x: hidden; /* ✅ hanya sembunyikan scroll horizontal */
+  overflow-y: auto;   /* ✅ biarkan scroll vertical alami */
 }
 
 .wrapper {
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+  align-items: flex-start; /* ✅ biar mulai dari atas, bukan tengah */
+  min-height: 100vh;       /* ✅ cukup fleksibel di mobile */
+  padding: 20px 0;         /* beri ruang sedikit */
 }
 
-/* 🔹 Skala container agar tetap proporsional saat zoom */
 .container {
+  max-width: 750px;
+  width: 100%;
+  margin: auto;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
   transform-origin: top center;
-  transition: transform 0.2s ease;
 }
 
-/* 🔹 Sesuaikan skala berdasarkan tinggi viewport */
+/* 🔹 Tetap proporsional saat viewport kecil */
 @media (max-height: 900px) {
   .container {
     transform: scale(0.95);
