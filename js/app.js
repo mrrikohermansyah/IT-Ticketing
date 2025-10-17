@@ -51,29 +51,44 @@ document.getElementById("adminBtn").addEventListener("click", () => {
 });
 
 // =========================================================
-// 🔹 Tooltip (follow cursor)
+// 🔹 Tooltip (support mobile + desktop)
 // =========================================================
 document.addEventListener("DOMContentLoaded", () => {
   const tooltip = document.createElement("div");
   tooltip.className = "custom-tooltip";
   document.body.appendChild(tooltip);
 
-  document.querySelectorAll("[data-tip]").forEach((el) => {
-    el.addEventListener("mousemove", (e) => {
-      const text = el.getAttribute("data-tip");
-      tooltip.textContent = text;
-      tooltip.style.top = e.pageY + 15 + "px";
-      tooltip.style.left = e.pageX + 15 + "px";
-      tooltip.style.opacity = 1;
-    });
+  const showTooltip = (text, x, y) => {
+    tooltip.textContent = text;
+    tooltip.style.opacity = 1;
+    tooltip.style.transform = "translateY(0)";
+    tooltip.style.top = y + 15 + "px";
+    tooltip.style.left = x + 15 + "px";
+  };
 
-    el.addEventListener("mouseleave", () => {
-      tooltip.style.opacity = 0;
+  const hideTooltip = () => {
+    tooltip.style.opacity = 0;
+    tooltip.style.transform = "translateY(5px)";
+  };
+
+  document.querySelectorAll("[data-tip]").forEach((el) => {
+    // Desktop (hover / mousemove)
+    el.addEventListener("mousemove", (e) => {
+      showTooltip(el.dataset.tip, e.pageX, e.pageY);
     });
+    el.addEventListener("mouseleave", hideTooltip);
+
+    // Mobile (tap & hold)
+    el.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      showTooltip(el.dataset.tip, touch.pageX, touch.pageY);
+    });
+    el.addEventListener("touchend", hideTooltip);
   });
+});
 
 // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -85,7 +100,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const parent = selectEl.parentElement;
 
     const switchToInput = () => {
-      // buat elemen input pengganti
       const input = document.createElement("input");
       input.type = "text";
       input.name = id;
@@ -93,50 +107,37 @@ window.addEventListener("DOMContentLoaded", () => {
       input.required = true;
       input.placeholder = `Please specify other ${id}`;
       input.classList.add("fade-in-input");
-      Object.assign(input.style, {
-        width: "100%",
-        padding: "8px",
-        borderRadius: "6px",
-        border: "1px solid #ccc",
-        marginTop: "5px",
-      });
+      input.style.width = "100%";
+      input.style.padding = "8px";
+      input.style.borderRadius = "6px";
+      input.style.border = "1px solid #ccc";
+      input.style.marginTop = "5px";
 
-      // simpan posisi select sebelumnya biar bisa dikembalikan
-      const oldValue = selectEl.value;
-
-      // ganti select → input
       selectEl.replaceWith(input);
 
-      // pakai requestAnimationFrame + delay kecil supaya keyboard muncul di iOS
+      // ✅ requestAnimationFrame + kecil delay = paling smooth dan bikin keyboard muncul
       requestAnimationFrame(() => {
         setTimeout(() => {
           input.focus({ preventScroll: true });
         }, 80);
       });
 
-      // kalau user batal (tidak isi)
+      // ✅ jangan langsung blur
       input.addEventListener("blur", () => {
         if (!input.value.trim()) {
           input.replaceWith(selectEl);
-          selectEl.value = ""; // reset pilihan
+          selectEl.value = "";
           attachListener();
-        }
-      });
-
-      // enter = tetap focus
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          input.blur();
         }
       });
     };
 
     const attachListener = () => {
+      // pakai click agar dianggap user gesture (bukan onchange)
       selectEl.addEventListener("change", (e) => {
         const val = e.target.value.toLowerCase();
-        if (val === "lainlain" || val === "etc" || val === "etc.") {
-          // gunakan event click agar dianggap user gesture di iOS
-          requestAnimationFrame(() => switchToInput());
+        if (val === "lainlain" || val === "etc") {
+          switchToInput();
         }
       });
     };
@@ -145,26 +146,24 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// =========================================================
+// 🔹 Show custom input when "Etc." is selected
+// =========================================================
+const deviceSelect = document.getElementById("device");
+const otherDeviceInput = document.getElementById("otherDevice");
 
-  // =========================================================
-  // 🔹 Show custom input when "Etc." is selected
-  // =========================================================
-  const deviceSelect = document.getElementById("device");
-  const otherDeviceInput = document.getElementById("otherDevice");
-
-  if (deviceSelect && otherDeviceInput) {
-    deviceSelect.addEventListener("change", () => {
-      if (deviceSelect.value === "Lainlain") {
-        otherDeviceInput.style.display = "block";
-        otherDeviceInput.required = true;
-      } else {
-        otherDeviceInput.style.display = "none";
-        otherDeviceInput.required = false;
-        otherDeviceInput.value = "";
-      }
-    });
-  }
-});
+if (deviceSelect && otherDeviceInput) {
+  deviceSelect.addEventListener("change", () => {
+    if (deviceSelect.value === "Lainlain") {
+      otherDeviceInput.style.display = "block";
+      otherDeviceInput.required = true;
+    } else {
+      otherDeviceInput.style.display = "none";
+      otherDeviceInput.required = false;
+      otherDeviceInput.value = "";
+    }
+  });
+}
 
 // =========================================================
 // 🔹 Send Email via EmailJS
@@ -300,9 +299,3 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
-
-
-
-
-
-
