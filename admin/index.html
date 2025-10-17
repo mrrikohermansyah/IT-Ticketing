@@ -24,59 +24,61 @@
 
   <body>
     <main class="container">
-      <header class="main-header">
-        <div class="left">
-          <img class="logo" src="../imgs/meitech-logo.png" alt="" />
-          <h1>📋 Lists of Ticket Received</h1>
-        </div>
-        <div class="auth-buttons">
-          <button
-            id="loginBtn"
-            class="auth-btn login-btn"
-            style="display: none"
-          >
-            <img
-              src="https://www.svgrepo.com/show/355037/google.svg"
-              alt="Google Logo"
-              class="google-logo"
-            />
-            <span>Login With Google</span>
-          </button>
+      <div class="layout-wrapper">
+        <header class="main-header">
+          <div class="left">
+            <img class="logo" src="../imgs/meitech-logo.png" alt="" />
+            <!-- <h1>📋 Lists of Ticket Received</h1> -->
+          </div>
+          <div class="auth-buttons">
+            <button
+              id="loginBtn"
+              class="auth-btn login-btn"
+              style="display: none"
+            >
+              <img
+                src="https://www.svgrepo.com/show/355037/google.svg"
+                alt="Google Logo"
+                class="google-logo"
+              />
+              <span>Login With Google</span>
+            </button>
 
-          <button
-            id="goLoginBtn"
-            class="auth-btn login-btn"
-            style="display: none"
-          >
-            <i class="fa-solid fa-right-to-bracket"></i> Login
-          </button>
-          <span
-            id="userInfo"
-            class="user-info"
-            style="display: none; margin-right: 10px"
-          ></span>
-          <button
-            id="logoutBtn"
-            class="auth-btn logout-btn"
-            style="display: none"
-          >
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-          </button>
-        </div>
-      </header>
+            <button
+              id="goLoginBtn"
+              class="auth-btn login-btn"
+              style="display: none"
+            >
+              <i class="fa-solid fa-right-to-bracket"></i> Login
+            </button>
+            <span
+              id="userInfo"
+              class="user-info"
+              style="display: none; margin-right: 10px"
+            ></span>
+            <button
+              id="logoutBtn"
+              class="auth-btn logout-btn"
+              style="display: none"
+            >
+              <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+          </div>
+        </header>
+      </div>
 
       <!-- Tombol Export -->
-      <div class="export-buttons">
+      <!-- <div class="export-buttons">
         <button onclick="exportToExcel()">
           <i class="fa-solid fa-file-excel"></i> Export Excel
         </button>
         <button id="btnExportPDF">
           <i class="fa-solid fa-file-pdf"></i> Export PDF
         </button>
-      </div>
+      </div> -->
 
       <section class="card">
-        <h2 style="margin-top: 0">Tickets</h2>
+        <!-- <h2 style="margin-top: 0">Tickets</h2> -->
         <div class="filter-bar">
           <label for="filterActionBy">Filter Action By:</label>
           <select id="filterActionBy">
@@ -87,6 +89,24 @@
           <input type="date" id="filterDate" />
           <!-- 🔹 Tombol Reset -->
           <button id="resetFilters">Reset Filters</button>
+          <!-- Tombol Export -->
+          <div class="export-buttons">
+            <button onclick="exportToExcel()">
+              <i class="fa-solid fa-file-excel"></i> Export Excel
+            </button>
+            <button id="btnExportPDF">
+              <i class="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
+          </div>
+        </div>
+        <div class="view-switch">
+          <button class="switch-view-btn" id="switchViewBtn">
+            🔄 Switch View
+          </button>
+        </div>
+
+        <div class="tableTitle">
+          <h1>📋 Lists of Ticket Received</h1>
         </div>
         <div class="table-wrapper">
           <table id="ticketsTable">
@@ -101,9 +121,10 @@
                 <th>Duration</th>
                 <th>QA</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Department</th>
                 <th>Priority</th>
-                <th>Subject</th>
+                <!-- <th>Subject</th> -->
                 <th>Action By</th>
                 <th>Ticket Status</th>
                 <th>Note</th>
@@ -152,4 +173,3 @@
     </script>
   </body>
 </html>
-
