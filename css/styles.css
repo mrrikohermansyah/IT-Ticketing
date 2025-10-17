@@ -9,48 +9,80 @@
   box-sizing: border-box;
 }
 
+.custom-tooltip {
+  position: fixed; /* penting! biar lepas dari container */
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 99999;
+}
+
+html,
 body {
+  height: 100%;
   margin: 0;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial;
   background: var(--bg);
   color: #0f172a;
-  min-height: 95vh;
-  overflow: hidden; /* hilangkan scroll */
+  overflow: hidden; /* body tidak scroll */
 }
 
+/* ✅ Wrapper menjadi area scroll tunggal */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto; /* hanya wrapper yang scroll */
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 0;
+}
+
+/* ✅ Container fleksibel */
 .container {
-  max-width: 750px; /* 🔹 diperkecil dari 1000px */
-  margin: 20px auto;
-  padding: 20px; /* 🔹 diperkecil dari 32px */
-  border-radius: 16px;
+  width: 95%;
+  max-width: 750px;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
   box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  padding: 20px;
+  transition: box-shadow 0.3s ease;
 }
 
+/* Header */
 header .logo {
-  width: 150px; /* 🔹 sedikit lebih kecil */
+  width: 150px;
   height: auto;
   object-fit: contain;
 }
 
 header h1 {
   margin: 0 0 6px;
-  font-size: 1.4rem; /* 🔹 kecil sedikit */
+  font-size: 1.4rem;
 }
 
+/* Card */
 .card {
   background: var(--card);
-  padding: 14px; /* 🔹 dari 18px */
+  padding: 14px;
   border-radius: 10px;
   box-shadow: 0 4px 18px rgba(2, 6, 23, 0.06);
-  margin-bottom: 12px; /* 🔹 dari 18px */
+  margin-bottom: 12px;
 }
 
+/* Forms */
 form label {
   display: block;
   margin-bottom: 10px;
@@ -63,13 +95,15 @@ input[type="tel"],
 select,
 textarea {
   width: 100%;
-  padding: 8px; /* 🔹 dari 10px */
+  padding: 8px;
   border: 1px solid #e6edf3;
   border-radius: 6px;
   font-size: 0.9rem;
+  appearance: none;
+  background-color: white;
 }
 
-.card textarea {
+textarea {
   resize: none;
   height: 60px;
 }
@@ -81,10 +115,11 @@ textarea {
   margin-top: 6px;
 }
 
+/* Buttons */
 button {
   background: var(--accent);
   color: white;
-  padding: 8px 12px; /* 🔹 dari 10px 14px */
+  padding: 8px 12px;
   border-radius: 8px;
   border: 0;
   cursor: pointer;
@@ -98,6 +133,35 @@ button[type="reset"] {
 
 button[type="reset"]:hover {
   background-color: #c7c3c3;
+}
+
+button[type="submit"] {
+  background-color: #2563eb;
+}
+
+button[type="submit"]:hover {
+  background-color: #0236a7;
+}
+
+/* Admin button */
+#adminBtn {
+  margin-left: auto;
+  background-color: red;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+}
+
+#adminBtn:hover {
+  background-color: rgb(179, 12, 12);
+}
+
+/* Misc */
+.required::after {
+  content: " *";
+  color: red;
 }
 
 .tickets ul {
@@ -116,66 +180,11 @@ button[type="reset"]:hover {
   color: var(--muted);
 }
 
-@media (min-width: 800px) {
-  form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  label[for="message"],
-  textarea,
-  .actions,
-  .tickets {
-    grid-column: 1 / -1;
-  }
-}
-
-.required::after {
-  content: " *";
-  color: red;
-}
-
-#adminBtn {
-  margin-left: auto;
-  background-color: red;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 0;
-  cursor: pointer;
-}
-
-#adminBtn:hover {
-  background-color: rgb(179, 12, 12);
-}
-
-button[type="submit"] {
-  background-color: #2563eb;
-}
-
-button[type="submit"]:hover {
-  background-color: #0236a7;
-}
-
-.custom-tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  pointer-events: none;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 9999;
-}
-
+/* Animasi input muncul */
 .fade-in-input {
-  animation: fadeInSlide 0.3s ease forwards;
+  animation: fadeInSlide 0.25s ease forwards;
   opacity: 0;
-  transform: translateY(5px);
+  transform: translateY(4px);
 }
 
 @keyframes fadeInSlide {
@@ -185,47 +194,21 @@ button[type="submit"]:hover {
   }
 }
 
-/* Hanya tampilan awal (saat placeholder terpilih) abu-abu */
+/* Select */
 select:invalid {
   color: #9ca3af;
 }
-
-/* Semua opsi (termasuk placeholder) hitam di dalam dropdown */
 select option {
   color: #0f172a;
 }
 
-html,
-body {
-  height: 100%;
-  overflow: hidden;
-}
-
-.wrapper {
-  height: 100vh;
-  overflow: auto; /* scroll hanya container ini */
-  -webkit-overflow-scrolling: touch;
-}
-
-.container {
-  width: 95%;
-  max-width: 750px;
-  margin: 0 auto;
-  padding: 20px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
+/* ✅ Responsive tweaks */
 @media (max-width: 600px) {
   .container {
-    padding: 10px;
+    padding: 14px;
     font-size: 0.9rem;
   }
+  header h1 {
+    font-size: 1.2rem;
+  }
 }
-
-/* ❌ hapus transform: scale semua media query */
-
