@@ -72,8 +72,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // =========================================================
-// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — fixed for iOS
+// =========================================================
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS-safe + anti-reset
 // =========================================================
 window.addEventListener("DOMContentLoaded", () => {
   const selects = ["device", "location", "department"];
@@ -98,19 +98,23 @@ window.addEventListener("DOMContentLoaded", () => {
       input.style.border = "1px solid #ccc";
       input.style.marginTop = "5px";
 
-      // ✅ Ganti elemen setelah popup select benar-benar tertutup
+      // ✅ Ganti elemen setelah dropdown benar-benar tertutup (iOS-safe)
       setTimeout(() => {
         selectEl.replaceWith(input);
         input.focus();
 
-        input.addEventListener("blur", () => {
-          if (!input.value.trim()) {
-            input.replaceWith(selectEl);
-            selectEl.value = "";
-            attachListener();
-          }
-        });
-      }, 250); // ← delay aman untuk iOS Safari
+        // ⏳ Delay sebelum blur listener aktif (biar iOS tak langsung reset)
+        setTimeout(() => {
+          input.addEventListener("blur", () => {
+            // hanya kembalikan ke select kalau input kosong
+            if (!input.value.trim()) {
+              input.replaceWith(selectEl);
+              selectEl.value = "";
+              attachListener();
+            }
+          });
+        }, 500); // <- waktu aman supaya iOS tidak auto reset
+      }, 250); // <- waktu tunggu sebelum ganti elemen (biar popup tertutup)
     };
 
     const attachListener = () => {
@@ -125,6 +129,7 @@ window.addEventListener("DOMContentLoaded", () => {
     attachListener();
   });
 });
+
 
   // =========================================================
   // 🔹 Show custom input when "Etc." is selected
@@ -280,5 +285,6 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
