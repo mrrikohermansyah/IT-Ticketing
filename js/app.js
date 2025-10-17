@@ -88,10 +88,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
-// 🔹 Universal handler for "Etc." dropdowns — iOS & Android stable
-//    + auto merge value to real field on submit
+// ✅ "Etc." handler — Works on Desktop, iOS, Android
 // =========================================================
-window.addEventListener("DOMContentLoaded", () => {
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("ticketForm");
   const selects = ["device", "location", "department"];
 
   selects.forEach((id) => {
@@ -99,62 +100,58 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!selectEl) return;
     const parent = selectEl.parentElement;
 
-    // 🔸 Buat input dari awal (disembunyikan)
+    // 🔹 Buat input tersembunyi
     const input = document.createElement("input");
     input.type = "text";
     input.name = `${id}_other`;
     input.id = `${id}_other`;
     input.placeholder = `Please specify other ${id}`;
-    input.classList.add("fade-in-input");
-    input.style.width = "100%";
-    input.style.padding = "8px";
-    input.style.borderRadius = "6px";
-    input.style.border = "1px solid #ccc";
-    input.style.marginTop = "5px";
-    input.style.display = "none";
+    input.style.cssText =
+      "display:none;width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-top:5px;";
     parent.appendChild(input);
 
-    // 🔹 Saat user blur input tanpa isi → kembalikan ke select
-    input.addEventListener("blur", () => {
-      if (!input.value.trim()) {
-        input.style.display = "none";
-        selectEl.style.display = "";
-        selectEl.required = true;
-        input.required = false;
-        selectEl.value = "";
-      }
-    });
-
-    // 🔹 Saat user pilih “Etc.”
+    // 🔹 Saat user pilih "Etc."
     selectEl.addEventListener("change", (e) => {
       const val = e.target.value.toLowerCase();
       if (val === "lainlain" || val === "etc" || val === "etc.") {
-        // sembunyikan select, tampilkan input
-        selectEl.style.display = "none";
-        selectEl.required = false; // ✅ disable required sementara
+        // 🩵 clone untuk menghindari bug validasi Chrome
+        const clone = selectEl.cloneNode(true);
+        clone.style.display = "none";
+        selectEl.replaceWith(clone);
+
+        // tampilkan input
         input.style.display = "block";
         input.required = true;
+        setTimeout(() => input.focus(), 100);
 
-        // tunggu dropdown close total (iOS delay)
-        setTimeout(() => input.focus(), 400);
+        // simpan referensi baru
+        selects[selects.indexOf(id)] = clone.id;
+      }
+    });
+
+    // 🔹 Saat blur tanpa isi → kembalikan select
+    input.addEventListener("blur", () => {
+      if (!input.value.trim()) {
+        input.required = false;
+        input.style.display = "none";
+
+        // kembalikan select asli
+        const newSelect = document.getElementById(id);
+        newSelect.style.display = "";
+        newSelect.required = true;
+        newSelect.value = "";
       }
     });
   });
 
   // =========================================================
-  // 🔹 Saat submit, ganti value field utama dengan input jika aktif
+  // 🔹 Saat submit, ambil input jika aktif
   // =========================================================
-  const form = document.getElementById("ticketForm");
   form.addEventListener("submit", (e) => {
-    // loop semua field yang mungkin punya input tambahan
-    ["device", "location", "department"].forEach((id) => {
+    selects.forEach((id) => {
       const selectEl = document.getElementById(id);
       const inputEl = document.getElementById(`${id}_other`);
-      if (!selectEl || !inputEl) return;
-
-      // jika input aktif (karena user pilih Etc.)
-      if (inputEl.style.display === "block" && inputEl.value.trim()) {
-        // buat hidden input untuk kirim value-nya
+      if (inputEl && inputEl.style.display === "block" && inputEl.value.trim()) {
         const hidden = document.createElement("input");
         hidden.type = "hidden";
         hidden.name = id;
@@ -300,6 +297,7 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
 
 
 
