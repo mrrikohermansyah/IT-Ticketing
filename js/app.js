@@ -87,52 +87,65 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-//drop down
-document.addEventListener("DOMContentLoaded", () => {
-  const selectEl = document.getElementById("device");
-  const otherInputId = "deviceOther";
-  let otherInput = null;
+// =========================================================
+// 🔹 Universal handler for "Etc." (Lainlain) dropdowns — iOS truly stable
+// =========================================================
+window.addEventListener("DOMContentLoaded", () => {
+  const selects = ["device", "location", "department"];
 
-  selectEl.addEventListener("change", (e) => {
-    const val = e.target.value.toLowerCase();
-    if (val === "lainlain" || val === "etc.") {
-      // Blur select agar Safari selesai internal focus
-      selectEl.blur();
+  selects.forEach((id) => {
+    const selectEl = document.getElementById(id);
+    if (!selectEl) return;
+    const parent = selectEl.parentElement;
 
+    const switchToInput = () => {
+      // tunggu dropdown benar-benar tertutup
       setTimeout(() => {
-        // buat input jika belum ada
-        if (!otherInput) {
-          otherInput = document.createElement("input");
-          otherInput.type = "text";
-          otherInput.id = otherInputId;
-          otherInput.name = "device";
-          otherInput.required = true;
-          otherInput.placeholder = "Please specify other device...";
-          // tambahkan style sesuai kamu butuhkan
-          Object.assign(otherInput.style, {
-            width: "100%",
-            marginTop: "5px",
-            padding: "8px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-          });
-          selectEl.parentNode.insertBefore(otherInput, selectEl.nextSibling);
-        }
-        otherInput.style.display = "block";
-        otherInput.focus({ preventScroll: false });
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = id;
+        input.id = id;
+        input.required = true;
+        input.placeholder = `Please specify other ${id}`;
+        input.classList.add("fade-in-input");
+        input.style.width = "100%";
+        input.style.padding = "8px";
+        input.style.borderRadius = "6px";
+        input.style.border = "1px solid #ccc";
+        input.style.marginTop = "5px";
 
-        // Tambahkan event blur
-        otherInput.addEventListener("blur", () => {
-          if (!otherInput.value.trim()) {
-            otherInput.style.display = "none";
-            // jangan set select.value, karena sering reset
-            // tapi bisa biarkan select tetap "Etc." atau kamu bisa set custom state
-          }
-        });
-      }, 300); // jeda supaya iOS selesai picker close dan event change & blur internalnya
-    }
+        selectEl.replaceWith(input);
+
+        // jangan langsung fokus → tunggu user tap manual
+        // tambahkan pesan halus agar jelas
+        input.placeholder = "Tap here to type your custom value...";
+
+        // blur listener dengan sedikit delay agar tidak langsung balik
+        setTimeout(() => {
+          input.addEventListener("blur", () => {
+            if (!input.value.trim()) {
+              input.replaceWith(selectEl);
+              selectEl.value = "";
+              attachListener();
+            }
+          });
+        }, 500); // beri waktu agar iOS tidak auto blur
+      }, 0); // tunggu dropdown close total
+    };
+
+    const attachListener = () => {
+      selectEl.addEventListener("change", (e) => {
+        const val = e.target.value.toLowerCase();
+        if (val === "lainlain" || val === "etc" || val === "etc.") {
+          switchToInput();
+        }
+      });
+    };
+
+    attachListener();
   });
 });
+
 
 // =========================================================
 // 🔹 Show custom input when "Etc." is selected
@@ -287,3 +300,4 @@ form.addEventListener("submit", async (e) => {
     statusEl.textContent = `❌ Error: ${error.message}`;
   }
 });
+
