@@ -198,21 +198,13 @@ select option {
 html,
 body {
   height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto; /* ✅ izinkan scroll tunggal */
-  -webkit-overflow-scrolling: touch; /* ✅ smooth scroll di iOS */
+  overflow: hidden;
 }
 
 .wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* ⬅️ dari center → biar tidak nempel atas */
-  min-height: 100vh;
-  width: 100%;
-  padding: 20px 0; /* ✅ kasih ruang atas-bawah proporsional */
+  height: 100vh;
+  overflow: auto; /* scroll hanya container ini */
+  -webkit-overflow-scrolling: touch;
 }
 
 .container {
@@ -228,13 +220,12 @@ body {
   box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
   transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
-
 @media (max-width: 600px) {
   .container {
-    padding: 14px;
+    padding: 10px;
     font-size: 0.9rem;
   }
 }
 
-
 /* ❌ hapus transform: scale semua media query */
+
