@@ -1,171 +1,284 @@
+// ==================== 🔹 Export to Excel Function ====================
 async function exportToExcel() {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Aktivitas IT");
+  try {
+    // Show loading state
+    const { value: accept } = await Swal.fire({
+      title: "Export to Excel",
+      html: `
+        <div style="text-align: center; padding: 1rem;">
+          <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
+          <p>Export ${allTickets.length} tickets to Excel format?</p>
+          <p style="font-size: 0.9rem; color: #666;">File akan berisi semua data tiket yang terlihat.</p>
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Export Now",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#217346",
+    });
 
-  // ===== FONTS & STYLE DASAR =====
-  workbook.creator = "Riko Hermansyah";
-  sheet.properties.defaultRowHeight = 20;
+    if (!accept) return;
 
-  // ===== JUDUL UTAMA =====
-  sheet.mergeCells("A2:H2");
-  const title = sheet.getCell("A2");
-  title.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
-  title.font = { name: "Times New Roman", italic: true, size: 18 };
-  title.alignment = { horizontal: "center", vertical: "middle" };
+    // Load ExcelJS library dynamically
+    await loadExcelJS();
 
-  // 🔹 border tebal keliling A2:H2
-  for (let col = 1; col <= 8; col++) {
-    const cell = sheet.getCell(2, col);
-    if (col === 1) cell.border = { left: { style: "thick" } };
-    if (col === 8) cell.border = { right: { style: "thick" } };
-    cell.border = {
-      ...cell.border,
-      top: { style: "thick" },
-      bottom: { style: "thick" },
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Aktivitas IT");
+
+    // ===== FONTS & STYLE DASAR =====
+    workbook.creator = "Riko Hermansyah";
+    sheet.properties.defaultRowHeight = 20;
+
+    // ===== JUDUL UTAMA dengan border tebal =====
+    sheet.mergeCells("A1:H1");
+    const titleCell = sheet.getCell("A1");
+    titleCell.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
+    titleCell.font = {
+      name: "Times New Roman",
+      italic: true,
+      size: 18,
+      bold: true,
     };
-  }
-
-  // ===== BARIS PERIOD =====
-  const now = new Date();
-  const periodText = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-  sheet.getCell("E4").value = "Period :";
-  sheet.getCell("E4").font = { name: "Arial", size: 10 };
-  sheet.getCell("E4").alignment = { horizontal: "right", vertical: "middle" };
-
-  sheet.getCell("F4").value = periodText;
-  sheet.getCell("F4").font = { name: "Arial", size: 10 };
-  sheet.getCell("F4").alignment = { horizontal: "left", vertical: "middle" };
-
-  // ===== BARIS KOSONG SEBELUM HEADER =====
-  sheet.addRow([]);
-
-  // ===== HEADER TABEL =====
-  const headers = [
-    "Tgl. / Date",
-    "Kode Inv. (uraian) / Inv. Code (Description)",
-    "Kode / Code",
-    "Lokasi / Location¹",
-    "Keterangan / Remarks",
-    "Pengguna / User",
-    "Durasi / Duration",
-    "Kendali Mutu / Quality Assurance",
-  ];
-
-  const headerRow = sheet.addRow(headers);
-  headerRow.font = { bold: true, name: "Arial", size: 10 };
-  headerRow.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-  headerRow.eachCell((cell) => {
-    cell.border = {
-      top: { style: "thick" },
-      left: { style: "thick" },
-      bottom: { style: "thick" },
-      right: { style: "thick" },
+    titleCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
     };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFEFEF" } };
-  });
-  sheet.getRow(headerRow.number).height = 69 * 0.75;
+    titleCell.border = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+    };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE6E6E6" },
+    };
 
-  // ===== ISI DATA DARI TABEL HTML =====
-  const trs = document.querySelectorAll("#ticketsTable tbody tr");
-  trs.forEach((tr) => {
-    const tds = tr.querySelectorAll("td");
-    const rowData = [];
+    // ===== BARIS KOSONG =====
+    sheet.addRow([]);
 
-    for (let i = 0; i < 8; i++) {
-      const td = tds[i];
-      let value = "";
-      if (td) {
-        const select = td.querySelector("select");
-        value = select
-          ? select.options[select.selectedIndex]?.text.trim() || ""
-          : td.innerText.trim();
-      }
+    // ===== BARIS PERIOD dengan border tebal =====
+    const now = new Date();
+    const periodText = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}`;
 
-      // Format tanggal
-      if (i === 0 && value) {
-        const cleanDate = value.split(",")[0].trim();
-        const parts = cleanDate.split("/");
-        if (parts.length === 3) {
-          const [d, m, y] = parts;
-          const fullYear = y.length === 2 ? "20" + y : y;
-          const dateObj = new Date(`${fullYear}-${m}-${d}`);
-          value = dateObj instanceof Date && !isNaN(dateObj) ? dateObj : cleanDate;
+    // Merge cells untuk period
+    sheet.mergeCells("A3:H3");
+    const periodCell = sheet.getCell("A3");
+    periodCell.value = `Period: ${periodText}`;
+    periodCell.font = { name: "Arial", size: 11, bold: true };
+    periodCell.alignment = { horizontal: "left", vertical: "middle" };
+    periodCell.border = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "thin" },
+      right: { style: "medium" },
+    };
+
+    // ===== BARIS KOSONG =====
+    sheet.addRow([]);
+
+    // ===== HEADER TABEL dengan border tebal =====
+    const headers = [
+      "Tgl. / Date",
+      "Kode Inv. (uraian) / Inv. Code (Description)",
+      "Kode / Code",
+      "Lokasi / Location¹",
+      "Keterangan / Remarks",
+      "Pengguna / User",
+      "Durasi / Duration",
+      "Kendali Mutu / Quality Assurance",
+    ];
+
+    const headerRow = sheet.addRow(headers);
+    headerRow.font = {
+      bold: true,
+      name: "Arial",
+      size: 10,
+      color: { argb: "FF000000" },
+    };
+    headerRow.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    // Set border tebal untuk header
+    headerRow.eachCell((cell, colNumber) => {
+      cell.border = {
+        top: { style: "medium" },
+        left: { style: "medium" },
+        bottom: { style: "medium" },
+        right: { style: "medium" },
+      };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFEFEFEF" },
+      };
+    });
+
+    // 🔹 TINGGI BARIS HEADER
+    sheet.getRow(headerRow.number).height = 69 * 0.75;
+
+    // ===== DEVICE TYPE MAPPING =====
+    const deviceTypeMapping = {
+      // Hardware devices → HW
+      "PC Hardware": "HW",
+      Laptop: "HW",
+      Printer: "HW",
+      Projector: "HW",
+      // Software devices → SW
+      "PC Software": "SW",
+      // Network devices → NW
+      Network: "NW",
+      // Default untuk device lain
+      Others: "OT",
+    };
+
+    // ===== ISI DATA DARI TICKETS =====
+    const filteredTickets =
+      filterSelect && filterSelect.value !== "all"
+        ? allTickets.filter((t) => t.status === filterSelect.value)
+        : allTickets;
+
+    filteredTickets.forEach((ticket) => {
+      // Format duration untuk Excel (dalam menit saja)
+      const durationText = formatDurationForExcel(ticket);
+
+      // Kendali Mutu: Finish jika status Closed, Continue untuk status lain
+      const kendaliMutu = ticket.status === "Closed" ? "Finish" : "Continue";
+
+      // Map device type ke kode yang sesuai
+      const deviceCode = deviceTypeMapping[ticket.device] || "OT";
+
+      const rowData = [
+        // Tgl. / Date
+        formatDateForExcel(ticket.createdAt),
+        // Kode Inv. (uraian) / Inv. Code (Description)
+        ticket.inventory || "-",
+        // Kode / Code - MAPPED DEVICE CODE
+        deviceCode,
+        // Lokasi / Location¹
+        ticket.location ? "Bintan / " + ticket.location : "Bintan / -",
+        // Keterangan / Remarks
+        ticket.subject || "-",
+        // Pengguna / User
+        ticket.name || "-",
+        // Durasi / Duration (dalam menit)
+        durationText,
+        // Kendali Mutu / Quality Assurance
+        kendaliMutu,
+      ];
+
+      const row = sheet.addRow(rowData);
+
+      // Set border dotted untuk data rows
+      row.eachCell((cell, colNumber) => {
+        cell.font = {
+          name: "Arial",
+          size: 10,
+        };
+
+        // Border dotted untuk data
+        cell.border = {
+          top: { style: "dotted" },
+          left: { style: "dotted" },
+          bottom: { style: "dotted" },
+          right: { style: "dotted" },
+        };
+
+        // Default alignment
+        cell.alignment = {
+          vertical: "top",
+          horizontal: "left",
+          wrapText: true,
+        };
+
+        // Kolom tanggal = format tanggal
+        if (colNumber === 1 && cell.value instanceof Date) {
+          cell.numFmt = "dd/mm/yyyy";
         }
-      }
 
-      // Lokasi → tambah "Bintan /"
-      if (i === 3 && value) {
-        value = "Bintan / " + value;
-      }
+        // Kolom ke-3 (Kode) & kolom ke-8 (Kendali Mutu) rata tengah
+        if (colNumber === 3 || colNumber === 8) {
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "center",
+            wrapText: true,
+          };
+        }
 
-      rowData.push(value);
+        // Kolom Duration rata tengah
+        if (colNumber === 7) {
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "center",
+            wrapText: true,
+          };
+        }
+      });
+    });
+
+    // ===== BORDER BAGIAN BAWAH TABEL =====
+    if (filteredTickets.length > 0) {
+      const lastRow = sheet.getRow(headerRow.number + filteredTickets.length);
+      lastRow.eachCell((cell, colNumber) => {
+        cell.border = {
+          ...cell.border,
+          bottom: { style: "medium" },
+        };
+      });
     }
 
-    const row = sheet.addRow(rowData);
-
-    row.eachCell((cell, colNumber) => {
-      cell.font = { name: "Arial", size: 10 };
-      cell.border = {
-        top: { style: "hair" },
-        left: { style: "hair" },
-        bottom: { style: "hair" },
-        right: { style: "hair" },
-      };
-      cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
-
-      if (colNumber === 1 && cell.value instanceof Date) {
-        cell.numFmt = "dd/mm/yyyy";
-        cell.alignment = { vertical: "top", horizontal: "right" };
-      }
-      if (colNumber === 3 || colNumber === 8) {
-        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-      }
+    // ===== ATUR LEBAR KOLOM =====
+    const pxToChar = (px) => Math.round(px / 7);
+    const widthsPx = [80, 113, 86, 181, 487, 126, 126, 124];
+    widthsPx.forEach((px, i) => {
+      sheet.getColumn(i + 1).width = pxToChar(px);
     });
-  });
 
-  // ===== TAMBAHKAN 2 BARIS KOSONG DI BAWAH =====
-  for (let i = 0; i < 2; i++) {
-    const extraRow = sheet.addRow(["", "", "", "", "", "", "", ""]);
-    extraRow.eachCell((cell, colNumber) => {
-      cell.font = { name: "Arial", size: 10 };
-      cell.border = {
-        top: { style: "hair" },   // bukan tebal
-        bottom: { style: "hair" },
-        left: { style: "hair" },
-        right: { style: "hair" },
-      };
-      if (colNumber === 1) cell.border.left = { style: "thick" };
-      if (colNumber === 8) cell.border.right = { style: "thick" };
-    });
-  }
-
-  // ===== TEBAL KELILING TABEL =====
-  const lastRow = sheet.lastRow.number;
-  const firstRow = headerRow.number;
-  for (let r = firstRow; r <= lastRow; r++) {
-    for (let c = 1; c <= 8; c++) {
-      const cell = sheet.getCell(r, c);
-      if (r === firstRow) cell.border.top = { style: "thick" };
-      if (r === lastRow) cell.border.bottom = { style: "thick" };
-      if (c === 1) cell.border.left = { style: "thick" };
-      if (c === 8) cell.border.right = { style: "thick" };
-    }
-  }
-
-  // ===== ATUR LEBAR KOLOM =====
-  const pxToChar = (px) => Math.round(px / 7);
-  const widthsPx = [80, 113, 86, 181, 487, 126, 126, 124];
-  widthsPx.forEach((px, i) => {
-    sheet.getColumn(i + 1).width = pxToChar(px);
-  });
-
-  // ===== SIMPAN FILE =====
-  const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(
-    new Blob([buffer], {
+    // ===== SIMPAN FILE =====
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
-    "Aktivitas_IT_Report.xlsx"
-  );
+    });
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Aktivitas_IT_Report_${
+      new Date().toISOString().split("T")[0]
+    }.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Show success message
+    Swal.fire({
+      title: "Export Successful!",
+      html: `
+        <div style="text-align: center; padding: 1rem;">
+          <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;"></i>
+          <p>${filteredTickets.length} tickets exported successfully!</p>
+          <p style="font-size: 0.9rem; color: #666;">File telah didownload ke perangkat Anda.</p>
+        </div>
+      `,
+      icon: "success",
+      timer: 3000,
+      showConfirmButton: false,
+    });
+  } catch (error) {
+    console.error("Export error:", error);
+    Swal.fire({
+      title: "Export Failed",
+      text: "Terjadi kesalahan saat mengekspor data. Silakan coba lagi.",
+      icon: "error",
+    });
+  }
 }
