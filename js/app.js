@@ -1,6 +1,4 @@
-// =========================================================
-// 🔹 Import Firebase SDK
-// =========================================================
+// ==================== 🔹 Import Firebase SDK ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
@@ -9,9 +7,7 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// =========================================================
-// 🔹 Firebase Configuration
-// =========================================================
+// ==================== 🔹 Firebase Config ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -22,204 +18,83 @@ const firebaseConfig = {
   measurementId: "G-TJCHPXG7D5",
 };
 
-// =========================================================
-// 🔹 EmailJS Configuration
-// =========================================================
+// ==================== 🔹 EmailJS Config ====================
 const EMAILJS_PUBLIC_KEY = "5Sl1dmt0fEZe1Wg38";
 const EMAILJS_SERVICE_ID = "service_gf26aop";
 const EMAILJS_TEMPLATE_ID = "template_nsi9k3e";
 const STATIC_RECIPIENT_EMAIL = "mr.rikohermansyah@gmail.com";
 
-// =========================================================
-// 🔹 Initialize Firebase & EmailJS
-// =========================================================
+// ==================== 🔹 Init Firebase & Firestore ====================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ==================== 🔹 Init EmailJS ====================
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
-// =========================================================
-// 🔹 DOM Elements
-// =========================================================
+// ==================== 🔹 DOM Element ====================
 const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
 
-// =========================================================
-// 🔹 Redirect to Admin Page
-// =========================================================
-document.getElementById("adminBtn").addEventListener("click", () => {
-  window.location.href = "admin/index.html";
-});
+// Hide the status element since we're using SweetAlert
+statusEl.style.display = "none";
 
-// =========================================================
-// 🔹 Tooltip (support mobile + desktop)
-// =========================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const tooltip = document.createElement("div");
-  tooltip.className = "custom-tooltip";
-  document.body.appendChild(tooltip);
+// ==================== 🔹 Device Type Mapping ====================
+const deviceTypeMapping = {
+  // Hardware devices → HW
+  "PC Hardware": "HW",
+  Laptop: "HW",
+  Printer: "HW",
+  Projector: "HW",
+  // Software devices → SW
+  "PC Software": "SW",
+  // Network devices → NW
+  Network: "NW",
+  // Default untuk device lain
+  Others: "OT",
+};
 
-  const showTooltip = (text, x, y) => {
-    tooltip.textContent = text;
-    tooltip.style.opacity = 1;
-    tooltip.style.transform = "translateY(0)";
-    tooltip.style.top = y + 15 + "px";
-    tooltip.style.left = x + 15 + "px";
-  };
-
-  const hideTooltip = () => {
-    tooltip.style.opacity = 0;
-    tooltip.style.transform = "translateY(5px)";
-  };
-
-  document.querySelectorAll("[data-tip]").forEach((el) => {
-    // Desktop (hover / mousemove)
-    el.addEventListener("mousemove", (e) => {
-      showTooltip(el.dataset.tip, e.pageX, e.pageY);
-    });
-    el.addEventListener("mouseleave", hideTooltip);
-
-    // Mobile (tap & hold)
-    el.addEventListener("touchstart", (e) => {
-      const touch = e.touches[0];
-      showTooltip(el.dataset.tip, touch.pageX, touch.pageY);
-    });
-    el.addEventListener("touchend", hideTooltip);
-  });
-});
-
-// =========================================================
-// 💪 Super-stable "Etc." handler — No reset, No stuck, iOS/Android/PC safe
-// =========================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const selects = ["device", "location", "department"];
-  const form = document.getElementById("ticketForm");
-
-  selects.forEach((id) => {
-    const selectEl = document.getElementById(id);
-    if (!selectEl) return;
-
-    selectEl.removeAttribute("required"); // kita handle manual
-
-    const parent = selectEl.parentElement;
-    const input = document.createElement("input");
-    input.type = "text";
-    input.name = `${id}_other`;
-    input.id = `${id}_other`;
-    input.placeholder = `Please specify other ${id}`;
-    Object.assign(input.style, {
-      width: "100%",
-      padding: "8px",
-      borderRadius: "6px",
-      border: "1px solid #ccc",
-      marginTop: "5px",
-      display: "none",
-    });
-    parent.appendChild(input);
-
-    let lastValue = ""; // untuk cegah trigger berulang
-
-    selectEl.addEventListener("change", (e) => {
-      const val = e.target.value.toLowerCase();
-
-      // Hindari trigger ulang
-      if (val === lastValue) return;
-      lastValue = val;
-
-      if (val === "lainlain" || val === "etc" || val === "etc.") {
-        // tampilkan input
-        setTimeout(() => {
-          selectEl.style.display = "none";
-          input.style.display = "block";
-          input.value = ""; // reset isinya biar fresh
-          input.focus();
-        }, 150); // kasih delay supaya dropdown tertutup penuh
-      } else if (!val) {
-        // kalau user balik ke choose, pastikan semua bersih
-        input.style.display = "none";
-        selectEl.style.display = "";
-      }
-    });
-
-    // kalau user keluar tanpa isi → balik ke select
-    input.addEventListener("blur", () => {
-      if (!input.value.trim()) {
-        input.style.display = "none";
-        selectEl.style.display = "";
-        selectEl.value = ""; // reset value agar bisa pilih lagi
-        lastValue = ""; // reset status terakhir
-      }
-    });
-  });
-
-  // =========================================================
-  // 🚀 Manual validation + merge value for EmailJS/Firebase
-  // =========================================================
-  form.addEventListener("submit", (e) => {
-    let valid = true;
-
-    ["device", "location", "department"].forEach((id) => {
-      const selectEl = document.getElementById(id);
-      const inputEl = document.getElementById(`${id}_other`);
-      let value = "";
-
-      if (inputEl && inputEl.style.display === "block") {
-        value = inputEl.value.trim();
-      } else if (selectEl) {
-        value = selectEl.value;
-      }
-
-      // Validasi
-      if (!value) {
-        valid = false;
-        selectEl.focus();
-      }
-
-      // Pastikan value tetap terkirim
-      const hidden = document.createElement("input");
-      hidden.type = "hidden";
-      hidden.name = id;
-      hidden.value = value;
-      form.appendChild(hidden);
-    });
-
-    if (!valid) {
-      e.preventDefault();
-      alert("Please complete all required fields before submitting.");
-    }
-  });
-});
-
-
-// =========================================================
-// 🔹 Send Email via EmailJS
-// =========================================================
+// ==================== 🔹 Send Email ====================
 async function sendEmail(payload) {
   try {
-    const response = await emailjs.send(
+    const res = await emailjs.send(
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
       payload
     );
-    console.log("✅ Email sent successfully:", response.status);
-    return response;
-  } catch (error) {
-    console.error("❌ Email sending failed:", error);
-    throw new Error("Failed to send email notification.");
+    console.log("✅ Email sent:", res.status);
+    return res;
+  } catch (err) {
+    console.error("❌ Email failed:", err);
+    throw new Error("Failed to send email.");
   }
 }
 
-// =========================================================
-// 🔹 Save Ticket to Firestore
-// =========================================================
+// ==================== 🔹 Save to Firestore ====================
 async function saveToFirestore(doc) {
-  const colRef = collection(db, "tickets");
-  const docRef = await addDoc(colRef, doc);
-  return docRef.id;
+  const col = collection(db, "tickets");
+  const ref = await addDoc(col, doc);
+  return ref.id;
 }
 
-// =========================================================
-// 🔹 Form Submit Handler
-// =========================================================
+// ==================== 🔹 Show SweetAlert ====================
+function showAlert(icon, title, text, timer = 3000) {
+  return Swal.fire({
+    icon: icon,
+    title: title,
+    text: text,
+    timer: timer,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    showClass: {
+      popup: "animate__animated animate__fadeInDown",
+    },
+    hideClass: {
+      popup: "animate__animated animate__fadeOutUp",
+    },
+  });
+}
+
+// ==================== 🔹 Enhanced Submit Handler ====================
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -228,35 +103,26 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  statusEl.textContent = "Submitting ticket...";
-  setTimeout(() => {
-    statusEl.textContent = "";
-  }, 2000);
+  const submitBtn = document.getElementById("submitBtn");
+  const originalText = submitBtn.innerHTML;
+
+  // Show loading state
+  submitBtn.innerHTML = '<span class="loading"></span> Submitting Ticket...';
+  submitBtn.disabled = true;
 
   const data = new FormData(form);
   const device = data.get("device");
 
-  // Jika user pilih "Lainlain", ambil nilai dari input tambahan
-  let finalDevice = device;
-  if (device === "Lainlain") {
-    finalDevice = data.get("otherDevice") || "Unspecified Device";
-  }
+  // Determine ticket code menggunakan mapping yang konsisten
+  const code = deviceTypeMapping[device] || "OT";
 
-  // Tentukan kode tiket
-  let code = "OT";
-  if (["PC", "Laptop", "Printer", "Projector"].includes(finalDevice))
-    code = "HW";
-  else if (finalDevice === "Jaringan") code = "NW";
-  else if (["MSOffice", "Software"].includes(finalDevice)) code = "SW";
-
-  // Data dokumen untuk Firestore
+  // Create document data for Firestore
   const docData = {
     inventory: (data.get("inventory") || "").toUpperCase(),
-    device: finalDevice,
+    device,
     code,
     name: data.get("name"),
     user_email: data.get("user_email"),
-    user_phone: data.get("user_phone"),
     department: data.get("department"),
     location: data.get("location"),
     priority: data.get("priority"),
@@ -271,10 +137,10 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    // Simpan ke Firestore
-    const ticketId = await saveToFirestore(docData);
+    // Save to Firestore
+    const id = await saveToFirestore(docData);
 
-    // Warna berdasarkan prioritas
+    // Determine priority color for EmailJS
     const priorityColor =
       {
         High: "#dc3545",
@@ -282,46 +148,62 @@ form.addEventListener("submit", async (e) => {
         Low: "#28a745",
       }[docData.priority] || "#007bff";
 
-    // Kirim email notifikasi
+    // Send email notification
     await sendEmail({
-      ticketId,
+      ticketId: id,
       ...docData,
       priority_color: priorityColor,
       sent_at: new Date().toLocaleString("en-US"),
       recipient: STATIC_RECIPIENT_EMAIL,
     });
 
-    // ✅ Popup sukses
-    await Swal.fire({
-      icon: "success",
-      title: "Ticket Submitted!",
-      html: `<p>Thank you! The IT team will review your ticket shortly.</p>`,
-      confirmButtonText: "OK",
-      confirmButtonColor: "#2563eb",
-      timer: 3000,
-      timerProgressBar: true,
-      allowOutsideClick: false,
-    });
+    // Show success alert
+    await showAlert(
+      "success",
+      "Ticket Submitted Successfully!",
+      `Your ticket has been created with ID: ${id}. Our IT team will contact you soon.`
+    );
 
+    // Reset form
     form.reset();
-    const otherDeviceInput = document.getElementById("otherDevice");
-    if (otherDeviceInput) otherDeviceInput.style.display = "none";
-  } catch (error) {
-    console.error(error);
 
-    // ❌ Popup error
-    await Swal.fire({
-      icon: "error",
-      title: "Submission Failed",
-      text: error.message || "Something went wrong. Please try again.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#dc3545",
-      timer: 4000,
-      timerProgressBar: true,
-      allowOutsideClick: false,
-    });
+    // Reset button
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
 
-    statusEl.textContent = `❌ Error: ${error.message}`;
+    // Show error alert
+    await showAlert(
+      "error",
+      "Submission Failed",
+      "There was an error submitting your ticket. Please try again or contact IT support directly."
+    );
+
+    // Reset button
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
   }
 });
 
+// ==================== 🔹 Input Validation Enhancements ====================
+document.addEventListener("DOMContentLoaded", function () {
+  // Add real-time validation feedback
+  const inputs = form.querySelectorAll("input, select, textarea");
+
+  inputs.forEach((input) => {
+    input.addEventListener("blur", function () {
+      if (this.value.trim() !== "") {
+        this.style.borderColor = "#10b981";
+      } else if (this.required) {
+        this.style.borderColor = "#dc2626";
+      }
+    });
+
+    input.addEventListener("input", function () {
+      if (this.value.trim() !== "") {
+        this.style.borderColor = "var(--primary)";
+      }
+    });
+  });
+});
