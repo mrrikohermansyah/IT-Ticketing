@@ -1,231 +1,478 @@
 :root {
-  --bg: #f4f7fb;
-  --card: #ffffff;
-  --accent: #2563eb;
-  --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --primary-light: #dbeafe;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --white: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius: 8px;
+  --radius-lg: 12px;
 }
 
 * {
   box-sizing: border-box;
-}
-
-.custom-tooltip {
-  position: fixed; /* penting! biar lepas dari container */
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  pointer-events: none;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateY(5px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 99999;
-}
-
-html,
-body {
-  height: 100%;
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial;
-  background: var(--bg);
-  color: #0f172a;
-  overflow: hidden; /* body tidak scroll */
+  padding: 0;
 }
 
-/* ✅ Wrapper menjadi area scroll tunggal */
-.wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  height: 100%;
-  width: 100%;
-  overflow-y: auto; /* hanya wrapper yang scroll */
-  -webkit-overflow-scrolling: touch;
-  padding: 16px 0;
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  color: var(--gray-900);
+  line-height: 1.6;
+  font-weight: 400;
 }
 
-/* ✅ Container fleksibel */
 .container {
-  width: 95%;
-  max-width: 750px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 6px 25px rgba(2, 6, 23, 0.15);
-  padding: 20px;
-  transition: box-shadow 0.3s ease;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  min-height: 100vh;
 }
 
-/* Header */
+/* Header Styles */
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+}
+
 header .logo {
-  width: 150px;
-  height: auto;
-  object-fit: contain;
+  height: 48px;
+  width: auto;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
 }
 
 header h1 {
-  margin: 0 0 6px;
-  font-size: 1.4rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
 }
 
-/* Card */
+/* Card & Form Styles */
 .card {
-  background: var(--card);
-  padding: 14px;
-  border-radius: 10px;
-  box-shadow: 0 4px 18px rgba(2, 6, 23, 0.06);
-  margin-bottom: 12px;
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
+  backdrop-filter: blur(8px);
 }
 
-/* Forms */
+form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* Form Labels */
 form label {
   display: block;
-  margin-bottom: 10px;
-  font-size: 0.9rem;
+  position: relative;
+  cursor: help;
 }
 
+form label span {
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+.required::after {
+  content: " *";
+  color: #dc2626;
+}
+
+/* Floating Tooltip Styles */
+.floating-tooltip {
+  position: fixed;
+  background: var(--gray-900);
+  color: var(--white);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: var(--shadow-lg);
+  max-width: 300px;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: left;
+  visibility: hidden;
+}
+
+.floating-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--gray-900);
+}
+
+/* Input Styles with Custom Validation */
 input[type="text"],
 input[type="email"],
-input[type="tel"],
 select,
 textarea {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #e6edf3;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: inherit;
+}
+
+/* Remove all default validation messages */
+input:invalid,
+select:invalid,
+textarea:invalid {
+  box-shadow: none;
+}
+
+/* Custom validation states */
+input:required:invalid,
+select:required:invalid,
+textarea:required:invalid {
+  border-color: var(--gray-200);
+}
+
+input:focus:invalid,
+select:focus:invalid,
+textarea:focus:invalid {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+input:valid,
+select:valid,
+textarea:valid {
+  border-color: #10b981;
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: var(--gray-400);
+  opacity: 1;
+  font-style: italic;
+}
+
+:-ms-input-placeholder {
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+::-ms-input-placeholder {
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+/* Select Styling */
+select {
   appearance: none;
-  background-color: white;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
 }
 
+/* Style for unselected selects */
+select:required:invalid {
+  color: var(--gray-400);
+}
+
+select option[value=""][disabled] {
+  display: none;
+}
+
+select option {
+  color: var(--gray-900);
+}
+
+/* Priority options color coding */
+select#priority option[value="Low"] {
+  color: #059669;
+}
+select#priority option[value="Medium"] {
+  color: #d97706;
+}
+select#priority option[value="High"] {
+  color: #dc2626;
+}
+
+/* Textarea Specific */
 textarea {
-  resize: none;
-  height: 60px;
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
 }
 
+/* Button Styles */
 .actions {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 6px;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
-/* Buttons */
 button {
-  background: var(--accent);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 0;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 0.95rem;
   cursor: pointer;
-  font-size: 0.9rem;
-}
-
-button[type="reset"] {
-  background: #efefef;
-  color: #111;
-}
-
-button[type="reset"]:hover {
-  background-color: #c7c3c3;
+  transition: all 0.2s ease;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  letter-spacing: -0.01em;
 }
 
 button[type="submit"] {
-  background-color: #2563eb;
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: var(--shadow-sm);
 }
 
 button[type="submit"]:hover {
-  background-color: #0236a7;
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
-/* Admin button */
-#adminBtn {
-  margin-left: auto;
-  background-color: red;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 0;
-  cursor: pointer;
+button[type="reset"] {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1.5px solid var(--gray-300);
 }
 
-#adminBtn:hover {
-  background-color: rgb(179, 12, 12);
+button[type="reset"]:hover {
+  background: var(--gray-200);
+  color: var(--gray-800);
+  border-color: var(--gray-400);
 }
 
-/* Misc */
-.required::after {
-  content: " *";
-  color: red;
-}
-
-.tickets ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tickets li {
-  padding: 8px;
-  border-bottom: 1px dashed #eef2ff;
-}
-
+/* Status Message */
 #status {
-  margin-top: 10px;
-  color: var(--muted);
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
-/* Animasi input muncul */
-.fade-in-input {
-  animation: fadeInSlide 0.25s ease forwards;
-  opacity: 0;
-  transform: translateY(4px);
+#status:not(:empty) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
 }
 
-@keyframes fadeInSlide {
+/* Success and Error status variants */
+#status.success {
+  background: #f0fdf4;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+#status.error {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #991b1b;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+  color: var(--gray-600);
+  margin-top: 2rem;
+  font-size: 0.875rem;
+}
+
+footer small {
+  opacity: 0.8;
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
-/* Select */
-select:invalid {
-  color: #9ca3af;
-}
-select option {
-  color: #0f172a;
+/* Custom Error Message */
+.error-message {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: none;
 }
 
-/* ✅ Responsive tweaks */
-@media (max-width: 600px) {
+.input-error .error-message {
+  display: block;
+}
+
+.input-error input,
+.input-error select,
+.input-error textarea {
+  border-color: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
   .container {
-    padding: 14px;
-    font-size: 0.9rem;
+    padding: 16px;
   }
+
+  header {
+    margin-bottom: 2rem;
+  }
+
   header h1 {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  button {
+    min-width: 100%;
+  }
+
+  .floating-tooltip {
+    max-width: 250px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
   }
 }
 
-.fade-in-input {
-  animation: fadeIn 0.25s ease-in-out;
+@media (min-width: 641px) {
+  form {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  label[for="message"],
+  textarea,
+  .actions {
+    grid-column: 1 / -1;
+  }
 }
 
-@keyframes fadeIn {
+/* Hover effects for form elements */
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--gray-400);
+}
+
+/* Focus states for accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for textarea */
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 3px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 3px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* Prevent text selection on tooltip */
+.floating-tooltip {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Better text rendering for English */
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle animations for better UX */
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-
+/* Hide status element since we're using SweetAlert */
+#status {
+  display: none !important;
+}
