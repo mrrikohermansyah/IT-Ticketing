@@ -6,6 +6,7 @@
     <title>Admin Panel - IT Ticketing</title>
     <link rel="stylesheet" href="../css/admin.css" />
     <script type="module" src="../js/admin.js"></script>
+    <script src="../js/export.js"></script>
     <!-- Library Export -->
     <link
       rel="stylesheet"
@@ -24,119 +25,108 @@
 
   <body>
     <main class="container">
-      <div class="layout-wrapper">
-        <header class="main-header">
-          <div class="left">
-            <img class="logo" src="../imgs/meitech-logo.png" alt="" />
-            <!-- <h1>📋 Lists of Ticket Received</h1> -->
-          </div>
-          <div class="auth-buttons">
-            <button
-              id="loginBtn"
-              class="auth-btn login-btn"
-              style="display: none"
-            >
-              <img
-                src="https://www.svgrepo.com/show/355037/google.svg"
-                alt="Google Logo"
-                class="google-logo"
-              />
-              <span>Login With Google</span>
-            </button>
-
-            <button
-              id="goLoginBtn"
-              class="auth-btn login-btn"
-              style="display: none"
-            >
-              <i class="fa-solid fa-right-to-bracket"></i> Login
-            </button>
-            <span
-              id="userInfo"
-              class="user-info"
-              style="display: none; margin-right: 10px"
-            ></span>
-            <button
-              id="logoutBtn"
-              class="auth-btn logout-btn"
-              style="display: none"
-            >
-              <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </button>
-          </div>
-        </header>
-      </div>
-
-      <!-- Tombol Export -->
-      <!-- <div class="export-buttons">
-        <button onclick="exportToExcel()">
-          <i class="fa-solid fa-file-excel"></i> Export Excel
-        </button>
-        <button id="btnExportPDF">
-          <i class="fa-solid fa-file-pdf"></i> Export PDF
-        </button>
-      </div> -->
-
-      <section class="card">
-        <!-- <h2 style="margin-top: 0">Tickets</h2> -->
-        <div class="filter-bar">
-          <label for="filterActionBy">Filter Action By:</label>
-          <select id="filterActionBy">
-            <option value="all">-- All --</option>
-          </select>
-          <!-- Filter by Date -->
-          <label for="filterDate">Filter Date:</label>
-          <input type="date" id="filterDate" />
-          <!-- 🔹 Tombol Reset -->
-          <button id="resetFilters">Reset Filters</button>
-          <!-- Tombol Export -->
-          <div class="export-buttons">
-            <button onclick="exportToExcel()">
-              <i class="fa-solid fa-file-excel"></i> Export Excel
-            </button>
-            <button id="btnExportPDF">
-              <i class="fa-solid fa-file-pdf"></i> Export PDF
-            </button>
-          </div>
+      <header class="main-header">
+        <div class="left">
+          <img class="logo" src="../imgs/meitech-logo.png" alt="" />
+          <h1>📋 Daftar Tiket Masuk</h1>
         </div>
-        <div class="view-switch">
-          <button class="switch-view-btn" id="switchViewBtn">
-            🔄 Switch View
+        <div class="auth-buttons">
+          <button
+            id="loginBtn"
+            class="auth-btn login-btn"
+            style="display: none"
+          >
+            <img
+              src="https://www.svgrepo.com/show/355037/google.svg"
+              alt="Google Logo"
+              class="google-logo"
+            />
+            <span>Login dengan Google</span>
+          </button>
+
+          <button
+            id="goLoginBtn"
+            class="auth-btn login-btn"
+            style="display: none"
+          >
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+          </button>
+
+          <button
+            id="logoutBtn"
+            class="auth-btn logout-btn"
+            style="display: none"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+          </button>
+        </div>
+      </header>
+
+      <!-- Controls Bar -->
+      <div class="controls-bar">
+        <!-- Tombol Export -->
+        <div class="export-buttons">
+          <button onclick="exportToExcel()">
+            <i class="fa-solid fa-file-excel"></i> Export Excel
+          </button>
+          <button id="btnExportPDF">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
           </button>
         </div>
 
-        <div class="tableTitle">
-          <h1>📋 Lists of Ticket Received</h1>
+        <!-- View Controls -->
+        <div class="view-controls">
+          <button id="switchViewBtn" class="view-toggle">
+            <i class="fa-solid fa-id-card"></i> Switch to Card View
+          </button>
+
+          <select id="filterSelect" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="Open">Open</option>
+            <option value="On Progress">On Progress</option>
+            <option value="Closed">Closed</option>
+          </select>
         </div>
+      </div>
+
+      <section class="card">
+        <h2 style="margin-top: 0">Tiket Terbaru</h2>
+
+        <!-- Table View -->
         <div class="table-wrapper">
           <table id="ticketsTable">
             <thead>
               <tr>
+                <!-- ✅ Semua field dari user.html + Date (createdAt) -->
                 <th>Date</th>
-                <th>Inventory Code</th>
-                <th>Code</th>
-                <th>Location</th>
-                <th>Description</th>
-                <th>Name</th>
                 <th>Duration</th>
-                <th>QA</th>
+                <th>Inventory</th>
+                <th>Device</th>
+                <th>Name</th>
                 <th>Email</th>
-                <th>Phone</th>
                 <th>Department</th>
+                <th>Location</th>
                 <th>Priority</th>
-                <!-- <th>Subject</th> -->
-                <th>Action By</th>
-                <th>Ticket Status</th>
+                <th>Subject</th>
+                <th>Message</th>
                 <th>Note</th>
-                <th>Action Button</th>
+                <th>Action By</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="ticketsBody">
+            <tbody id="ticketTableBody">
               <tr>
-                <td colspan="16" class="loading">Load data...</td>
+                <!-- ✅ Update colspan sesuai jumlah kolom baru -->
+                <td colspan="14" class="loading">Memuat data...</td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Card View -->
+        <div id="cardContainer" class="card-container" style="display: none">
+          <!-- Cards will be rendered here -->
         </div>
       </section>
     </main>
@@ -149,6 +139,7 @@
       function addDataLabels() {
         const table = document.getElementById("ticketsTable");
         if (!table) return;
+
         const headers = Array.from(table.querySelectorAll("thead th")).map(
           (th) => th.innerText.trim()
         );
@@ -164,12 +155,16 @@
 
       // Jalankan tiap kali halaman load
       window.addEventListener("load", addDataLabels);
-      // Jalankan ulang tiap kali ada perubahan tabel (misal Firestore update)
+
+      // Jalankan ulang tiap kali ada perubahan tabel
       const observer = new MutationObserver(addDataLabels);
-      observer.observe(document.getElementById("ticketsBody"), {
-        childList: true,
-        subtree: true,
-      });
+      const ticketsBody = document.getElementById("ticketTableBody");
+      if (ticketsBody) {
+        observer.observe(ticketsBody, {
+          childList: true,
+          subtree: true,
+        });
+      }
     </script>
   </body>
 </html>
