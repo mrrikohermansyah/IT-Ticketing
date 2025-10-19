@@ -1,403 +1,645 @@
-/* ===========================================================
-   admin.css — Default = Card (mobile) view; Switch -> Table view
-   =========================================================== */
+/* ===== admin.css — Fixed for New HTML Structure ===== */
 
 :root {
-  --bg: #f4f7fb;
-  --card: #ffffff;
+  --bg: #f5f7fb;
+  --card: #fff;
   --accent: #2563eb;
+  --accent-hover: #1e40af;
   --danger: #e53935;
+  --danger-hover: #c62828;
   --muted: #6b7280;
-  --border: #e5e7eb;
-  --radius: 10px;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --border: #e6e9ee;
+  --radius: 12px;
+  --shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
+  height: 100%;
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
   background: var(--bg);
+  font-family: var(--font);
   color: #0f172a;
-  line-height: 1.5;
-  padding: 20px;
-  overflow-x: hidden;
 }
 
+/* ================== Container ================== */
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 12px;
+  padding: 16px;
 }
 
-/* ================= Header ================= */
+/* ================== Header ================== */
 .main-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
-  background: #f9fafb;
-  border-bottom: 1px solid var(--border);
-  border-radius: 10px;
+  padding: 16px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
+
 .main-header .left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.tableTitle h1 {
-  font-size: 1.25rem;
-  margin: 0;
-}
-.main-header .logo {
-  width: 160px;
-  max-width: 100%;
+
+.logo {
+  width: 150px;
   height: auto;
-  object-fit: contain;
 }
 
-/* ================= Auth & Buttons ================= */
+.main-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
 .auth-buttons {
   display: flex;
   gap: 10px;
-  align-items: center;
-}
-.auth-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-.login-btn {
-  background: var(--accent);
-  color: #fff;
-}
-.logout-btn {
-  background: var(--danger);
-  color: #fff;
+  flex-wrap: wrap;
 }
 
-/* ================= Export & Filter ================= */
-.export-buttons {
+/* ================== Controls Bar ================== */
+.controls-bar {
   display: flex;
-  gap: 12px;
-  margin-left: auto;
-}
-.export-buttons button {
-  display: inline-flex;
-  gap: 8px;
+  justify-content: space-between;
   align-items: center;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  font-weight: 600;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
-  justify-content: center;
-}
-.export-buttons button:first-child {
-  background: #1d6f42;
-}
-.export-buttons button:last-child {
-  background: #d32f2f;
 }
 
-.filter-bar {
+.export-buttons {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  align-items: center;
-  padding: 10px 12px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-  margin-bottom: 12px;
-}
-.filter-bar select,
-.filter-bar input[type="date"],
-.filter-bar button {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: #fff;
-  cursor: pointer;
-}
-.filter-bar button {
-  background: #4a90e2;
-  color: #fff;
-  border: none;
 }
 
-/* ================= Table ================= */
+.view-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ================== Button Base ================== */
+button {
+  font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+/* ================== Auth & Control Buttons ================== */
+.auth-btn {
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(2, 6, 23, 0.06);
+}
+
+.login-btn {
+  background: var(--accent);
+}
+
+.logout-btn {
+  background: var(--danger);
+}
+
+.switch-view-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.switch-view-btn:hover {
+  background: var(--accent-hover);
+}
+
+.export-buttons button {
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(2, 6, 23, 0.06);
+}
+
+.export-buttons button:first-child {
+  background: #1d6f42;
+}
+
+.export-buttons button:last-child {
+  background: var(--danger);
+}
+
+.export-buttons button:hover {
+  opacity: 0.9;
+}
+
+/* ================== Filter Select ================== */
+.filter-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  background: var(--card);
+  color: #0f172a;
+  min-width: 150px;
+}
+
+/* ================== Main Card ================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.3rem;
+  color: #0f172a;
+}
+
+/* ================== Table View ================== */
 .table-wrapper {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
+  border-radius: var(--radius);
 }
+
 #ticketsTable {
   width: 100%;
   border-collapse: collapse;
   background: var(--card);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
   table-layout: auto;
-}
-#ticketsTable th,
-#ticketsTable td {
-  padding: 5px 5px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-  word-wrap: break-word;
-}
-#ticketsTable th {
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.85rem;
-}
-#ticketsTable tbody tr:nth-child(even) {
-  background: #fafafa;
-}
-#ticketsTable tbody tr:hover {
-  background: #f1f5f9;
+  min-width: 1000px;
 }
 
-/* ================= Buttons in Table ================= */
+#ticketsTable th,
+#ticketsTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+#ticketsTable th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 2px solid var(--border);
+}
+
+#ticketsTable td {
+  white-space: normal;
+}
+
+#ticketsTable tbody tr:hover {
+  background: #f8fafc;
+}
+
+#ticketsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ================== Status & Priority Badges ================== */
+.status-badge,
+.priority-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.status-open {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-onprogress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-closed {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.priority-high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.priority-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.priority-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ================== Table Action Buttons ================== */
 .action-buttons {
   display: flex;
   gap: 8px;
-  align-items: center;
+  justify-content: flex-start;
 }
-.table-btn {
+
+.action-buttons button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 8px;
   color: #fff;
-  white-space: nowrap;
-  transition: transform 0.2s ease, background-color 0.3s;
+  font-weight: 600;
+  min-width: auto;
+  transition: 0.2s ease-in-out;
 }
-.table-btn:hover {
-  transform: scale(1.05);
-}
-.update-btn {
+
+.action-buttons .edit-btn {
   background: var(--accent);
 }
-.delete-btn {
+
+.action-buttons .edit-btn:hover {
+  background: var(--accent-hover);
+}
+
+.action-buttons .delete-btn {
   background: var(--danger);
 }
-.cancel-btn {
-  background: #6b7280;
+
+.action-buttons .delete-btn:hover {
+  background: var(--danger-hover);
 }
 
-/* ======================================================
-   🔹 EDIT MODE FIELDS
-   ====================================================== */
-.edit-input,
-select.edit-input,
-textarea.edit-input {
-  width: 100%;
-  max-width: 100%;
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: inherit;
-  color: #111827;
-  background-color: #fff;
-  transition: all 0.2s ease;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-}
-select.edit-input {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 12px;
-  padding-right: 28px;
-}
-textarea.edit-input {
-  resize: vertical;
-  min-height: 45px;
-}
-.edit-input:hover {
-  border-color: #94a3b8;
+/* ================== Card View ================== */
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
 }
 
-/* 🔹 Column-based width for proportional layout */
-td[data-column="location"] .edit-input {
-  width: 130px;
-}
-td[data-column="management"] .edit-input {
-  width: 130px;
-}
-td[data-column="priority"] .edit-input {
-  width: 110px;
-}
-td[data-column="status"] .edit-input {
-  width: 120px;
-}
-td[data-column="note"] .edit-input {
-  width: 200px;
-}
-
-/* ======================================================
-   🔹 SWITCH VIEW TOGGLE BUTTON
-   ====================================================== */
-.switch-view-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: var(--shadow);
-}
-.switch-view-btn:hover {
-  background: #1e40af;
-}
-
-/* ======================================================
-   🔹 DEFAULT = CARD VIEW (VERTIKAL)
-   ====================================================== */
-body:not(.table-view) #ticketsTable thead {
-  display: none;
-}
-body:not(.table-view) #ticketsTable tr {
-  display: block;
-  background: #fff;
+.ticket-card {
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
+  padding: 18px;
   box-shadow: var(--shadow);
-  padding: 12px;
-  margin-bottom: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-body:not(.table-view) #ticketsTable td {
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.card-field {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border: none;
-  padding: 8px 0;
-  text-align: left;
-}
-body:not(.table-view) #ticketsTable td::before {
-  content: attr(data-label);
-  font-weight: 600;
-  color: #374151;
-  flex-basis: 35%;
-  text-align: left;
-}
-body:not(.table-view) #ticketsTable td:last-child {
-  border-bottom: none;
-}
-body:not(.table-view) .action-buttons {
-  justify-content: flex-start;
+  gap: 12px;
+  font-size: 0.95rem;
 }
 
-/* ======================================================
-   🔹 RESPONSIVE
-   ====================================================== */
+.card-field strong {
+  flex: 0 0 120px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+}
+
+.card-field span {
+  flex: 1;
+  text-align: left;
+  color: #111827;
+  word-break: break-word;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.card-actions button {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+}
+
+/* ================== Empty & Loading States ================== */
+.empty-state,
+.loading,
+.login-prompt,
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.empty-state i,
+.loading i,
+.login-prompt i,
+.error-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.empty-state p,
+.loading p,
+.login-prompt p,
+.error-state p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.loading {
+  color: var(--accent);
+}
+
+.error-state {
+  color: var(--danger);
+}
+
+.login-prompt {
+  color: var(--muted);
+}
+
+/* ================== Note Cell ================== */
+.note-cell {
+  max-width: 200px;
+  word-break: break-word;
+}
+
+/* ================== Responsive Design ================== */
+@media (max-width: 1200px) {
+  .container {
+    padding: 12px;
+  }
+
+  .card-container {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
   .main-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
   }
-  .filter-bar,
-  .export-buttons {
+
+  .main-header .left {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .auth-buttons {
+    justify-content: center;
+  }
+
+  .controls-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+  }
+
+  .export-buttons,
+  .view-controls {
+    justify-content: center;
+  }
+
+  .card-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ticket-card {
+    padding: 16px;
+  }
+
+  .card-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .card-field strong {
+    flex: none;
+    margin-bottom: 2px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .card-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Auto switch to card view on mobile */
+  .table-wrapper {
+    display: none;
+  }
+
+  .card-container {
+    display: grid;
+  }
+
+  /* Show switch view button only on desktop */
+  .switch-view-btn {
+    display: none !important;
+  }
+
+  #ticketsTable th,
+  #ticketsTable td {
+    font-size: 0.88rem;
+    padding: 10px 8px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
     width: 100%;
   }
-  .edit-input,
-  select.edit-input,
-  textarea.edit-input {
-    width: 100% !important;
+
+  .action-buttons button {
+    width: 100%;
+    justify-content: center;
   }
-  #ticketsTable td::before {
-    flex-basis: 40%;
+}
+
+@media (max-width: 480px) {
+  .main-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .logo {
+    width: 120px;
+  }
+
+  button {
+    padding: 8px 12px;
     font-size: 0.9rem;
   }
-}
 
-/* ======================================================
-   🔹 NO SCROLL HORIZONTAL (FINAL FIX)
-   ====================================================== */
-html,
-body {
-  overflow-x: hidden !important;
-  width: 100%;
-  max-width: 100%;
-}
-.table-wrapper,
-.container,
-main {
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* ============================================
-   🔹 Fix: Card view (mobile) rata kiri & sejajar
-   ============================================ */
-body:not(.table-view) #ticketsTable td {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 6px 0;
-  border: none;
-  text-align: left;
-  flex-wrap: nowrap;
-}
-
-body:not(.table-view) #ticketsTable td::before {
-  content: attr(data-label);
-  font-weight: 600;
-  color: #374151;
-  text-align: left;
-  min-width: 130px; /* Lebar label */
-  max-width: 160px; /* Biar fleksibel sedikit */
-  flex-shrink: 0; /* Jangan mengecil */
-}
-
-body:not(.table-view) #ticketsTable td span,
-body:not(.table-view) #ticketsTable td div,
-body:not(.table-view) #ticketsTable td p {
-  text-align: left;
-  white-space: normal;
-  word-break: break-word;
-  flex: 1;
-}
-
-/* 🔹 Responsive: biar tetap sejajar tapi tidak melebar */
-@media (max-width: 480px) {
-  body:not(.table-view) #ticketsTable td::before {
-    min-width: 100px;
-    max-width: 120px;
+  .card {
+    padding: 16px;
   }
+
+  .card h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* ================== Desktop Only ================== */
+@media (min-width: 769px) {
+  .switch-view-btn {
+    display: inline-flex !important;
+  }
+}
+
+/* ================== Utility Classes ================== */
+.google-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+/* ================== SweetAlert Customization ================== */
+.swal2-popup {
+  border-radius: var(--radius) !important;
+  font-family: var(--font) !important;
+}
+
+.swal2-confirm {
+  background: var(--accent) !important;
+  border-radius: 8px !important;
+}
+
+.swal2-cancel {
+  background: var(--muted) !important;
+  border-radius: 8px !important;
+}
+
+/* Duration Badge Styles */
+.duration-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.duration-short {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.duration-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.duration-long {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.duration-closed {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.duration-neutral {
+  background: #f3f4f6;
+  color: #6b7280;
 }
