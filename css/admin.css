@@ -29,7 +29,7 @@ body {
 
 /* ================== Container ================== */
 .container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 16px;
 }
@@ -693,3 +693,4 @@ button:hover {
   display: inline-block;
   vertical-align: middle;
 }
+
