@@ -78,6 +78,17 @@ function getAdminDisplayName(user) {
     return user.displayName;
   }
 
+  function validateTicketBeforeSave(ticketData) {
+    if (
+      (ticketData.status_ticket === "Closed" ||
+        ticketData.status_ticket === "Resolved") &&
+      !ticketData.note
+    ) {
+      throw new Error("Harap isi Technician Notes sebelum menutup ticket!");
+    }
+    return true;
+  }
+
   // Fallback: extract dari email (first part)
   const nameFromEmail = userEmail
     .split("@")[0]
@@ -1228,8 +1239,8 @@ async function handleEdit(e) {
                 : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
             }
             <div class="form-group">
-              <label><i class="fa-solid fa-note-sticky"></i> Note</label>
-              <textarea id="note" class="swal2-textarea" placeholder="Add notes or updates...">${
+              <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note</label>
+              <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
                 data.note || ""
               }</textarea>
             </div>
@@ -1296,6 +1307,8 @@ async function handleEdit(e) {
     });
 
     if (!formValues) return;
+
+    validateTicketBeforeSave(formValues);
 
     // ✅ Tentukan QA berdasarkan status baru
     const newQA = getAutoQA(formValues.status_ticket);

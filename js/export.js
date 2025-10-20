@@ -332,7 +332,7 @@ async function exportToExcel(allTickets, filterSelect) {
         ticket.inventory || "-",
         deviceCode,
         ticket.location ? "Bintan / " + ticket.location : "Bintan / -",
-        ticket.subject || "-",
+        ticket.note || "-",
         ticket.name || "-",
         durationText,
         kendaliMutu,
