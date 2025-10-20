@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
   <head>
     <meta charset="utf-8" />
@@ -90,6 +90,11 @@
             <option value="On Progress">On Progress</option>
             <option value="Closed">Closed</option>
           </select>
+          <!-- ✅ TAMBAHKAN ACTION BY FILTER DI SINI -->
+          <select id="actionByFilter" class="filter-select">
+            <option value="all">All IT Staff</option>
+            <!-- Options akan diisi oleh JavaScript -->
+          </select>
         </div>
       </div>
 
@@ -169,7 +174,7 @@
         if (!table) return;
 
         const headers = Array.from(table.querySelectorAll("thead th")).map(
-          (th) => th.innerText.trim()
+          (th) => th.innerText.trim(),
         );
 
         table.querySelectorAll("tbody tr").forEach((row) => {
@@ -196,4 +201,3 @@
     </script>
   </body>
 </html>
-
