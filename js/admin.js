@@ -1442,6 +1442,7 @@ function getLocationOptions(selected) {
     "Green Office",
     "HRD",
     "HSE Yard",
+    "IT Store",
     "Maintenance",
     "Multi Purposes Building",
     "Red Office",
@@ -1624,3 +1625,4 @@ window.exportToExcel = exportToExcel;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS loaded successfully");
+
