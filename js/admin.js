@@ -47,6 +47,7 @@ const switchViewBtn = document.getElementById("switchViewBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const exportBtn = document.getElementById("exportBtn");
 const filterSelect = document.getElementById("filterSelect");
+const actionByFilter = document.getElementById("actionByFilter");
 const loginBtn = document.getElementById("loginBtn");
 const goLoginBtn = document.getElementById("goLoginBtn");
 const userInfo = document.getElementById("userInfo");
@@ -78,17 +79,6 @@ function getAdminDisplayName(user) {
     return user.displayName;
   }
 
-  function validateTicketBeforeSave(ticketData) {
-    if (
-      (ticketData.status_ticket === "Closed" ||
-        ticketData.status_ticket === "Resolved") &&
-      !ticketData.note
-    ) {
-      throw new Error("Harap isi Technician Notes sebelum menutup ticket!");
-    }
-    return true;
-  }
-
   // Fallback: extract dari email (first part)
   const nameFromEmail = userEmail
     .split("@")[0]
@@ -100,7 +90,7 @@ function getAdminDisplayName(user) {
   return nameFromEmail;
 }
 
-// ✅ TAMBAHKAN VALIDASI FUNCTION DI SINI
+// ✅ VALIDASI FUNCTION
 function validateTicketBeforeSave(ticketData) {
   console.log("🔍 Validating ticket data:", ticketData);
 
@@ -113,6 +103,27 @@ function validateTicketBeforeSave(ticketData) {
   }
 
   return true;
+}
+
+// ✅ FUNCTION UNTUK POPULATE ACTION BY FILTER
+function populateActionByFilter() {
+  if (!actionByFilter) return;
+
+  // Ambil daftar IT Staff dari CONFIG
+  const itStaff = window.CONFIG.IT_STAFF || [];
+
+  // Clear existing options kecuali "All"
+  actionByFilter.innerHTML = '<option value="all">All IT Staff</option>';
+
+  // Tambahkan setiap IT Staff sebagai option
+  itStaff.forEach((staff) => {
+    const option = document.createElement("option");
+    option.value = staff;
+    option.textContent = staff;
+    actionByFilter.appendChild(option);
+  });
+
+  console.log("✅ Action By filter populated with:", itStaff);
 }
 
 // ==================== 🔹 Session Storage Management ====================
@@ -183,12 +194,32 @@ function initAdminApp() {
         return;
       }
 
-      exportToExcel(allTickets, filterSelect);
+      // ✅ APPLY SAME FILTERS FOR EXPORT
+      let filtered = allTickets;
+
+      if (filterSelect && filterSelect.value !== "all") {
+        filtered = filtered.filter(
+          (t) => t.status_ticket === filterSelect.value,
+        );
+      }
+
+      if (actionByFilter && actionByFilter.value !== "all") {
+        filtered = filtered.filter((t) => t.action_by === actionByFilter.value);
+      }
+
+      exportToExcel(filtered, filterSelect);
     });
   }
 
   if (filterSelect) {
     filterSelect.addEventListener("change", handleFilterChange);
+  }
+
+  // ✅ TAMBAHKAN EVENT LISTENER UNTUK ACTION BY FILTER
+  if (actionByFilter) {
+    actionByFilter.addEventListener("change", handleFilterChange);
+    // Populate filter options
+    populateActionByFilter();
   }
 
   // Pisahkan event listener untuk kedua tombol login
@@ -219,7 +250,7 @@ function isAdminUser(user) {
 
   const userEmail = user.email.toLowerCase();
   const isAdmin = window.CONFIG.ADMIN_EMAILS.some(
-    (adminEmail) => adminEmail.toLowerCase() === userEmail
+    (adminEmail) => adminEmail.toLowerCase() === userEmail,
   );
 
   console.log("🔐 Admin Check:", {
@@ -320,7 +351,7 @@ function initAuth() {
       cleanup();
       showAuthButtons(false);
       showLoginScreen();
-    }
+    },
   );
 }
 
@@ -587,13 +618,13 @@ function initTickets() {
         error.code === "missing-or-insufficient-permissions"
       ) {
         console.log(
-          "🔐 Permission denied - user might be logged out or not admin"
+          "🔐 Permission denied - user might be logged out or not admin",
         );
         showLoginScreen();
       } else {
         showErrorState("Failed to load tickets: " + error.message);
       }
-    }
+    },
   );
 }
 
@@ -624,7 +655,7 @@ function calculateDuration(ticket) {
       "❌ Condition failed - status:",
       ticketStatus,
       "closedAt exists:",
-      hasClosedAt
+      hasClosedAt,
     );
     return "-";
   }
@@ -677,7 +708,7 @@ function updateDurations() {
       const durationCell = row.cells[1]; // Kolom ke-2 (Duration)
       if (durationCell) {
         durationCell.innerHTML = `<span class="duration-badge ${getDurationClass(
-          ticket
+          ticket,
         )}" title="Duration sejak tiket dibuat sampai pertama kali ditutup">
           ${calculateDuration(ticket)}
         </span>`;
@@ -691,11 +722,10 @@ function updateDurations() {
     if (ticket && ticket.status_ticket === "Closed") {
       const durationField = card.querySelector(".card-field:nth-child(2)"); // Field duration ke-2
       if (durationField) {
-        durationField.querySelector(
-          "span"
-        ).innerHTML = `<span class="duration-badge ${getDurationClass(
-          ticket
-        )}" title="Duration sejak tiket dibuat sampai pertama kali ditutup">
+        durationField.querySelector("span").innerHTML =
+          `<span class="duration-badge ${getDurationClass(
+            ticket,
+          )}" title="Duration sejak tiket dibuat sampai pertama kali ditutup">
           ${calculateDuration(ticket)}
         </span>`;
       }
@@ -737,10 +767,25 @@ function renderTickets(tickets) {
     return;
   }
 
-  const filtered =
-    filterSelect && filterSelect.value !== "all"
-      ? tickets.filter((t) => t.status_ticket === filterSelect.value)
-      : tickets;
+  // ✅ APPLY MULTIPLE FILTERS
+  let filtered = tickets;
+
+  // Filter by status
+  if (filterSelect && filterSelect.value !== "all") {
+    filtered = filtered.filter((t) => t.status_ticket === filterSelect.value);
+  }
+
+  // Filter by Action By
+  if (actionByFilter && actionByFilter.value !== "all") {
+    filtered = filtered.filter((t) => t.action_by === actionByFilter.value);
+  }
+
+  console.log("🔍 Filtered tickets:", {
+    original: tickets.length,
+    filtered: filtered.length,
+    statusFilter: filterSelect?.value,
+    actionByFilter: actionByFilter?.value,
+  });
 
   if (isCardView) {
     renderCards(filtered);
@@ -778,10 +823,10 @@ function renderTable(data) {
       <!-- ✅ Duration (NEW) -->
       <td>
         <span class="duration-badge ${getDurationClass(ticket)}" title="${
-      ticket.status_ticket === "Closed"
-        ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
-        : "Duration akan muncul ketika tiket ditutup"
-    }">
+          ticket.status_ticket === "Closed"
+            ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
+            : "Duration akan muncul ketika tiket ditutup"
+        }">
           ${calculateDuration(ticket)}
         </span>
       </td>
@@ -1276,20 +1321,20 @@ async function handleEdit(e) {
       confirmButtonText: "Update Ticket",
       cancelButtonText: "Cancel",
       preConfirm: () => {
-        return {
-          user_email: document.getElementById("user_email").value, // ✅ TAMBAH EMAIL
+        const formData = {
+          user_email: document.getElementById("user_email").value,
           name: document.getElementById("name").value,
           note: document.getElementById("note").value,
           action_by: document.getElementById("action_by").value,
-          user_phone: document.getElementById("user_phone").value, // ✅ TAMBAH PHONE
+          user_phone: document.getElementById("user_phone").value,
           device: document.getElementById("device").value,
           location: document.getElementById("location").value,
           department: document.getElementById("department").value,
           priority: document.getElementById("priority").value,
           status_ticket: document.getElementById("status_ticket").value,
-          // QA akan di-set otomatis berdasarkan status
         };
-        // ✅ VALIDASI DI SINI - PASTIKAN FUNCTION SUDAH DIDEFINISIKAN
+
+        // ✅ VALIDASI
         try {
           validateTicketBeforeSave(formData);
         } catch (error) {
@@ -1338,6 +1383,7 @@ async function handleEdit(e) {
 
     if (!formValues) return;
 
+    // Validasi ulang sebelum update
     validateTicketBeforeSave(formValues);
 
     // ✅ Tentukan QA berdasarkan status baru
@@ -1363,7 +1409,7 @@ async function handleEdit(e) {
       hasClosedAt: hasClosedAt,
       device: formValues.device,
       code: updateData.code,
-      user_phone: formValues.user_phone, // ✅ DEBUG PHONE
+      user_phone: formValues.user_phone,
       user_email: formValues.user_email,
       note: formValues.note,
     });
@@ -1398,7 +1444,7 @@ async function handleEdit(e) {
     updateDurations();
   } catch (error) {
     console.error("Edit error:", error);
-    Swal.fire("Error!", "Failed to update ticket.", "error");
+    Swal.fire("Error!", error.message || "Failed to update ticket.", "error");
   }
 }
 
@@ -1419,7 +1465,7 @@ function getDeviceOptions(selected) {
       (device) =>
         `<option value="${device}" ${
           device === selected ? "selected" : ""
-        }>${device}</option>`
+        }>${device}</option>`,
     )
     .join("");
 }
@@ -1429,7 +1475,7 @@ function getActionByOptions(selected) {
     (staff) =>
       `<option value="${staff}" ${
         staff === selected ? "selected" : ""
-      }>${staff}</option>`
+      }>${staff}</option>`,
   ).join("");
 }
 
@@ -1441,8 +1487,8 @@ function getLocationOptions(selected) {
     "Dark Room",
     "Green Office",
     "HRD",
-    "HSE Yard",
     "IT Store",
+    "HSE Yard",
     "Maintenance",
     "Multi Purposes Building",
     "Red Office",
@@ -1463,7 +1509,7 @@ function getLocationOptions(selected) {
       (opt) =>
         `<option value="${opt}" ${
           opt === selected ? "selected" : ""
-        }>${opt}</option>`
+        }>${opt}</option>`,
     )
     .join("");
 }
@@ -1491,7 +1537,7 @@ function getDepartmentOptions(selected) {
       (opt) =>
         `<option value="${opt}" ${
           opt === selected ? "selected" : ""
-        }>${opt}</option>`
+        }>${opt}</option>`,
     )
     .join("");
 }
@@ -1503,7 +1549,7 @@ function getPriorityOptions(selected) {
       (opt) =>
         `<option value="${opt}" ${
           opt === selected ? "selected" : ""
-        }>${opt}</option>`
+        }>${opt}</option>`,
     )
     .join("");
 }
@@ -1515,11 +1561,12 @@ function getStatusOptions(selected) {
       (opt) =>
         `<option value="${opt}" ${
           opt === selected ? "selected" : ""
-        }>${opt}</option>`
+        }>${opt}</option>`,
     )
     .join("");
 }
-// Dynamic load ExcelJS - PINDAHKAN KE ATAS exportToExcel
+
+// Dynamic load ExcelJS
 function loadExcelJS() {
   return new Promise((resolve, reject) => {
     if (window.ExcelJS) {
@@ -1536,7 +1583,7 @@ function loadExcelJS() {
   });
 }
 
-// Helper function untuk format date Excel - JUGA PINDAHKAN KE ATAS
+// Helper function untuk format date Excel
 function formatDateForExcel(ts) {
   if (!ts) return "-";
   const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -1555,7 +1602,7 @@ function addDataLabels() {
   if (!table) return;
 
   const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
-    th.innerText.trim()
+    th.innerText.trim(),
   );
 
   table.querySelectorAll("tbody tr").forEach((row) => {
@@ -1625,4 +1672,3 @@ window.exportToExcel = exportToExcel;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS loaded successfully");
-
