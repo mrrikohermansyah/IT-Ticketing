@@ -1,5 +1,5 @@
 // ======================================================
-// 🔹 js/export.js - Excel Export Functionality (Updated Borders)
+// 🔹 js/export.js - Excel Export with Empty Rows (Dotted Borders)
 // ======================================================
 
 // ==================== 🔹 ExcelJS Loader ====================
@@ -152,7 +152,6 @@ async function exportToExcel(allTickets, filterSelect) {
     }
 
     console.log("📊 Exporting tickets:", allTickets.length);
-    console.log("🔍 Sample ticket:", allTickets[0]);
 
     const { value: accept } = await Swal.fire({
       title: "Export to Excel",
@@ -201,7 +200,7 @@ async function exportToExcel(allTickets, filterSelect) {
       bold: true,
     };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    
+
     // BORDER TEBAAL untuk judul utama
     titleCell.border = {
       top: { style: "thick" },
@@ -209,7 +208,7 @@ async function exportToExcel(allTickets, filterSelect) {
       bottom: { style: "thick" },
       right: { style: "thick" },
     };
-    
+
     titleCell.fill = {
       type: "pattern",
       pattern: "solid",
@@ -230,7 +229,7 @@ async function exportToExcel(allTickets, filterSelect) {
     periodCell.value = `Period: ${periodText}`;
     periodCell.font = { name: "Arial", size: 11, bold: true };
     periodCell.alignment = { horizontal: "left", vertical: "middle" };
-    
+
     // BORDER TEBAAL untuk period
     periodCell.border = {
       top: { style: "thick" },
@@ -284,6 +283,22 @@ async function exportToExcel(allTickets, filterSelect) {
 
     sheet.getRow(headerRow.number).height = 69 * 0.75;
 
+    // ===== KOLOM KOSONG ATAS (2 BARIS) =====
+    const emptyRow1 = sheet.addRow(Array(8).fill(""));
+    const emptyRow2 = sheet.addRow(Array(8).fill(""));
+
+    // Border DOTTED untuk kolom kosong atas
+    [emptyRow1, emptyRow2].forEach((row) => {
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: "hair" },
+          left: { style: "hair" },
+          bottom: { style: "hair" },
+          right: { style: "hair" },
+        };
+      });
+    });
+
     // ===== ISI DATA DARI TICKETS =====
     const filteredTickets =
       filterSelect && filterSelect.value !== "all"
@@ -325,18 +340,17 @@ async function exportToExcel(allTickets, filterSelect) {
 
       const row = sheet.addRow(rowData);
 
-      // BORDER TITIK-TITIK KECIL untuk data rows
+      // BORDER DOTTED untuk data rows
       row.eachCell((cell, colNumber) => {
         cell.font = { name: "Arial", size: 10 };
-        
-        // Gunakan dotted yang lebih kecil/halus
+
         cell.border = {
-          top: { style: "dotted" },
-          left: { style: "dotted" },
-          bottom: { style: "dotted" },
-          right: { style: "dotted" },
+          top: { style: "hair" },
+          left: { style: "hair" },
+          bottom: { style: "hair" },
+          right: { style: "hair" },
         };
-        
+
         cell.alignment = {
           vertical: "top",
           horizontal: "left",
@@ -366,29 +380,43 @@ async function exportToExcel(allTickets, filterSelect) {
       });
     });
 
+    // ===== KOLOM KOSONG BAWAH (2 BARIS) =====
+    const emptyRowBottom1 = sheet.addRow(Array(8).fill(""));
+    const emptyRowBottom2 = sheet.addRow(Array(8).fill(""));
+
+    // Border DOTTED untuk kolom kosong bawah
+    [emptyRowBottom1, emptyRowBottom2].forEach((row) => {
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: "hair" },
+          left: { style: "hair" },
+          bottom: { style: "hair" },
+          right: { style: "hair" },
+        };
+      });
+    });
+
     // ===== BORDER TEBAAL UNTUK SELURUH TABEL =====
-    const totalRows = headerRow.number + filteredTickets.length;
-    
-    // Border tebal kiri untuk semua baris
+    const totalRows = headerRow.number + filteredTickets.length + 4; // +4 untuk 2 baris kosong atas + 2 baris kosong bawah
+
+    // Border tebal kiri untuk semua baris (dari header sampai baris kosong bawah terakhir)
     for (let i = headerRow.number; i <= totalRows; i++) {
       const leftCell = sheet.getCell(`A${i}`);
       leftCell.border = { ...leftCell.border, left: { style: "thick" } };
     }
-    
+
     // Border tebal kanan untuk semua baris
     for (let i = headerRow.number; i <= totalRows; i++) {
       const rightCell = sheet.getCell(`H${i}`);
       rightCell.border = { ...rightCell.border, right: { style: "thick" } };
     }
-    
+
     // Border tebal atas untuk header (sudah ada)
-    // Border tebal bawah untuk baris terakhir
-    if (filteredTickets.length > 0) {
-      const lastRow = sheet.getRow(totalRows);
-      lastRow.eachCell((cell, colNumber) => {
-        cell.border = { ...cell.border, bottom: { style: "thick" } };
-      });
-    }
+    // Border tebal bawah untuk baris terakhir (baris kosong bawah ke-2)
+    const lastRow = sheet.getRow(totalRows);
+    lastRow.eachCell((cell, colNumber) => {
+      cell.border = { ...cell.border, bottom: { style: "thick" } };
+    });
 
     // ===== ATUR LEBAR KOLOM =====
     const pxToChar = (px) => Math.round(px / 7);
