@@ -1,4 +1,4 @@
-/* ===== admin.css — Fixed for New HTML Structure ===== */
+/* ===== admin.css — With Status Badges ===== */
 
 :root {
   --bg: #f5f7fb;
@@ -191,91 +191,171 @@ button:hover {
   width: 100%;
   overflow-x: auto;
   border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 #ticketsTable {
   width: 100%;
   border-collapse: collapse;
   background: var(--card);
-  table-layout: auto;
-  min-width: 1000px;
+  font-size: 0.9rem;
 }
 
 #ticketsTable th,
 #ticketsTable td {
-  padding: 12px 14px;
+  padding: 10px 8px;
   border-bottom: 1px solid var(--border);
-  font-size: 0.95rem;
   text-align: left;
   vertical-align: top;
   word-break: break-word;
+  white-space: normal;
+  line-height: 1.3;
 }
 
+/* ================== Table Header - No Wrap ================== */
 #ticketsTable th {
   background: #f8fafc;
-  font-weight: 700;
-  color: #374151;
-  white-space: nowrap;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 2;
-  border-bottom: 2px solid var(--border);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 60px;
 }
 
-#ticketsTable td {
-  white-space: normal;
+/* Hide Device Column */
+#ticketsTable th:nth-child(4),
+#ticketsTable td:nth-child(4) {
+  display: none;
 }
 
-#ticketsTable tbody tr:hover {
-  background: #f8fafc;
-}
-
-#ticketsTable tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* ================== Status & Priority Badges ================== */
-.status-badge,
-.priority-badge {
-  padding: 4px 10px;
+/* ================== Status Badges ================== */
+.status-badge {
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
   display: inline-block;
+  text-align: center;
+  min-width: 90px;
 }
 
 .status-open {
-  background: #dcfce7;
-  color: #166534;
+  background: #ffcfcf;
+  color: #f80000;
+  border: 1px solid #f7bbbb;
 }
 
 .status-onprogress {
   background: #fef3c7;
-  color: #92400e;
+  color: #ffa600;
+  border: 1px solid #fde68a;
 }
 
 .status-closed {
-  background: #e5e7eb;
-  color: #374151;
+  background: #11cc00;
+  color: #ffffff;
+  border: 1px solid #d1d5db;
 }
 
-.priority-high {
+.status-inprogress {
+  background: #ffc400;
+  color: #ffffff;
+  border: 1px solid #93c5fd;
+}
+
+/* ================== QA Badges ================== */
+.qa-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+  text-align: center;
+  min-width: 80px;
+}
+
+.qa-continue {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.qa-finish {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.qa-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* ================== Duration Badges ================== */
+.duration-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  min-width: 100px;
+}
+
+.duration-short {
+  background: #dcfce7;
+  color: #065f46;
+  border: 1px solid #bbf7d0;
+}
+
+.duration-medium {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.duration-long {
   background: #fee2e2;
   color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.duration-neutral {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+/* Priority Colors - Text Only */
+.priority-high {
+  color: #991b1b;
+  font-weight: 600;
 }
 
 .priority-medium {
-  background: #fef3c7;
   color: #92400e;
+  font-weight: 600;
 }
 
 .priority-low {
-  background: #dcfce7;
   color: #166534;
+  font-weight: 600;
 }
 
-/* ================== Table Action Buttons ================== */
+/* ================== Action Buttons ================== */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -312,7 +392,7 @@ button:hover {
   background: var(--danger-hover);
 }
 
-/* ================== Card View ================== */
+/* ================== Card View - Fixed Alignment ================== */
 .card-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -326,12 +406,6 @@ button:hover {
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ticket-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.1);
 }
 
 .card-header {
@@ -356,12 +430,13 @@ button:hover {
   margin-bottom: 16px;
 }
 
+/* FIX: Card field alignment */
 .card-field {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .card-field strong {
@@ -376,6 +451,20 @@ button:hover {
   text-align: left;
   color: #111827;
   word-break: break-word;
+}
+
+/* Status badge di card view */
+.card-field .status-badge {
+  min-width: 80px;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+
+/* FIX Khusus untuk email yang panjang */
+.card-field .email-cell {
+  word-break: break-all;
+  text-align: left;
+  display: block;
 }
 
 .card-actions {
@@ -430,23 +519,7 @@ button:hover {
   color: var(--muted);
 }
 
-/* ================== Note Cell ================== */
-.note-cell {
-  max-width: 200px;
-  word-break: break-word;
-}
-
 /* ================== Responsive Design ================== */
-@media (max-width: 1200px) {
-  .container {
-    padding: 12px;
-  }
-
-  .card-container {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
-}
-
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -516,25 +589,16 @@ button:hover {
     display: grid;
   }
 
-  /* Show switch view button only on desktop */
+  /* Hide switch view button on mobile */
   .switch-view-btn {
     display: none !important;
   }
 
-  #ticketsTable th,
-  #ticketsTable td {
-    font-size: 0.88rem;
-    padding: 10px 8px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .action-buttons button {
-    width: 100%;
-    justify-content: center;
+  /* Status badge di mobile */
+  .status-badge {
+    min-width: 70px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
   }
 }
 
@@ -559,6 +623,12 @@ button:hover {
   .card h2 {
     font-size: 1.2rem;
   }
+
+  .status-badge {
+    min-width: 65px;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
 }
 
 /* ================== Desktop Only ================== */
@@ -578,68 +648,48 @@ button:hover {
   display: none !important;
 }
 
-.text-center {
-  text-align: center;
-}
-
-.flex {
+.user-info {
   display: flex;
-}
-
-.items-center {
   align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #475569;
 }
 
-.justify-between {
-  justify-content: space-between;
+.user-info i {
+  font-size: 16px;
+  color: #2563eb;
 }
 
-/* ================== SweetAlert Customization ================== */
-.swal2-popup {
-  border-radius: var(--radius) !important;
-  font-family: var(--font) !important;
-}
-
-.swal2-confirm {
-  background: var(--accent) !important;
-  border-radius: 8px !important;
-}
-
-.swal2-cancel {
-  background: var(--muted) !important;
-  border-radius: 8px !important;
-}
-
-/* Duration Badge Styles */
-.duration-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+.user-info span {
   font-weight: 600;
-  white-space: nowrap;
+  color: #1e293b;
 }
 
-.duration-short {
-  background: #d1fae5;
-  color: #065f46;
+/* Note cell untuk konten panjang */
+.note-cell {
+  max-width: 200px;
+  word-break: break-word;
 }
 
-.duration-medium {
-  background: #fef3c7;
-  color: #92400e;
+/* Hover effect untuk table rows */
+#ticketsTable tbody tr:hover {
+  background: #f8fafc;
 }
 
-.duration-long {
-  background: #fee2e2;
-  color: #991b1b;
+/* Alternating row colors */
+#ticketsTable tbody tr:nth-child(even) {
+  background: #fafbfc;
 }
 
-.duration-closed {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-
-.duration-neutral {
-  background: #f3f4f6;
-  color: #6b7280;
+/* Email cell styling */
+.email-cell {
+  word-break: break-all;
+  max-width: 150px;
+  display: inline-block;
+  vertical-align: middle;
 }

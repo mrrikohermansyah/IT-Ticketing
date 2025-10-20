@@ -6,6 +6,7 @@
     <title>Admin Panel - IT Ticketing</title>
     <link rel="stylesheet" href="../css/admin.css" />
     <script type="module" src="../js/admin.js"></script>
+    <script src="../js/config.js"></script>
     <script src="../js/export.js"></script>
     <!-- Library Export -->
     <link
@@ -31,6 +32,10 @@
           <h1>📋 Daftar Tiket Masuk</h1>
         </div>
         <div class="auth-buttons">
+          <div id="userInfo" class="user-info" style="display: none">
+            <i class="fa-solid fa-user-circle"></i>
+            <span id="userName">Admin</span>
+          </div>
           <button
             id="loginBtn"
             class="auth-btn login-btn"
@@ -66,9 +71,8 @@
       <div class="controls-bar">
         <!-- Tombol Export -->
         <div class="export-buttons">
-          <button onclick="exportToExcel()">
-            <i class="fa-solid fa-file-excel"></i> Export Excel
-          </button>
+          <!-- ✅ Use this instead -->
+          <button onclick="handleExportToExcel()">Export Excel</button>
           <button id="btnExportPDF">
             <i class="fa-solid fa-file-pdf"></i> Export PDF
           </button>
@@ -95,30 +99,54 @@
         <!-- Table View -->
         <div class="table-wrapper">
           <table id="ticketsTable">
+            <!-- 🔥 TAMBAHKAN COLGROUP INI -->
+            <!-- <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup> -->
             <thead>
               <tr>
-                <!-- ✅ Semua field dari user.html + Date (createdAt) -->
+                <!-- ✅ Update kolom sesuai struktur Firebase -->
                 <th>Date</th>
                 <th>Duration</th>
                 <th>Inventory</th>
                 <th>Device</th>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Department</th>
                 <th>Location</th>
                 <th>Priority</th>
                 <th>Subject</th>
                 <th>Message</th>
                 <th>Note</th>
+                <th>Code</th>
                 <th>Action By</th>
+                <th>QA</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="ticketTableBody">
               <tr>
-                <!-- ✅ Update colspan sesuai jumlah kolom baru -->
-                <td colspan="14" class="loading">Memuat data...</td>
+                <!-- ✅ Update colspan sesuai jumlah kolom baru (18 kolom) -->
+                <td colspan="18" class="loading">Memuat data...</td>
               </tr>
             </tbody>
           </table>

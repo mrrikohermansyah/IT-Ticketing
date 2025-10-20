@@ -41,118 +41,148 @@
       </header>
 
       <form id="ticketForm" class="card" autocomplete="on" novalidate>
-        <label for="inventory">
-          <span class="required">Inventory Code</span>
-          <input
-            type="text"
-            name="inventory"
-            id="inventory"
-            required
-            placeholder="PCPRO-MEB001 / PC24001MEB / PRN24001MEB"
-          />
-          <div class="error-message">Please enter inventory code</div>
-        </label>
+        <!-- Inventory & Device Section -->
+        <div class="form-row">
+          <label for="inventory">
+            <span class="required">Inventory Code</span>
+            <input
+              type="text"
+              name="inventory"
+              id="inventory"
+              required
+              placeholder="PCPRO-MEB001 / PC24001MEB / PRN24001MEB"
+            />
+            <div class="error-message">Please enter inventory code</div>
+          </label>
 
-        <label for="device">
-          <span class="required">Device Type</span>
-          <select name="device" id="device" required>
-            <option value="" disabled selected>Select Device Type</option>
-            <option value="PC">PC Hardware</option>
-            <option value="Software">PC Software</option>
-            <option value="Laptop">Laptop</option>
-            <option value="Printer">Printer</option>
-            <option value="Jaringan">Network</option>
-            <option value="Projector">Projector</option>
-            <option value="Lainlain">Others</option>
-          </select>
-          <div class="error-message">Please select device type</div>
-        </label>
+          <label for="device">
+            <span class="required">Device Type</span>
+            <select name="device" id="device" required>
+              <option value="" disabled selected>Select Device Type</option>
+              <option value="PC Hardware">PC Hardware</option>
+              <option value="PC Software">PC Software</option>
+              <option value="Laptop">Laptop</option>
+              <option value="Printer">Printer</option>
+              <option value="Network">Network</option>
+              <option value="Projector">Projector</option>
+              <option value="Others">Others</option>
+            </select>
+            <div class="error-message">Please select device type</div>
+          </label>
+        </div>
 
-        <label for="name">
-          <span class="required">Full Name</span>
-          <input
-            type="text"
-            name="name"
-            id="name"
-            required
-            placeholder="Your full name"
-          />
-          <div class="error-message">Please enter your full name</div>
-        </label>
+        <!-- Personal Information Section -->
+        <div class="form-row">
+          <label for="name">
+            <span class="required">Full Name</span>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              placeholder="Your full name"
+            />
+            <div class="error-message">Please enter your full name</div>
+          </label>
 
-        <label for="user_email">
-          <span class="required">Email Address</span>
-          <input
-            type="email"
-            name="user_email"
-            id="user_email"
-            required
-            placeholder="email@company.com"
-          />
-          <div class="error-message">Please enter a valid email address</div>
-        </label>
+          <label for="user_email">
+            <span class="required">Email Address</span>
+            <input
+              type="email"
+              name="user_email"
+              id="user_email"
+              required
+              placeholder="email@company.com"
+            />
+            <div class="error-message">Please enter a valid email address</div>
+          </label>
+        </div>
 
-        <label for="department">
-          <span class="required">Department</span>
-          <select name="department" id="department" required>
-            <option value="" disabled selected>Select Department</option>
-            <option value="Clinic">Clinic</option>
-            <option value="Completion">Completion</option>
-            <option value="Document Control">Document Control</option>
-            <option value="Engineer">Engineering</option>
-            <option value="Finance">Finance</option>
-            <option value="HR">Human Resources</option>
-            <option value="HSE">HSE</option>
-            <option value="IT">IT</option>
-            <option value="Management">Management</option>
-            <option value="Procurement">Procurement</option>
-            <option value="QC">Quality Control</option>
-            <option value="Vendor">Vendor</option>
-            <option value="Lainlain">Other Department</option>
-          </select>
-          <div class="error-message">Please select your department</div>
-        </label>
+        <!-- Contact & Department Section -->
+        <div class="form-row">
+          <label for="user_phone">
+            <span>Phone Number</span>
+            <input
+              type="tel"
+              name="user_phone"
+              id="user_phone"
+              placeholder="+62 XXX-XXXX-XXXX / 08XX-XXXX-XXXX"
+            />
+            <div class="helper-text">For urgent contact if needed</div>
+          </label>
 
-        <label for="location">
-          <span class="required">Location</span>
-          <select name="location" id="location" required>
-            <option value="" disabled selected>Select Location</option>
-            <option value="Blue Office">Blue Office</option>
-            <option value="Clinic">Clinic</option>
-            <option value="Control Room">Control Room</option>
-            <option value="Dark Room">Dark Room</option>
-            <option value="Green Office">Green Office</option>
-            <option value="HRD">HR Department</option>
-            <option value="HSE Yard">HSE Yard</option>
-            <option value="Multi Purposes Building">
-              Multi Purposes Building
-            </option>
-            <option value="Red Office">Red Office</option>
-            <option value="Security">Security</option>
-            <option value="White Office">White Office</option>
-            <option value="White Office 2nd Fl">White Office 2nd Floor</option>
-            <option value="White Office 3rd Fl">White Office 3rd Floor</option>
-            <option value="Welding School">Welding School</option>
-            <option value="Workshop9">Workshop 9</option>
-            <option value="Workshop10">Workshop 10</option>
-            <option value="Workshop11">Workshop 11</option>
-            <option value="Workshop12">Workshop 12</option>
-            <option value="Lainlain">Other Location</option>
-          </select>
-          <div class="error-message">Please select your location</div>
-        </label>
+          <label for="department">
+            <span class="required">Department</span>
+            <select name="department" id="department" required>
+              <option value="" disabled selected>Select Department</option>
+              <option value="Clinic">Clinic</option>
+              <option value="Completion">Completion</option>
+              <option value="Document Control">Document Control</option>
+              <option value="Engineer">Engineering</option>
+              <option value="Finance">Finance</option>
+              <option value="HR">Human Resources</option>
+              <option value="HSE">HSE</option>
+              <option value="IT">IT</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Management">Management</option>
+              <option value="Procurement">Procurement</option>
+              <option value="QC">Quality Control</option>
+              <option value="Vendor">Vendor</option>
+              <option value="Warehouse">Warehouse</option>
+              <option value="Lainlain">Other Department</option>
+            </select>
+            <div class="error-message">Please select your department</div>
+          </label>
+        </div>
 
-        <label for="priority">
-          <span class="required">Priority Level</span>
-          <select name="priority" id="priority" required>
-            <option value="" disabled selected>Select Priority</option>
-            <option value="Low">Low - Minor issue</option>
-            <option value="Medium">Medium - Significant issue</option>
-            <option value="High">High - Critical issue</option>
-          </select>
-          <div class="error-message">Please select priority level</div>
-        </label>
+        <!-- Location & Priority Section -->
+        <div class="form-row">
+          <label for="location">
+            <span class="required">Location</span>
+            <select name="location" id="location" required>
+              <option value="" disabled selected>Select Location</option>
+              <option value="Blue Office">Blue Office</option>
+              <option value="Clinic">Clinic</option>
+              <option value="Control Room">Control Room</option>
+              <option value="Dark Room">Dark Room</option>
+              <option value="Green Office">Green Office</option>
+              <option value="HRD">HR Department</option>
+              <option value="HSE Yard">HSE Yard</option>
+              <option value="Multi Purposes Building">
+                Multi Purposes Building
+              </option>
+              <option value="Red Office">Red Office</option>
+              <option value="Security">Security</option>
+              <option value="White Office">White Office</option>
+              <option value="White Office 2nd Fl">
+                White Office 2nd Floor
+              </option>
+              <option value="White Office 3rd Fl">
+                White Office 3rd Floor
+              </option>
+              <option value="Welding School">Welding School</option>
+              <option value="Workshop9">Workshop 9</option>
+              <option value="Workshop10">Workshop 10</option>
+              <option value="Workshop11">Workshop 11</option>
+              <option value="Workshop12">Workshop 12</option>
+              <option value="Lainlain">Other Location</option>
+            </select>
+            <div class="error-message">Please select your location</div>
+          </label>
 
+          <label for="priority">
+            <span class="required">Priority Level</span>
+            <select name="priority" id="priority" required>
+              <option value="" disabled selected>Select Priority</option>
+              <option value="Low">Low - Minor issue</option>
+              <option value="Medium">Medium - Significant issue</option>
+              <option value="High">High - Critical issue</option>
+            </select>
+            <div class="error-message">Please select priority level</div>
+          </label>
+        </div>
+
+        <!-- Issue Details Section -->
         <label for="subject">
           <span class="required">Issue Summary</span>
           <input
@@ -160,7 +190,7 @@
             name="subject"
             id="subject"
             required
-            placeholder="Brief summary of the issue"
+            placeholder="Brief summary of the issue (e.g., Printer not printing, Network connection lost)"
           />
           <div class="error-message">Please enter issue summary</div>
         </label>
@@ -172,16 +202,30 @@
             id="message"
             rows="5"
             required
-            placeholder="Please describe the issue in detail including error messages, steps to reproduce, and when it started..."
+            placeholder="Please describe the issue in detail including:
+• Error messages you see
+• Steps to reproduce the problem
+• When the issue started
+• What you were doing when it happened
+• Any recent changes to the system"
           ></textarea>
           <div class="error-message">Please describe the issue</div>
         </label>
 
+        <!-- Auto-generated fields (hidden) -->
+        <input type="hidden" name="code" id="code" />
+        <input type="hidden" name="status_ticket" value="Open" />
+        <input type="hidden" name="qa" value="Pending" />
+
         <div class="actions">
           <button type="submit" id="submitBtn">
             <span class="btn-text">Submit Ticket</span>
+            <div class="btn-loading" style="display: none">
+              <i class="fas fa-spinner fa-spin"></i>
+              Processing...
+            </div>
           </button>
-          <button type="reset">Clear Form</button>
+          <button type="reset" id="resetBtn">Clear Form</button>
         </div>
 
         <div id="status" role="status" aria-live="polite"></div>
@@ -189,6 +233,10 @@
 
       <footer>
         <small>&copy; 2025 IT Support System 71001-04-8314</small>
+        <br />
+        <small style="color: var(--gray-500)">
+          For urgent issues, please contact IT Support directly
+        </small>
       </footer>
     </main>
 
@@ -200,16 +248,23 @@
       document.addEventListener("DOMContentLoaded", function () {
         // Tooltip data in English
         const tooltips = {
-          inventory: "Device inventory code (found on device sticker)",
-          device: "Type of device experiencing issues",
-          name: "Your full name for identification",
-          user_email: "Company email for notifications and updates",
-          department: "Your department for routing the ticket",
-          location: "Physical location of the device",
-          priority: "High: Critical • Medium: Significant • Low: Minor",
-          subject: "Brief summary of the problem (max 10 words)",
+          inventory:
+            "Device inventory code (found on device sticker). Format: PCPRO-MEB001, PC24001MEB, PRN24001MEB",
+          device:
+            "Type of device experiencing issues. Hardware: Physical components, Software: Applications/OS",
+          name: "Your full name for identification and follow-up",
+          user_email: "Company email for ticket notifications and updates",
+          user_phone:
+            "Optional phone number for urgent contact (if immediate assistance needed)",
+          department:
+            "Your department for proper ticket routing and assignment",
+          location: "Physical location of the device for IT dispatch",
+          priority:
+            "High: Critical system down • Medium: Significant impact • Low: Minor issue",
+          subject:
+            "Brief summary of the problem (e.g., 'Monitor not displaying', 'Cannot connect to WiFi')",
           message:
-            "Detailed description including error messages and reproduction steps",
+            "Detailed description including error messages, reproduction steps, and timeline",
         };
 
         // Create floating tooltip
@@ -265,9 +320,39 @@
           });
         });
 
+        // Device type mapping for auto code generation
+        const deviceTypeMapping = {
+          "PC Hardware": "HW",
+          "PC Software": "SW",
+          Laptop: "HW",
+          Printer: "HW",
+          Network: "NW",
+          Projector: "HW",
+          Others: "OT",
+        };
+
+        // Auto-generate code based on device type
+        const deviceSelect = document.getElementById("device");
+        const codeInput = document.getElementById("code");
+
+        deviceSelect.addEventListener("change", function () {
+          const selectedDevice = this.value;
+          const code = deviceTypeMapping[selectedDevice] || "OT";
+          codeInput.value = code;
+          console.log(
+            "Auto-generated code:",
+            code,
+            "for device:",
+            selectedDevice
+          );
+        });
+
         // Custom validation to remove default messages
         const form = document.getElementById("ticketForm");
         const inputs = form.querySelectorAll("input, select, textarea");
+        const submitBtn = document.getElementById("submitBtn");
+        const btnText = submitBtn.querySelector(".btn-text");
+        const btnLoading = submitBtn.querySelector(".btn-loading");
 
         // Prevent default validation messages
         inputs.forEach((input) => {
@@ -297,8 +382,13 @@
           let isValid = true;
           let firstError = null;
 
+          // Show loading state
+          btnText.style.display = "none";
+          btnLoading.style.display = "block";
+          submitBtn.disabled = true;
+
           inputs.forEach((input) => {
-            if (!input.validity.valid) {
+            if (input.hasAttribute("required") && !input.value.trim()) {
               input.parentElement.classList.add("input-error");
               isValid = false;
 
@@ -310,6 +400,11 @@
 
           if (!isValid) {
             e.preventDefault();
+            // Reset loading state
+            btnText.style.display = "block";
+            btnLoading.style.display = "none";
+            submitBtn.disabled = false;
+
             if (firstError) {
               firstError.scrollIntoView({
                 behavior: "smooth",
@@ -318,6 +413,7 @@
               firstError.focus();
             }
           }
+          // If valid, the form will be submitted and app.js will handle it
         });
 
         // Reset form handler
@@ -325,6 +421,12 @@
           inputs.forEach((input) => {
             input.parentElement.classList.remove("input-error");
           });
+          // Reset code field
+          codeInput.value = "";
+          // Reset loading state if any
+          btnText.style.display = "block";
+          btnLoading.style.display = "none";
+          submitBtn.disabled = false;
         });
       });
     </script>
@@ -332,6 +434,10 @@
     <script type="module" src="js/app.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
   </body>
 </html>
-

@@ -1,6 +1,164 @@
-// ==================== 🔹 Export to Excel Function ====================
-async function exportToExcel() {
+// ======================================================
+// 🔹 js/excel-export.js - Excel Export Functionality
+// ======================================================
+
+// ==================== 🔹 ExcelJS Loader ====================
+function loadExcelJS() {
+  return new Promise((resolve, reject) => {
+    if (window.ExcelJS) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// ==================== 🔹 Helper Functions ====================
+function formatDateForExcel(ts) {
+  if (!ts) return "-";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+
+  if (isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date;
+}
+
+function calculateDurationForExport(ticket) {
+  if (!ticket.createdAt) {
+    return "-";
+  }
+
+  const ticketStatus = ticket.status_ticket || "Open";
+  const hasClosedAt = !!ticket.closedAt;
+
+  if (ticketStatus !== "Closed" || !hasClosedAt) {
+    return "-";
+  }
+
+  const createdDate = ticket.createdAt.toDate
+    ? ticket.createdAt.toDate()
+    : new Date(ticket.createdAt);
+
+  const endDate = ticket.closedAt.toDate
+    ? ticket.closedAt.toDate()
+    : new Date(ticket.closedAt);
+
+  const diffMs = endDate - createdDate;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+  if (diffMinutes > 0) {
+    return `${diffMinutes} Minute${diffMinutes > 1 ? "s" : ""}`;
+  } else {
+    return "Less than 1 Minute";
+  }
+}
+
+// ==================== 🔹 Wrapper Function for HTML Button ====================
+async function handleExportToExcel() {
   try {
+    // Debug current state
+    console.log("🔍 Debug export state:");
+    console.log("window.allTickets:", window.allTickets);
+    console.log("Type:", typeof window.allTickets);
+    console.log("Is Array:", Array.isArray(window.allTickets));
+
+    // Get tickets from global scope or try to recover
+    const allTickets = window.allTickets || (await recoverTicketsData());
+    const filterSelect = document.getElementById("filterSelect");
+
+    if (!allTickets || !Array.isArray(allTickets)) {
+      await Swal.fire({
+        title: "Data Not Available",
+        html: `
+          <div style="text-align: left;">
+            <p>Tickets data is not available for export.</p>
+            <p><strong>Possible solutions:</strong></p>
+            <ul>
+              <li>Refresh the page and try again</li>
+              <li>Wait for data to load completely</li>
+              <li>Check if you have any tickets created</li>
+            </ul>
+          </div>
+        `,
+        icon: "warning",
+      });
+      return;
+    }
+
+    await exportToExcel(allTickets, filterSelect);
+  } catch (error) {
+    console.error("❌ Export handler error:", error);
+    await Swal.fire({
+      title: "Export Failed",
+      text: "Could not start export process. Please try again.",
+      icon: "error",
+    });
+  }
+}
+
+// ==================== 🔹 Data Recovery Function ====================
+async function recoverTicketsData() {
+  try {
+    // Try to get tickets from localStorage as backup
+    const savedTickets = localStorage.getItem("tickets-backup");
+    if (savedTickets) {
+      const parsedTickets = JSON.parse(savedTickets);
+      console.log("🔄 Recovered tickets from backup:", parsedTickets.length);
+      return parsedTickets;
+    }
+
+    // Try common global variables where tickets might be stored
+    const possibleSources = [
+      window.ticketData,
+      window.tickets,
+      window.allTicketsArray,
+      window.appState?.tickets,
+      window.data?.tickets,
+    ];
+
+    for (const source of possibleSources) {
+      if (source && Array.isArray(source)) {
+        console.log("🔄 Found tickets in alternative source:", source.length);
+        return source;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("❌ Recovery failed:", error);
+    return null;
+  }
+}
+
+// ==================== 🔹 Main Export Function ====================
+async function exportToExcel(allTickets, filterSelect) {
+  try {
+    // ✅ IMPROVED VALIDATION: Check if allTickets exists and is an array
+    if (!allTickets) {
+      console.error("❌ allTickets is undefined or null");
+      throw new Error("Tickets data is not available (undefined)");
+    }
+
+    if (!Array.isArray(allTickets)) {
+      console.error(
+        "❌ allTickets is not an array:",
+        typeof allTickets,
+        allTickets
+      );
+      throw new Error("Tickets data is not a valid array");
+    }
+
+    console.log("📊 Exporting tickets:", allTickets.length);
+    console.log("🔍 Sample ticket:", allTickets[0]); // Debug first ticket
+
     // Show loading state
     const { value: accept } = await Swal.fire({
       title: "Export to Excel",
@@ -23,6 +181,16 @@ async function exportToExcel() {
     // Load ExcelJS library dynamically
     await loadExcelJS();
 
+    // ✅ FIX: Validasi lagi setelah user confirm
+    if (!allTickets || allTickets.length === 0) {
+      await Swal.fire({
+        title: "No Data",
+        text: "Tidak ada data tiket untuk diekspor.",
+        icon: "warning",
+      });
+      return;
+    }
+
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Aktivitas IT");
 
@@ -30,7 +198,7 @@ async function exportToExcel() {
     workbook.creator = "Riko Hermansyah";
     sheet.properties.defaultRowHeight = 20;
 
-    // ===== JUDUL UTAMA dengan border tebal =====
+    // ===== JUDUL UTAMA =====
     sheet.mergeCells("A1:H1");
     const titleCell = sheet.getCell("A1");
     titleCell.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
@@ -40,10 +208,7 @@ async function exportToExcel() {
       size: 18,
       bold: true,
     };
-    titleCell.alignment = {
-      horizontal: "center",
-      vertical: "middle",
-    };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
     titleCell.border = {
       top: { style: "medium" },
       left: { style: "medium" },
@@ -59,13 +224,12 @@ async function exportToExcel() {
     // ===== BARIS KOSONG =====
     sheet.addRow([]);
 
-    // ===== BARIS PERIOD dengan border tebal =====
+    // ===== BARIS PERIOD =====
     const now = new Date();
     const periodText = `${now.getFullYear()}-${String(
       now.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    // Merge cells untuk period
     sheet.mergeCells("A3:H3");
     const periodCell = sheet.getCell("A3");
     periodCell.value = `Period: ${periodText}`;
@@ -81,7 +245,7 @@ async function exportToExcel() {
     // ===== BARIS KOSONG =====
     sheet.addRow([]);
 
-    // ===== HEADER TABEL dengan border tebal =====
+    // ===== HEADER TABEL =====
     const headers = [
       "Tgl. / Date",
       "Kode Inv. (uraian) / Inv. Code (Description)",
@@ -106,7 +270,7 @@ async function exportToExcel() {
       wrapText: true,
     };
 
-    // Set border tebal untuk header
+    // Set border untuk header
     headerRow.eachCell((cell, colNumber) => {
       cell.border = {
         top: { style: "medium" },
@@ -121,89 +285,71 @@ async function exportToExcel() {
       };
     });
 
-    // 🔹 TINGGI BARIS HEADER
     sheet.getRow(headerRow.number).height = 69 * 0.75;
-
-    // ===== DEVICE TYPE MAPPING =====
-    const deviceTypeMapping = {
-      // Hardware devices → HW
-      "PC Hardware": "HW",
-      Laptop: "HW",
-      Printer: "HW",
-      Projector: "HW",
-      // Software devices → SW
-      "PC Software": "SW",
-      // Network devices → NW
-      Network: "NW",
-      // Default untuk device lain
-      Others: "OT",
-    };
 
     // ===== ISI DATA DARI TICKETS =====
     const filteredTickets =
       filterSelect && filterSelect.value !== "all"
-        ? allTickets.filter((t) => t.status === filterSelect.value)
+        ? allTickets.filter((t) => t.status_ticket === filterSelect.value)
         : allTickets;
 
+    console.log("🔍 Filtered tickets for export:", filteredTickets.length);
+
+    // ✅ FIX: Gunakan device mapping dari CONFIG atau fallback
+    const deviceMapping = window.CONFIG
+      ? window.CONFIG.DEVICE_TYPE_MAPPING
+      : {
+          "PC Hardware": "HW",
+          Laptop: "HW",
+          Printer: "HW",
+          Projector: "HW",
+          "PC Software": "SW",
+          Network: "NW",
+          Others: "OT",
+        };
+
     filteredTickets.forEach((ticket) => {
-      // Format duration untuk Excel (dalam menit saja)
-      const durationText = formatDurationForExcel(ticket);
+      const durationText = calculateDurationForExport(ticket);
+      const kendaliMutu =
+        ticket.qa ||
+        (ticket.status_ticket === "Closed" ? "Finish" : "Continue");
 
-      // Kendali Mutu: Finish jika status Closed, Continue untuk status lain
-      const kendaliMutu = ticket.status === "Closed" ? "Finish" : "Continue";
-
-      // Map device type ke kode yang sesuai
-      const deviceCode = deviceTypeMapping[ticket.device] || "OT";
+      // ✅ FIX: Gunakan deviceMapping yang aman
+      const deviceCode = ticket.code || deviceMapping[ticket.device] || "OT";
 
       const rowData = [
-        // Tgl. / Date
         formatDateForExcel(ticket.createdAt),
-        // Kode Inv. (uraian) / Inv. Code (Description)
         ticket.inventory || "-",
-        // Kode / Code - MAPPED DEVICE CODE
         deviceCode,
-        // Lokasi / Location¹
         ticket.location ? "Bintan / " + ticket.location : "Bintan / -",
-        // Keterangan / Remarks
         ticket.subject || "-",
-        // Pengguna / User
         ticket.name || "-",
-        // Durasi / Duration (dalam menit)
         durationText,
-        // Kendali Mutu / Quality Assurance
         kendaliMutu,
       ];
 
       const row = sheet.addRow(rowData);
 
-      // Set border dotted untuk data rows
+      // Set styling untuk data rows
       row.eachCell((cell, colNumber) => {
-        cell.font = {
-          name: "Arial",
-          size: 10,
-        };
-
-        // Border dotted untuk data
+        cell.font = { name: "Arial", size: 10 };
         cell.border = {
           top: { style: "dotted" },
           left: { style: "dotted" },
           bottom: { style: "dotted" },
           right: { style: "dotted" },
         };
-
-        // Default alignment
         cell.alignment = {
           vertical: "top",
           horizontal: "left",
           wrapText: true,
         };
 
-        // Kolom tanggal = format tanggal
+        // Format khusus per kolom
         if (colNumber === 1 && cell.value instanceof Date) {
           cell.numFmt = "dd/mm/yyyy";
         }
 
-        // Kolom ke-3 (Kode) & kolom ke-8 (Kendali Mutu) rata tengah
         if (colNumber === 3 || colNumber === 8) {
           cell.alignment = {
             vertical: "middle",
@@ -212,7 +358,6 @@ async function exportToExcel() {
           };
         }
 
-        // Kolom Duration rata tengah
         if (colNumber === 7) {
           cell.alignment = {
             vertical: "middle",
@@ -227,10 +372,7 @@ async function exportToExcel() {
     if (filteredTickets.length > 0) {
       const lastRow = sheet.getRow(headerRow.number + filteredTickets.length);
       lastRow.eachCell((cell, colNumber) => {
-        cell.border = {
-          ...cell.border,
-          bottom: { style: "medium" },
-        };
+        cell.border = { ...cell.border, bottom: { style: "medium" } };
       });
     }
 
@@ -247,7 +389,6 @@ async function exportToExcel() {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    // Create download link
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -260,7 +401,7 @@ async function exportToExcel() {
     URL.revokeObjectURL(url);
 
     // Show success message
-    Swal.fire({
+    await Swal.fire({
       title: "Export Successful!",
       html: `
         <div style="text-align: center; padding: 1rem;">
@@ -274,11 +415,38 @@ async function exportToExcel() {
       showConfirmButton: false,
     });
   } catch (error) {
-    console.error("Export error:", error);
-    Swal.fire({
+    console.error("❌ Export error:", error);
+    await Swal.fire({
       title: "Export Failed",
-      text: "Terjadi kesalahan saat mengekspor data. Silakan coba lagi.",
+      text:
+        error.message ||
+        "Terjadi kesalahan saat mengekspor data. Silakan coba lagi.",
       icon: "error",
     });
   }
 }
+
+// ==================== 🔹 Global Initialization ====================
+// Initialize global tickets array if it doesn't exist
+window.allTickets = window.allTickets || [];
+
+// Function to update the global tickets array (call this when you load tickets)
+function updateAllTickets(newTickets) {
+  if (Array.isArray(newTickets)) {
+    window.allTickets = newTickets;
+    // Backup to localStorage for recovery
+    try {
+      localStorage.setItem("tickets-backup", JSON.stringify(newTickets));
+    } catch (e) {
+      console.warn("⚠️ Could not backup tickets to localStorage:", e);
+    }
+    console.log("✅ Updated allTickets with", newTickets.length, "tickets");
+  } else {
+    console.error("❌ Cannot update allTickets: invalid data");
+  }
+}
+
+// Export functions for global usage
+window.exportToExcel = exportToExcel;
+window.handleExportToExcel = handleExportToExcel;
+window.updateAllTickets = updateAllTickets;

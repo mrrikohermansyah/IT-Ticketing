@@ -49,6 +49,8 @@ const exportBtn = document.getElementById("exportBtn");
 const filterSelect = document.getElementById("filterSelect");
 const loginBtn = document.getElementById("loginBtn");
 const goLoginBtn = document.getElementById("goLoginBtn");
+const userInfo = document.getElementById("userInfo");
+const userName = document.getElementById("userName");
 
 // ==================== 🔹 State ====================
 let isCardView = false;
@@ -57,36 +59,58 @@ let loginInProgress = false;
 let ticketsUnsubscribe = null;
 let durationIntervalId = null;
 
-// ==================== 🔹 Admin Emails Whitelist ====================
-const ADMIN_EMAILS = [
-  "riko.hermansyah@meitech-ekabintan.com",
-  "devi.armanda@meitech-ekabintan.com",
-  "wahyu.nugroho@meitech-ekabintan.com",
-  "abdurahman.hakim@meitech-ekabintan.com",
-  "admin@meitech-ekabintan.com",
-  "nimda@meitech-ekabintan.com",
-];
+// ==================== 🔹 Helper Functions ====================
+function getAdminDisplayName(user) {
+  if (!user || !user.email) return "IT Support";
 
-// ==================== 🔹 IT Staff List ====================
-const IT_STAFF = [
-  "Riko Hermansyah",
-  "Devi Armanda",
-  "Wahyu Nugroho",
-  "Abdurahman Hakim",
-  "IT Support 1",
-  "IT Support 2",
-];
+  const userEmail = user.email.toLowerCase();
 
-// ==================== 🔹 Device Type Mapping ====================
-const deviceTypeMapping = {
-  "PC Hardware": "HW",
-  Laptop: "HW",
-  Printer: "HW",
-  Projector: "HW",
-  "PC Software": "SW",
-  Network: "NW",
-  Others: "OT",
-};
+  // Cek mapping dulu
+  const mappedName = window.CONFIG.ADMIN_NAME_MAPPING[userEmail];
+  if (mappedName) {
+    console.log("✅ Using mapped name:", mappedName);
+    return mappedName;
+  }
+
+  // Jika tidak ada mapping, gunakan displayName dari Google
+  if (user.displayName) {
+    console.log("✅ Using Google displayName:", user.displayName);
+    return user.displayName;
+  }
+
+  // Fallback: extract dari email (first part)
+  const nameFromEmail = userEmail
+    .split("@")[0]
+    .split(".")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+  console.log("✅ Using name from email:", nameFromEmail);
+  return nameFromEmail;
+}
+
+// ==================== 🔹 Session Storage Management ====================
+function setupSessionStorage() {
+  const sessionData = sessionStorage.getItem("adminFirstLogin");
+  if (sessionData) {
+    // Optional: Check if session is too old (e.g., more than 8 hours)
+    const sessionTime = sessionStorage.getItem("adminSessionTime");
+    if (sessionTime) {
+      const timeDiff = Date.now() - parseInt(sessionTime);
+      const eightHours = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+      if (timeDiff > eightHours) {
+        // Session terlalu lama, clear dan anggap sebagai login baru
+        sessionStorage.removeItem("adminFirstLogin");
+        sessionStorage.removeItem("adminSessionTime");
+        console.log("🕒 Session expired - cleared storage");
+      }
+    } else {
+      // Set session time jika belum ada
+      sessionStorage.setItem("adminSessionTime", Date.now().toString());
+    }
+  }
+}
 
 // ==================== 🔹 Initialize App ====================
 document.addEventListener("DOMContentLoaded", function () {
@@ -96,6 +120,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function initAdminApp() {
   console.log("🔄 Initializing admin application...");
+
+  // Setup session storage management
+  setupSessionStorage();
 
   // Check if DOM elements exist
   if (!ticketTableBody) {
@@ -117,7 +144,21 @@ function initAdminApp() {
   }
 
   if (exportBtn) {
-    exportBtn.addEventListener("click", exportToExcel);
+    exportBtn.addEventListener("click", () => {
+      console.log("📤 Export clicked, allTickets:", allTickets?.length);
+
+      // ✅ FIX: Pastikan allTickets tersedia
+      if (!allTickets || allTickets.length === 0) {
+        Swal.fire({
+          title: "No Data",
+          text: "Tidak ada data tiket untuk diekspor. Silakan tunggu hingga data dimuat.",
+          icon: "warning",
+        });
+        return;
+      }
+
+      exportToExcel(allTickets, filterSelect);
+    });
   }
 
   if (filterSelect) {
@@ -151,14 +192,14 @@ function isAdminUser(user) {
   if (!user || !user.email) return false;
 
   const userEmail = user.email.toLowerCase();
-  const isAdmin = ADMIN_EMAILS.some(
+  const isAdmin = window.CONFIG.ADMIN_EMAILS.some(
     (adminEmail) => adminEmail.toLowerCase() === userEmail
   );
 
   console.log("🔐 Admin Check:", {
     userEmail: userEmail,
     isAdmin: isAdmin,
-    adminEmails: ADMIN_EMAILS,
+    adminEmails: window.CONFIG.ADMIN_EMAILS,
   });
 
   return isAdmin;
@@ -173,6 +214,9 @@ function initAuth() {
 
       // Cleanup on logout
       if (!user) {
+        // Clear session storage pada logout
+        sessionStorage.removeItem("adminFirstLogin");
+        sessionStorage.removeItem("adminSessionTime");
         cleanup();
         showAuthButtons(false);
         showLoginScreen();
@@ -180,9 +224,12 @@ function initAuth() {
       }
 
       console.log("📧 User email:", user.email);
+      console.log("👤 User displayName:", user.displayName);
 
       if (!isAdminUser(user)) {
         console.log("🚫 Access denied for email:", user.email);
+        sessionStorage.removeItem("adminFirstLogin");
+        sessionStorage.removeItem("adminSessionTime");
         cleanup();
         showLoginScreen();
 
@@ -205,28 +252,45 @@ function initAuth() {
 
       // User is authenticated admin
       console.log("✅ Admin access granted for:", user.email);
-      showAuthButtons(true);
+      showAuthButtons(true, user);
       initTickets();
 
-      // Show welcome message
-      Swal.fire({
-        title: "Login Successful!",
-        html: `
-          <div style="text-align: center;">
-            <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: #27ae60; margin-bottom: 1rem;"></i>
-            <h3>Welcome Admin!</h3>
-            <p>Selamat datang <strong>${
-              user.displayName || user.email
-            }</strong></p>
-          </div>
-        `,
-        icon: "success",
-        timer: 3000,
-        showConfirmButton: false,
-      });
+      // ✅ CHECK: Apakah ini login pertama kali atau page refresh?
+      const isFirstLogin = !sessionStorage.getItem("adminFirstLogin");
+
+      if (isFirstLogin) {
+        // Ini adalah login pertama kali, tampilkan welcome message
+        const displayName = getAdminDisplayName(user);
+
+        Swal.fire({
+          title: "Login Successful!",
+          html: `
+            <div style="text-align: center;">
+              <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: #27ae60; margin-bottom: 1rem;"></i>
+              <h3>Welcome Admin!</h3>
+              <p>Selamat datang <strong>${displayName}</strong></p>
+              <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+                Anda login sebagai <strong>${user.email}</strong>
+              </p>
+            </div>
+          `,
+          icon: "success",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+
+        // Set session storage untuk menandai sudah login
+        sessionStorage.setItem("adminFirstLogin", "true");
+        sessionStorage.setItem("adminSessionTime", Date.now().toString());
+        console.log("🎉 First login - welcome message shown");
+      } else {
+        console.log("🔄 Page refresh - no welcome message");
+      }
     },
     (error) => {
       console.error("❌ Auth state error:", error);
+      sessionStorage.removeItem("adminFirstLogin");
+      sessionStorage.removeItem("adminSessionTime");
       cleanup();
       showAuthButtons(false);
       showLoginScreen();
@@ -234,7 +298,7 @@ function initAuth() {
   );
 }
 
-function showAuthButtons(isLoggedIn) {
+function showAuthButtons(isLoggedIn, user = null) {
   if (loginBtn) {
     loginBtn.style.display = isLoggedIn ? "none" : "flex";
     loginBtn.disabled = false;
@@ -245,6 +309,23 @@ function showAuthButtons(isLoggedIn) {
   }
   if (logoutBtn) logoutBtn.style.display = isLoggedIn ? "inline-flex" : "none";
   if (exportBtn) exportBtn.style.display = isLoggedIn ? "inline-flex" : "none";
+
+  // Tampilkan user info jika login
+  if (userInfo) {
+    userInfo.style.display = isLoggedIn ? "flex" : "none";
+  }
+
+  // Set nama user menggunakan getAdminDisplayName
+  if (userName && user) {
+    const displayName = getAdminDisplayName(user);
+    userName.textContent = displayName;
+
+    console.log("👤 User display info:", {
+      email: user.email,
+      googleDisplayName: user.displayName,
+      finalDisplayName: displayName,
+    });
+  }
 }
 
 // ==================== 🔹 Show Login Screen ====================
@@ -255,7 +336,7 @@ function showLoginScreen() {
   if (ticketTableBody) {
     ticketTableBody.innerHTML = `
       <tr>
-        <td colspan="15" class="login-prompt">
+        <td colspan="18" class="login-prompt">
           <div style="text-align: center; padding: 2rem;">
             <i class="fa-solid fa-lock" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
             <h3>Admin Login Required</h3>
@@ -300,6 +381,10 @@ async function handleGoogleLogin() {
 
     const result = await signInWithPopup(auth, provider);
     console.log("✅ Login successful:", result.user.email);
+
+    // Set session storage untuk menandai first login
+    sessionStorage.setItem("adminFirstLogin", "true");
+    sessionStorage.setItem("adminSessionTime", Date.now().toString());
   } catch (error) {
     console.error("❌ Login error details:", error);
 
@@ -341,6 +426,10 @@ async function handleLogout() {
     // Cleanup first
     cleanup();
 
+    // Clear session storage
+    sessionStorage.removeItem("adminFirstLogin");
+    sessionStorage.removeItem("adminSessionTime");
+
     // Clear local data
     allTickets = [];
 
@@ -363,6 +452,8 @@ async function handleLogout() {
 
     // Even if logout fails, clear local data and show login screen
     cleanup();
+    sessionStorage.removeItem("adminFirstLogin");
+    sessionStorage.removeItem("adminSessionTime");
     allTickets = [];
     showLoginScreen();
 
@@ -411,7 +502,7 @@ function initTickets() {
   if (ticketTableBody) {
     ticketTableBody.innerHTML = `
       <tr>
-        <td colspan="15" class="loading">
+        <td colspan="18" class="loading">
           <div style="text-align: center; padding: 2rem;">
             <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #2563eb; margin-bottom: 1rem;"></i>
             <p>Loading tickets...</p>
@@ -451,6 +542,9 @@ function initTickets() {
 
       console.log("✅ Tickets loaded:", tickets.length);
       allTickets = tickets;
+      if (typeof updateAllTickets === "function") {
+        updateAllTickets(tickets);
+      }
       renderTickets(tickets);
 
       // Start auto-updating durations
@@ -482,7 +576,7 @@ function calculateDuration(ticket) {
   console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
 
   // Handle missing fields dengan default values
-  const ticketStatus = ticket.status || "Open";
+  const ticketStatus = ticket.status_ticket || "Open";
   const hasClosedAt = !!ticket.closedAt;
 
   console.log("🔍 Debug calculateDuration - PROCESSED:", {
@@ -528,20 +622,12 @@ function calculateDuration(ticket) {
 
 function formatDuration(startDate, endDate) {
   const diffMs = endDate - startDate;
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(
-    (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-  );
-  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const diffMinutes = Math.floor(diffMs / (1000 * 60)); // Konversi langsung ke menit
 
-  if (diffDays > 0) {
-    return `${diffDays}d ${diffHours}h`;
-  } else if (diffHours > 0) {
-    return `${diffHours}h ${diffMinutes}m`;
-  } else if (diffMinutes > 0) {
-    return `${diffMinutes}m`;
+  if (diffMinutes > 0) {
+    return `${diffMinutes} Minute${diffMinutes > 1 ? "s" : ""}`;
   } else {
-    return "< 1m";
+    return "Less than 1 Minute";
   }
 }
 
@@ -561,7 +647,7 @@ function updateDurations() {
   // Update table view - hanya untuk ticket yang closed
   document.querySelectorAll("#ticketTableBody tr").forEach((row, index) => {
     const ticket = allTickets[index];
-    if (ticket && ticket.status === "Closed") {
+    if (ticket && ticket.status_ticket === "Closed") {
       const durationCell = row.cells[1]; // Kolom ke-2 (Duration)
       if (durationCell) {
         durationCell.innerHTML = `<span class="duration-badge ${getDurationClass(
@@ -576,7 +662,7 @@ function updateDurations() {
   // Update card view - hanya untuk ticket yang closed
   document.querySelectorAll(".ticket-card").forEach((card, index) => {
     const ticket = allTickets[index];
-    if (ticket && ticket.status === "Closed") {
+    if (ticket && ticket.status_ticket === "Closed") {
       const durationField = card.querySelector(".card-field:nth-child(2)"); // Field duration ke-2
       if (durationField) {
         durationField.querySelector(
@@ -596,7 +682,7 @@ function getDurationClass(ticket) {
   if (!ticket.createdAt) return "duration-neutral";
 
   // Handle missing status
-  const ticketStatus = ticket.status || "Open";
+  const ticketStatus = ticket.status_ticket || "Open";
 
   // Untuk ticket yang belum closed, gunakan class neutral
   if (ticketStatus !== "Closed" || !ticket.closedAt) {
@@ -627,7 +713,7 @@ function renderTickets(tickets) {
 
   const filtered =
     filterSelect && filterSelect.value !== "all"
-      ? tickets.filter((t) => t.status === filterSelect.value)
+      ? tickets.filter((t) => t.status_ticket === filterSelect.value)
       : tickets;
 
   if (isCardView) {
@@ -650,10 +736,13 @@ function renderTable(data) {
   data.forEach((ticket) => {
     console.log("🔍 Render Ticket:", {
       id: ticket.id,
-      status: ticket.status,
+      status: ticket.status_ticket,
       closedAt: ticket.closedAt,
       duration: calculateDuration(ticket),
     });
+
+    // ✅ AUTO QA: Tentukan nilai QA untuk display
+    const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -663,7 +752,7 @@ function renderTable(data) {
       <!-- ✅ Duration (NEW) -->
       <td>
         <span class="duration-badge ${getDurationClass(ticket)}" title="${
-      ticket.status === "Closed"
+      ticket.status_ticket === "Closed"
         ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
         : "Duration akan muncul ketika tiket ditutup"
     }">
@@ -675,13 +764,20 @@ function renderTable(data) {
       <td>${ticket.inventory || "-"}</td>
       
       <!-- ✅ Device -->
-      <td>${ticket.device || "-"}</td>
+        <td>${ticket.device || "-"}</td>
       
       <!-- ✅ Name -->
       <td>${ticket.name || "-"}</td>
-      
-      <!-- ✅ Email -->
-      <td>${ticket.user_email || "-"}</td>
+
+      <!-- ✅ Email (UPDATED - bisa diedit) -->
+      <td>
+        <span class="email-cell" title="${ticket.user_email || "-"}">
+          ${ticket.user_email || "-"}
+        </span>
+      </td>
+
+      <!-- ✅ Phone -->
+      <td>${ticket.user_phone || "-"}</td>
       
       <!-- ✅ Department -->
       <td>${ticket.department || "-"}</td>
@@ -706,16 +802,26 @@ function renderTable(data) {
       
       <!-- ✅ Note -->
       <td class="note-cell">${ticket.note || "-"}</td>
+
+      <!-- ✅ Code -->
+      <td>${ticket.code || "-"}</td>
       
       <!-- ✅ Action By -->
-      <td>${ticket.actionBy || "-"}</td>
+      <td>${ticket.action_by || "-"}</td>
+
+      <!-- ✅ QA (Auto) -->
+      <td>
+        <span class="qa-badge qa-${displayQA.toLowerCase()}">
+          ${displayQA}
+        </span>
+      </td>
       
       <!-- ✅ Status -->
       <td>
         <span class="status-badge status-${
-          ticket.status?.replace(" ", "").toLowerCase() || "open"
+          ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"
         }">
-          ${ticket.status || "Open"}
+          ${ticket.status_ticket || "Open"}
         </span>
       </td>
       
@@ -752,15 +858,18 @@ function renderCards(data) {
   cardContainer.innerHTML = "";
 
   data.forEach((ticket) => {
+    // ✅ AUTO QA: Tentukan nilai QA untuk display
+    const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
+
     const card = document.createElement("div");
     card.className = "ticket-card";
     card.innerHTML = `
       <div class="card-header">
         <h3>Ticket</h3>
         <span class="status-badge status-${
-          ticket.status?.replace(" ", "").toLowerCase() || "open"
+          ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"
         }">
-          ${ticket.status || "Open"}
+          ${ticket.status_ticket || "Open"}
         </span>
       </div>
       
@@ -776,7 +885,7 @@ function renderCards(data) {
           <strong><i class="fa-solid fa-clock"></i> Duration</strong>
           <span class="duration-badge ${getDurationClass(ticket)}" 
                 title="${
-                  ticket.status === "Closed"
+                  ticket.status_ticket === "Closed"
                     ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
                     : "Duration akan muncul ketika tiket ditutup"
                 }">
@@ -801,11 +910,19 @@ function renderCards(data) {
           <strong><i class="fa-solid fa-user"></i> Name</strong>
           <span>${ticket.name || "-"}</span>
         </div>
-        
-        <!-- ✅ Email -->
+
+        <!-- ✅ Email (UPDATED - bisa diedit) -->
         <div class="card-field">
           <strong><i class="fa-solid fa-envelope"></i> Email</strong>
-          <span>${ticket.user_email || "-"}</span>
+          <span class="email-cell" title="${ticket.user_email || "-"}">
+            ${ticket.user_email || "-"}
+          </span>
+        </div>
+
+        <!-- ✅ Phone -->
+        <div class="card-field">
+          <strong><i class="fa-solid fa-phone"></i> Phone</strong>
+          <span>${ticket.user_phone || "-"}</span>
         </div>
         
         <!-- ✅ Department -->
@@ -847,11 +964,25 @@ function renderCards(data) {
           <strong><i class="fa-solid fa-note-sticky"></i> Note</strong>
           <span>${ticket.note || "-"}</span>
         </div>
+
+        <!-- ✅ Code -->
+        <div class="card-field">
+          <strong><i class="fa-solid fa-code"></i> Code</strong>
+          <span>${ticket.code || "-"}</span>
+        </div>
         
         <!-- ✅ Action By -->
         <div class="card-field">
           <strong><i class="fa-solid fa-user-gear"></i> Action By</strong>
-          <span>${ticket.actionBy || "-"}</span>
+          <span>${ticket.action_by || "-"}</span>
+        </div>
+
+        <!-- ✅ QA (Auto) -->
+        <div class="card-field">
+          <strong><i class="fa-solid fa-check-double"></i> QA</strong>
+          <span class="qa-badge qa-${displayQA.toLowerCase()}">
+            ${displayQA}
+          </span>
         </div>
       </div>
       
@@ -874,7 +1005,7 @@ function showEmptyState() {
   if (ticketTableBody) {
     ticketTableBody.innerHTML = `
       <tr>
-        <td colspan="15" class="empty-state">
+        <td colspan="18" class="empty-state">
           <i class="fa-solid fa-inbox"></i>
           <p>No tickets found</p>
           <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Belum ada tiket yang dibuat</p>
@@ -899,7 +1030,7 @@ function showErrorState(message) {
   if (ticketTableBody) {
     ticketTableBody.innerHTML = `
       <tr>
-        <td colspan="15" class="error-state">
+        <td colspan="18" class="error-state">
           <i class="fa-solid fa-exclamation-triangle"></i>
           <p>${message}</p>
           <button onclick="initTickets()" style="margin-top: 10px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
@@ -1008,66 +1139,98 @@ async function handleEdit(e) {
     }
 
     const data = docSnap.data();
+    const currentUser = auth.currentUser;
+
+    // Dapatkan nama admin yang sedang login untuk default actionBy
+    const currentAdminName = getAdminDisplayName(currentUser);
 
     // Handle missing fields in existing data
-    const currentStatus = data.status || "Open";
+    const currentStatus = data.status_ticket || "Open";
     const hasClosedAt = !!data.closedAt;
+
+    // ✅ AUTO QA: Tentukan nilai QA berdasarkan status
+    const getAutoQA = (status) => {
+      return status === "Closed" ? "Finish" : "Continue";
+    };
+
+    const currentQA = getAutoQA(currentStatus);
 
     const { value: formValues } = await Swal.fire({
       title: "Edit Ticket",
       html: `
         <div class="form-grid">
+        <!-- ✅ TAMBAH FIELD EMAIL -->
           <div class="form-group">
-            <label><i class="fa-solid fa-note-sticky"></i> Note</label>
-            <textarea id="note" class="swal2-textarea" placeholder="Add notes or updates...">${
-              data.note || ""
-            }</textarea>
+            <label><i class="fa-solid fa-envelope"></i> User Email</label>
+            <input type="email" id="user_email" class="swal2-input" value="${
+              data.user_email || ""
+            }" placeholder="user@company.com">
           </div>
+
+          
           <div class="form-group">
-            <label><i class="fa-solid fa-user-gear"></i> Action By</label>
-            <select id="actionBy" class="swal2-select">
-              <option value="">-- Select IT Staff --</option>
-              ${getActionByOptions(data.actionBy)}
-            </select>
+          <label><i class="fa-solid fa-user-gear"></i> Action By</label>
+          <select id="action_by" class="swal2-select">
+          <option value="">-- Select IT Staff --</option>
+          ${getActionByOptions(data.action_by || currentAdminName)}
+          </select>
           </div>
+          
           <div class="form-group">
+          <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+          <input type="tel" id="user_phone" class="swal2-select" value="${
+            data.user_phone || ""
+          }" placeholder="+62 XXX-XXXX-XXXX">
+            </div>
+            
+            <div class="form-group">
             <label><i class="fa-solid fa-computer"></i> Device Type</label>
             <select id="device" class="swal2-select">
-              ${getDeviceOptions(data.device)}
+            ${getDeviceOptions(data.device)}
             </select>
-          </div>
-          <div class="form-group">
+            </div>
+            <div class="form-group">
             <label><i class="fa-solid fa-location-dot"></i> Location</label>
             <select id="location" class="swal2-select">
-              ${getLocationOptions(data.location)}
+            ${getLocationOptions(data.location)}
             </select>
-          </div>
-          <div class="form-group">
+            </div>
+            <div class="form-group">
             <label><i class="fa-solid fa-building"></i> Department</label>
             <select id="department" class="swal2-select">
-              ${getDepartmentOptions(data.department)}
+            ${getDepartmentOptions(data.department)}
             </select>
-          </div>
-          <div class="form-group">
+            </div>
+            <div class="form-group">
             <label><i class="fa-solid fa-flag"></i> Priority</label>
             <select id="priority" class="swal2-select">
-              ${getPriorityOptions(data.priority)}
+            ${getPriorityOptions(data.priority)}
             </select>
-          </div>
-          <div class="form-group">
+            </div>
+            <div class="form-group">
             <label><i class="fa-solid fa-circle-check"></i> Status</label>
-            <select id="status" class="swal2-select">
-              ${getStatusOptions(currentStatus)}
+            <select id="status_ticket" class="swal2-select">
+            ${getStatusOptions(currentStatus)}
             </select>
-          </div>
+            </div>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+            <i class="fa-solid fa-info-circle"></i> 
+            ${
+              currentStatus === "Closed"
+                ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
+                : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
+            }
+            <div class="form-group">
+              <label><i class="fa-solid fa-note-sticky"></i> Note</label>
+              <textarea id="note" class="swal2-textarea" placeholder="Add notes or updates...">${
+                data.note || ""
+              }</textarea>
+            </div>
         </div>
-        <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+        <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
           <i class="fa-solid fa-info-circle"></i> 
-          ${
-            currentStatus === "Closed"
-              ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
-              : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
-          }
+          QA akan otomatis di-set ke "Finish" ketika status Closed, "Continue" untuk status lainnya.
         </div>
       `,
       focusConfirm: false,
@@ -1076,13 +1239,17 @@ async function handleEdit(e) {
       cancelButtonText: "Cancel",
       preConfirm: () => {
         return {
+          user_email: document.getElementById("user_email").value, // ✅ TAMBAH EMAIL
+          name: document.getElementById("name").value,
           note: document.getElementById("note").value,
-          actionBy: document.getElementById("actionBy").value,
+          action_by: document.getElementById("action_by").value,
+          user_phone: document.getElementById("user_phone").value, // ✅ TAMBAH PHONE
           device: document.getElementById("device").value,
           location: document.getElementById("location").value,
           department: document.getElementById("department").value,
           priority: document.getElementById("priority").value,
-          status: document.getElementById("status").value,
+          status_ticket: document.getElementById("status_ticket").value,
+          // QA akan di-set otomatis berdasarkan status
         };
       },
       didOpen: () => {
@@ -1124,37 +1291,51 @@ async function handleEdit(e) {
 
     if (!formValues) return;
 
+    // ✅ Tentukan QA berdasarkan status baru
+    const newQA = getAutoQA(formValues.status_ticket);
+
     // Logic untuk menangani closedAt timestamp
     const updateData = {
       ...formValues,
+      qa: newQA, // ✅ SET QA OTOMATIS
       updatedAt: serverTimestamp(),
     };
 
     // Update code berdasarkan device type yang baru
     if (formValues.device) {
-      updateData.code = deviceTypeMapping[formValues.device] || "OT";
+      updateData.code =
+        window.CONFIG.DEVICE_TYPE_MAPPING[formValues.device] || "OT";
     }
 
     console.log("🔍 Edit Debug:", {
       currentStatus: currentStatus,
-      newStatus: formValues.status,
+      newStatus: formValues.status_ticket,
+      newQA: newQA,
       hasClosedAt: hasClosedAt,
       device: formValues.device,
       code: updateData.code,
+      user_phone: formValues.user_phone, // ✅ DEBUG PHONE
+      user_email: formValues.user_email,
     });
 
     // HANYA jika status berubah dari non-Closed ke Closed
-    if (formValues.status === "Closed" && currentStatus !== "Closed") {
+    if (formValues.status_ticket === "Closed" && currentStatus !== "Closed") {
       updateData.closedAt = serverTimestamp();
       console.log("🔄 First time closed - setting closedAt timestamp");
     }
     // Jika status berubah dari Closed ke non-Closed, hapus closedAt untuk reset
-    else if (formValues.status !== "Closed" && currentStatus === "Closed") {
+    else if (
+      formValues.status_ticket !== "Closed" &&
+      currentStatus === "Closed"
+    ) {
       updateData.closedAt = null;
       console.log("🔄 Reopened ticket - clearing closedAt timestamp");
     }
     // Jika sudah closed dan tetap closed, JANGAN ubah closedAt
-    else if (formValues.status === "Closed" && currentStatus === "Closed") {
+    else if (
+      formValues.status_ticket === "Closed" &&
+      currentStatus === "Closed"
+    ) {
       console.log("🔒 Ticket tetap closed - closedAt tidak diubah");
     }
 
@@ -1194,7 +1375,7 @@ function getDeviceOptions(selected) {
 }
 
 function getActionByOptions(selected) {
-  return IT_STAFF.map(
+  return window.CONFIG.IT_STAFF.map(
     (staff) =>
       `<option value="${staff}" ${
         staff === selected ? "selected" : ""
@@ -1211,9 +1392,11 @@ function getLocationOptions(selected) {
     "Green Office",
     "HRD",
     "HSE Yard",
+    "Maintenance",
     "Multi Purposes Building",
     "Red Office",
     "Security",
+    "Warehouse",
     "White Office",
     "White Office 2nd Fl",
     "White Office 3rd Fl",
@@ -1244,10 +1427,12 @@ function getDepartmentOptions(selected) {
     "HR",
     "HSE",
     "IT",
+    "Maintenance",
     "Management",
     "Procurement",
     "QC",
     "Vendor",
+    "Warehouse",
     "Lainlain",
   ];
   return list
@@ -1283,318 +1468,7 @@ function getStatusOptions(selected) {
     )
     .join("");
 }
-
-// ==================== 🔹 Export to Excel Function ====================
-async function exportToExcel() {
-  try {
-    // Show loading state
-    const { value: accept } = await Swal.fire({
-      title: "Export to Excel",
-      html: `
-        <div style="text-align: center; padding: 1rem;">
-          <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
-          <p>Export ${allTickets.length} tickets to Excel format?</p>
-          <p style="font-size: 0.9rem; color: #666;">File akan berisi semua data tiket yang terlihat.</p>
-        </div>
-      `,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Export Now",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#217346",
-    });
-
-    if (!accept) return;
-
-    // Load ExcelJS library dynamically
-    await loadExcelJS();
-
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Aktivitas IT");
-
-    // ===== FONTS & STYLE DASAR =====
-    workbook.creator = "Riko Hermansyah";
-    sheet.properties.defaultRowHeight = 20;
-
-    // ===== JUDUL UTAMA dengan border tebal =====
-    sheet.mergeCells("A1:H1");
-    const titleCell = sheet.getCell("A1");
-    titleCell.value = "AKTIVITAS-AKTIVITAS IT / IT ACTIVITIES";
-    titleCell.font = {
-      name: "Times New Roman",
-      italic: true,
-      size: 18,
-      bold: true,
-    };
-    titleCell.alignment = {
-      horizontal: "center",
-      vertical: "middle",
-    };
-    titleCell.border = {
-      top: { style: "medium" },
-      left: { style: "medium" },
-      bottom: { style: "medium" },
-      right: { style: "medium" },
-    };
-    titleCell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFE6E6E6" },
-    };
-
-    // ===== BARIS KOSONG =====
-    sheet.addRow([]);
-
-    // ===== BARIS PERIOD dengan border tebal =====
-    const now = new Date();
-    const periodText = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}`;
-
-    // Merge cells untuk period
-    sheet.mergeCells("A3:H3");
-    const periodCell = sheet.getCell("A3");
-    periodCell.value = `Period: ${periodText}`;
-    periodCell.font = { name: "Arial", size: 11, bold: true };
-    periodCell.alignment = { horizontal: "left", vertical: "middle" };
-    periodCell.border = {
-      top: { style: "medium" },
-      left: { style: "medium" },
-      bottom: { style: "thin" },
-      right: { style: "medium" },
-    };
-
-    // ===== BARIS KOSONG =====
-    sheet.addRow([]);
-
-    // ===== HEADER TABEL dengan border tebal =====
-    const headers = [
-      "Tgl. / Date",
-      "Kode Inv. (uraian) / Inv. Code (Description)",
-      "Kode / Code",
-      "Lokasi / Location¹",
-      "Keterangan / Remarks",
-      "Pengguna / User",
-      "Durasi / Duration",
-      "Kendali Mutu / Quality Assurance",
-    ];
-
-    const headerRow = sheet.addRow(headers);
-    headerRow.font = {
-      bold: true,
-      name: "Arial",
-      size: 10,
-      color: { argb: "FF000000" },
-    };
-    headerRow.alignment = {
-      horizontal: "center",
-      vertical: "middle",
-      wrapText: true,
-    };
-
-    // Set border tebal untuk header
-    headerRow.eachCell((cell, colNumber) => {
-      cell.border = {
-        top: { style: "medium" },
-        left: { style: "medium" },
-        bottom: { style: "medium" },
-        right: { style: "medium" },
-      };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFEFEFEF" },
-      };
-    });
-
-    // 🔹 TINGGI BARIS HEADER
-    sheet.getRow(headerRow.number).height = 69 * 0.75;
-
-    // ===== ISI DATA DARI TICKETS =====
-    const filteredTickets =
-      filterSelect && filterSelect.value !== "all"
-        ? allTickets.filter((t) => t.status === filterSelect.value)
-        : allTickets;
-
-    filteredTickets.forEach((ticket) => {
-      // Format duration untuk Excel (dalam menit saja)
-      const durationText = formatDurationForExcel(ticket);
-
-      // Kendali Mutu: Finish jika status Closed, Continue untuk status lain
-      const kendaliMutu = ticket.status === "Closed" ? "Finish" : "Continue";
-
-      // Map device type ke kode yang sesuai - GUNAKAN MAPPING YANG SAMA
-      const deviceCode = deviceTypeMapping[ticket.device] || "OT";
-
-      const rowData = [
-        // Tgl. / Date
-        formatDateForExcel(ticket.createdAt),
-        // Kode Inv. (uraian) / Inv. Code (Description)
-        ticket.inventory || "-",
-        // Kode / Code - MAPPED DEVICE CODE (HW/SW/NW/OT)
-        deviceCode,
-        // Lokasi / Location¹
-        ticket.location ? "Bintan / " + ticket.location : "Bintan / -",
-        // Keterangan / Remarks
-        ticket.subject || "-",
-        // Pengguna / User
-        ticket.name || "-",
-        // Durasi / Duration (dalam menit)
-        durationText,
-        // Kendali Mutu / Quality Assurance
-        kendaliMutu,
-      ];
-
-      const row = sheet.addRow(rowData);
-
-      // Set border dotted untuk data rows
-      row.eachCell((cell, colNumber) => {
-        cell.font = {
-          name: "Arial",
-          size: 10,
-        };
-
-        // Border dotted untuk data
-        cell.border = {
-          top: { style: "dotted" },
-          left: { style: "dotted" },
-          bottom: { style: "dotted" },
-          right: { style: "dotted" },
-        };
-
-        // Default alignment
-        cell.alignment = {
-          vertical: "top",
-          horizontal: "left",
-          wrapText: true,
-        };
-
-        // Kolom tanggal = format tanggal
-        if (colNumber === 1 && cell.value instanceof Date) {
-          cell.numFmt = "dd/mm/yyyy";
-        }
-
-        // Kolom ke-3 (Kode) & kolom ke-8 (Kendali Mutu) rata tengah
-        if (colNumber === 3 || colNumber === 8) {
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: "center",
-            wrapText: true,
-          };
-        }
-
-        // Kolom Duration rata tengah
-        if (colNumber === 7) {
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: "center",
-            wrapText: true,
-          };
-        }
-      });
-    });
-
-    // ===== BORDER BAGIAN BAWAH TABEL =====
-    if (filteredTickets.length > 0) {
-      const lastRow = sheet.getRow(headerRow.number + filteredTickets.length);
-      lastRow.eachCell((cell, colNumber) => {
-        cell.border = {
-          ...cell.border,
-          bottom: { style: "medium" },
-        };
-      });
-    }
-
-    // ===== ATUR LEBAR KOLOM =====
-    const pxToChar = (px) => Math.round(px / 7);
-    const widthsPx = [80, 113, 86, 181, 487, 126, 126, 124];
-    widthsPx.forEach((px, i) => {
-      sheet.getColumn(i + 1).width = pxToChar(px);
-    });
-
-    // ===== SIMPAN FILE =====
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    // Create download link
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Aktivitas_IT_Report_${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    // Show success message
-    Swal.fire({
-      title: "Export Successful!",
-      html: `
-        <div style="text-align: center; padding: 1rem;">
-          <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;"></i>
-          <p>${filteredTickets.length} tickets exported successfully!</p>
-          <p style="font-size: 0.9rem; color: #666;">File telah didownload ke perangkat Anda.</p>
-        </div>
-      `,
-      icon: "success",
-      timer: 3000,
-      showConfirmButton: false,
-    });
-  } catch (error) {
-    console.error("Export error:", error);
-    Swal.fire({
-      title: "Export Failed",
-      text: "Terjadi kesalahan saat mengekspor data. Silakan coba lagi.",
-      icon: "error",
-    });
-  }
-}
-
-// Helper function untuk format duration Excel (dalam menit saja)
-function formatDurationForExcel(ticket) {
-  if (!ticket.createdAt) return "-";
-
-  const ticketStatus = ticket.status || "Open";
-  const hasClosedAt = !!ticket.closedAt;
-
-  // Jika ticket belum closed, return "-"
-  if (ticketStatus !== "Closed" || !hasClosedAt) {
-    return "-";
-  }
-
-  const createdDate = ticket.createdAt.toDate
-    ? ticket.createdAt.toDate()
-    : new Date(ticket.createdAt);
-
-  const endDate = ticket.closedAt.toDate
-    ? ticket.closedAt.toDate()
-    : new Date(ticket.closedAt);
-
-  const diffMs = endDate - createdDate;
-  const totalMinutes = Math.floor(diffMs / (1000 * 60));
-
-  // Format dalam menit saja
-  if (totalMinutes === 0) {
-    return "Less than 1 Minute";
-  } else if (totalMinutes === 1) {
-    return "1 Minute";
-  } else {
-    return `${totalMinutes.toLocaleString()} Minutes`;
-  }
-}
-
-// Helper function untuk format date Excel
-function formatDateForExcel(ts) {
-  if (!ts) return "-";
-  const date = ts.toDate ? ts.toDate() : new Date(ts);
-  return date;
-}
-
-// Dynamic load ExcelJS
+// Dynamic load ExcelJS - PINDAHKAN KE ATAS exportToExcel
 function loadExcelJS() {
   return new Promise((resolve, reject) => {
     if (window.ExcelJS) {
@@ -1609,6 +1483,19 @@ function loadExcelJS() {
     script.onerror = reject;
     document.head.appendChild(script);
   });
+}
+
+// Helper function untuk format date Excel - JUGA PINDAHKAN KE ATAS
+function formatDateForExcel(ts) {
+  if (!ts) return "-";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+
+  // Validasi tanggal
+  if (isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date;
 }
 
 // ==================== 🔹 Utility Functions ====================
@@ -1629,7 +1516,7 @@ function addDataLabels() {
   });
 }
 
-// Add CSS untuk Duration Badge dan Login Button
+// Add CSS untuk Duration Badge, QA Badge dan Login Button
 const style = document.createElement("style");
 style.textContent = `
   .duration-badge {
@@ -1665,6 +1552,29 @@ style.textContent = `
     color: #6b7280;
   }
   
+  .qa-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  
+  .qa-continue {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .qa-finish {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  .qa-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
   .login-redirect-btn {
     padding: 10px 20px;
     background: #2563eb;
@@ -1679,6 +1589,32 @@ style.textContent = `
   .login-redirect-btn:hover {
     background: #1d4ed8;
   }
+    /* ✅ STYLE BARU UNTUK EMAIL CELL */
+  .email-cell {
+    word-break: break-all;
+    max-width: 150px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+/* CSS khusus untuk hide kolom DEVICE dengan colgroup */
+#ticketsTable th:nth-of-type(4),
+#ticketsTable td:nth-of-type(4),
+#ticketsTable th:nth-of-type(11),
+#ticketsTable td:nth-of-type(11)  {
+    display: none !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    visibility: hidden !important;
+}
+
+/* Juga hide col ke-4 di colgroup */
+#ticketsTable col:nth-child(4) {
+    width: 0 !important;
+}
+
 `;
 document.head.appendChild(style);
 

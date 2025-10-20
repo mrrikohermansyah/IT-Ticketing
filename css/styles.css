@@ -5,53 +5,54 @@
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
   --gray-400: #9ca3af;
+  --gray-500: #6b7280;
   --gray-600: #4b5563;
+  --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
   --white: #ffffff;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --success: #10b981;
+  --error: #dc2626;
+  --warning: #f59e0b;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --radius: 8px;
-  --radius-lg: 12px;
 }
 
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
-  color: var(--gray-900);
-  line-height: 1.6;
+  color: var(--gray-800);
+  line-height: 1.5;
   font-weight: 400;
 }
 
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 2rem 1rem;
   min-height: 100vh;
 }
 
-/* Header Styles */
+/* Header */
 header {
   text-align: center;
   margin-bottom: 3rem;
-  padding: 0 1rem;
 }
 
 header .logo {
-  height: 48px;
+  height: 40px;
   width: auto;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   opacity: 0.9;
 }
 
@@ -59,53 +60,70 @@ header h1 {
   font-size: 1.75rem;
   font-weight: 600;
   color: var(--gray-900);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.025em;
 }
 
-/* Card & Form Styles */
+header p {
+  color: var(--gray-600);
+  font-size: 0.9rem;
+}
+
+/* Card */
 .card {
   background: var(--white);
   padding: 2rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--gray-200);
-  backdrop-filter: blur(8px);
 }
 
+/* Form Layout */
 form {
-  display: grid;
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* Form Labels */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Labels */
 form label {
   display: block;
   position: relative;
-  cursor: help;
 }
 
 form label span {
   font-weight: 500;
-  color: var(--gray-800);
+  color: var(--gray-700);
   margin-bottom: 0.5rem;
   display: block;
   font-size: 0.875rem;
-  letter-spacing: -0.01em;
 }
 
 .required::after {
   content: " *";
-  color: #dc2626;
+  color: var(--error);
 }
 
-/* Floating Tooltip Styles */
+.helper-text {
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Floating Tooltip */
 .floating-tooltip {
   position: fixed;
   background: var(--gray-900);
   color: var(--white);
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 400;
   line-height: 1.4;
@@ -113,8 +131,8 @@ form label span {
   z-index: 10000;
   opacity: 0;
   transition: opacity 0.2s ease;
-  box-shadow: var(--shadow-lg);
-  max-width: 300px;
+  box-shadow: var(--shadow);
+  max-width: 280px;
   white-space: normal;
   word-wrap: break-word;
   text-align: left;
@@ -134,78 +152,44 @@ form label span {
   border-bottom: 6px solid var(--gray-900);
 }
 
-/* Input Styles with Custom Validation */
+/* Inputs */
 input[type="text"],
 input[type="email"],
+input[type="tel"],
 select,
 textarea {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1.5px solid var(--gray-200);
+  padding: 0.75rem;
+  border: 1px solid var(--gray-300);
   border-radius: var(--radius);
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   background: var(--white);
   color: var(--gray-900);
   font-family: inherit;
 }
 
-/* Remove all default validation messages */
-input:invalid,
-select:invalid,
-textarea:invalid {
-  box-shadow: none;
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-/* Custom validation states */
-input:required:invalid,
-select:required:invalid,
-textarea:required:invalid {
-  border-color: var(--gray-200);
-}
-
-input:focus:invalid,
-select:focus:invalid,
-textarea:focus:invalid {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-input:valid,
-select:valid,
-textarea:valid {
-  border-color: #10b981;
-}
-
-/* Placeholder styling */
-::placeholder {
-  color: var(--gray-400);
-  opacity: 1;
-  font-style: italic;
-}
-
-:-ms-input-placeholder {
-  color: var(--gray-400);
-  font-style: italic;
-}
-
-::-ms-input-placeholder {
-  color: var(--gray-400);
-  font-style: italic;
-}
-
-/* Select Styling */
+/* Select */
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
+  background-size: 1rem;
   padding-right: 2.5rem;
 }
 
-/* Style for unselected selects */
-select:required:invalid {
+select:invalid {
   color: var(--gray-400);
 }
 
@@ -219,27 +203,27 @@ select option {
 
 /* Priority options color coding */
 select#priority option[value="Low"] {
-  color: #059669;
+  color: var(--success);
 }
 select#priority option[value="Medium"] {
-  color: #d97706;
+  color: var(--warning);
 }
 select#priority option[value="High"] {
-  color: #dc2626;
+  color: var(--error);
 }
 
-/* Textarea Specific */
+/* Textarea */
 textarea {
   resize: vertical;
   min-height: 120px;
   line-height: 1.5;
 }
 
-/* Button Styles */
+/* Buttons */
 .actions {
   display: flex;
   gap: 0.75rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 button {
@@ -249,103 +233,62 @@ button {
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  letter-spacing: -0.01em;
 }
 
 button[type="submit"] {
   background: var(--primary);
   color: var(--white);
-  box-shadow: var(--shadow-sm);
 }
 
-button[type="submit"]:hover {
+button[type="submit"]:hover:not(:disabled) {
   background: var(--primary-dark);
   transform: translateY(-1px);
-  box-shadow: var(--shadow);
 }
 
 button[type="reset"] {
   background: var(--gray-100);
   color: var(--gray-700);
-  border: 1.5px solid var(--gray-300);
+  border: 1px solid var(--gray-300);
 }
 
 button[type="reset"]:hover {
   background: var(--gray-200);
-  color: var(--gray-800);
-  border-color: var(--gray-400);
 }
 
-/* Status Message */
-#status {
-  margin-top: 1rem;
-  padding: 0.875rem 1rem;
-  border-radius: var(--radius);
-  font-weight: 500;
-  text-align: center;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+/* Button States */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
-#status:not(:empty) {
-  background: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary-dark);
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Success and Error status variants */
-#status.success {
-  background: #f0fdf4;
-  border-color: #10b981;
-  color: #065f46;
-}
-
-#status.error {
-  background: #fef2f2;
-  border-color: #dc2626;
-  color: #991b1b;
+.btn-text {
+  display: block;
 }
 
 /* Footer */
 footer {
   text-align: center;
-  padding: 2rem 1rem 1rem;
-  color: var(--gray-600);
-  margin-top: 2rem;
+  margin-top: 3rem;
+  color: var(--gray-500);
   font-size: 0.875rem;
 }
 
-footer small {
-  opacity: 0.8;
-}
-
-/* Loading Animation */
-.loading {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Custom Error Message */
+/* Error States */
 .error-message {
-  color: #dc2626;
+  color: var(--error);
   font-size: 0.75rem;
   margin-top: 0.25rem;
   display: none;
@@ -358,33 +301,42 @@ footer small {
 .input-error input,
 .input-error select,
 .input-error textarea {
-  border-color: #dc2626;
+  border-color: var(--error);
 }
 
-/* Responsive Design */
-@media (max-width: 640px) {
+/* Utility */
+#status {
+  display: none;
+}
+
+/* Make full-width elements */
+label[for="subject"],
+label[for="message"],
+.actions {
+  grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .container {
-    padding: 16px;
-  }
-
-  header {
-    margin-bottom: 2rem;
-  }
-
-  header h1 {
-    font-size: 1.5rem;
+    padding: 1rem;
   }
 
   .card {
     padding: 1.5rem;
   }
 
-  .actions {
-    flex-direction: column;
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  button {
-    min-width: 100%;
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
   }
 
   .floating-tooltip {
@@ -394,36 +346,50 @@ footer small {
   }
 }
 
-@media (min-width: 641px) {
-  form {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+@media (max-width: 480px) {
+  .card {
+    padding: 1.25rem;
   }
 
-  label[for="message"],
-  textarea,
-  .actions {
-    grid-column: 1 / -1;
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    padding: 0.675rem;
+  }
+
+  button {
+    padding: 0.75rem 1.25rem;
   }
 }
 
-/* Hover effects for form elements */
-input:hover,
-select:hover,
-textarea:hover {
-  border-color: var(--gray-400);
+/* Animations */
+.card {
+  animation: fadeIn 0.6s ease-out;
 }
 
-/* Focus states for accessibility */
-button:focus,
-input:focus,
-select:focus,
-textarea:focus {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Custom scrollbar for textarea */
+/* Scrollbar for textarea */
 textarea::-webkit-scrollbar {
   width: 6px;
 }
@@ -442,37 +408,23 @@ textarea::-webkit-scrollbar-thumb:hover {
   background: var(--gray-500);
 }
 
-/* Prevent text selection on tooltip */
-.floating-tooltip {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+/* Placeholder styling */
+::placeholder {
+  color: var(--gray-400);
+  opacity: 1;
 }
 
-/* Better text rendering for English */
-body {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:-ms-input-placeholder {
+  color: var(--gray-400);
 }
 
-/* Subtle animations for better UX */
-.card {
-  animation: fadeInUp 0.6s ease-out;
+::-ms-input-placeholder {
+  color: var(--gray-400);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* Hide status element since we're using SweetAlert */
-#status {
-  display: none !important;
+/* Hover effects */
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--gray-400);
 }
