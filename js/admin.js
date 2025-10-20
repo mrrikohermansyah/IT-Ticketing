@@ -1166,13 +1166,13 @@ async function handleEdit(e) {
               data.user_email || ""
             }" placeholder="user@company.com">
           </div>
-        <!-- ✅ TAMBAH FIELD NAME YANG HILANG -->
-          <div class="form-group">
-            <label><i class="fa-solid fa-user"></i> Name</label>
-            <input type="text" id="name" class="swal2-input" value="${
-              data.name || ""
-            }" placeholder="User Name">
-          </div>
+<!-- ✅ TAMBAH FIELD NAME YANG HILANG -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-user"></i> Name</label>
+        <input type="text" id="name" class="swal2-input" value="${
+          data.name || ""
+        }" placeholder="User Name">
+      </div>
           
           <div class="form-group">
           <label><i class="fa-solid fa-user-gear"></i> Action By</label>
@@ -1525,61 +1525,6 @@ function addDataLabels() {
 // Add CSS untuk Duration Badge, QA Badge dan Login Button
 const style = document.createElement("style");
 style.textContent = `
-  .duration-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  
-  .duration-short {
-    background: #d1fae5;
-    color: #065f46;
-  }
-  
-  .duration-medium {
-    background: #fef3c7;
-    color: #92400e;
-  }
-  
-  .duration-long {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-  
-  .duration-closed {
-    background: #e0e7ff;
-    color: #3730a3;
-  }
-  
-  .duration-neutral {
-    background: #f3f4f6;
-    color: #6b7280;
-  }
-  
-  .qa-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  
-  .qa-continue {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-  
-  .qa-finish {
-    background: #dcfce7;
-    color: #166534;
-  }
-  
-  .qa-pending {
-    background: #fef3c7;
-    color: #92400e;
-  }
   
   .login-redirect-btn {
     padding: 10px 20px;
@@ -1635,4 +1580,3 @@ window.exportToExcel = exportToExcel;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS loaded successfully");
-
