@@ -146,7 +146,7 @@ async function exportToExcel(allTickets, filterSelect) {
       console.error(
         "❌ allTickets is not an array:",
         typeof allTickets,
-        allTickets
+        allTickets,
       );
       throw new Error("Tickets data is not a valid array");
     }
@@ -221,7 +221,7 @@ async function exportToExcel(allTickets, filterSelect) {
     // ===== BARIS PERIOD =====
     const now = new Date();
     const periodText = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
 
     sheet.mergeCells("A3:H3");
@@ -354,15 +354,35 @@ async function exportToExcel(allTickets, filterSelect) {
         cell.alignment = {
           vertical: "top",
           horizontal: "left",
-          wrapText: true,
+          wrapText: false,
         };
 
         // Format khusus per kolom
         if (colNumber === 1 && cell.value instanceof Date) {
           cell.numFmt = "dd/mm/yyyy";
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "right",
+            wrapText: true,
+          };
         }
 
-        if (colNumber === 3 || colNumber === 8) {
+        if (colNumber === 2) {
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "left",
+            wrapText: false,
+          };
+        }
+
+        if (colNumber === 3) {
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "center",
+            wrapText: true,
+          };
+        }
+        if (colNumber === 8) {
           cell.alignment = {
             vertical: "middle",
             horizontal: "center",
@@ -373,7 +393,7 @@ async function exportToExcel(allTickets, filterSelect) {
         if (colNumber === 7) {
           cell.alignment = {
             vertical: "middle",
-            horizontal: "center",
+            horizontal: "left",
             wrapText: true,
           };
         }
