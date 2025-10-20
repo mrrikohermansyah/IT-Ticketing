@@ -1166,7 +1166,13 @@ async function handleEdit(e) {
               data.user_email || ""
             }" placeholder="user@company.com">
           </div>
-
+        <!-- ✅ TAMBAH FIELD NAME YANG HILANG -->
+          <div class="form-group">
+            <label><i class="fa-solid fa-user"></i> Name</label>
+            <input type="text" id="name" class="swal2-input" value="${
+              data.name || ""
+            }" placeholder="User Name">
+          </div>
           
           <div class="form-group">
           <label><i class="fa-solid fa-user-gear"></i> Action By</label>
@@ -1629,3 +1635,4 @@ window.exportToExcel = exportToExcel;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS loaded successfully");
+
