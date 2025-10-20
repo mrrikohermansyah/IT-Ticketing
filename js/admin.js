@@ -100,6 +100,21 @@ function getAdminDisplayName(user) {
   return nameFromEmail;
 }
 
+// ✅ TAMBAHKAN VALIDASI FUNCTION DI SINI
+function validateTicketBeforeSave(ticketData) {
+  console.log("🔍 Validating ticket data:", ticketData);
+
+  if (
+    (ticketData.status_ticket === "Closed" ||
+      ticketData.status_ticket === "Resolved") &&
+    !ticketData.note
+  ) {
+    throw new Error("📝 Harap isi Technician Notes sebelum menutup ticket!");
+  }
+
+  return true;
+}
+
 // ==================== 🔹 Session Storage Management ====================
 function setupSessionStorage() {
   const sessionData = sessionStorage.getItem("adminFirstLogin");
@@ -1230,6 +1245,17 @@ async function handleEdit(e) {
             ${getStatusOptions(currentStatus)}
             </select>
             </div>
+            <!-- ✅ NOTE FIELD YANG PENTING -->
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
+            <textarea id="note" class="swal2-textarea" placeholder="Deskripsi tindakan perbaikan yang dilakukan (wajib diisi jika status Closed):&#10;• Diagnosa: [analisa masalah]&#10;• Tindakan: [langkah perbaikan]&#10;• Hasil: [status setelah perbaikan]" style="min-height: 100px;">${
+              data.note || ""
+            }</textarea>
+            <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
+              <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
+            </small>
+          </div>
+        </div>
             </div>
             <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
             <i class="fa-solid fa-info-circle"></i> 
@@ -1268,6 +1294,15 @@ async function handleEdit(e) {
           status_ticket: document.getElementById("status_ticket").value,
           // QA akan di-set otomatis berdasarkan status
         };
+        // ✅ VALIDASI DI SINI - PASTIKAN FUNCTION SUDAH DIDEFINISIKAN
+        try {
+          validateTicketBeforeSave(formData);
+        } catch (error) {
+          Swal.showValidationMessage(error.message);
+          return false;
+        }
+
+        return formData;
       },
       didOpen: () => {
         // Add styling for the form
@@ -1335,6 +1370,7 @@ async function handleEdit(e) {
       code: updateData.code,
       user_phone: formValues.user_phone, // ✅ DEBUG PHONE
       user_email: formValues.user_email,
+      note: formValues.note,
     });
 
     // HANYA jika status berubah dari non-Closed ke Closed
