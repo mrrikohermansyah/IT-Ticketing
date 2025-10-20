@@ -1245,17 +1245,17 @@ async function handleEdit(e) {
             ${getStatusOptions(currentStatus)}
             </select>
             </div>
-            <!-- ✅ NOTE FIELD YANG PENTING -->
-          <div class="form-group" style="grid-column: 1 / -1;">
-            <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
-            <textarea id="note" class="swal2-textarea" placeholder="Deskripsi tindakan perbaikan yang dilakukan (wajib diisi jika status Closed):&#10;• Diagnosa: [analisa masalah]&#10;• Tindakan: [langkah perbaikan]&#10;• Hasil: [status setelah perbaikan]" style="min-height: 100px;">${
-              data.note || ""
-            }</textarea>
-            <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
-              <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
-            </small>
-          </div>
-        </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
+                <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
+                  data.note || ""
+                }</textarea>
+                  <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
+                <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
+              </small>
+              </div>
+            </div>
             </div>
             <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
             <i class="fa-solid fa-info-circle"></i> 
@@ -1264,12 +1264,7 @@ async function handleEdit(e) {
                 ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
                 : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
             }
-            <div class="form-group">
-              <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note</label>
-              <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
-                data.note || ""
-              }</textarea>
-            </div>
+            
         </div>
         <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
           <i class="fa-solid fa-info-circle"></i> 
