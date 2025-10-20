@@ -1,5 +1,5 @@
 // ======================================================
-// 🔹 js/excel-export.js - Excel Export Functionality
+// 🔹 js/export.js - Excel Export Functionality (Updated Borders)
 // ======================================================
 
 // ==================== 🔹 ExcelJS Loader ====================
@@ -64,13 +64,11 @@ function calculateDurationForExport(ticket) {
 // ==================== 🔹 Wrapper Function for HTML Button ====================
 async function handleExportToExcel() {
   try {
-    // Debug current state
     console.log("🔍 Debug export state:");
     console.log("window.allTickets:", window.allTickets);
     console.log("Type:", typeof window.allTickets);
     console.log("Is Array:", Array.isArray(window.allTickets));
 
-    // Get tickets from global scope or try to recover
     const allTickets = window.allTickets || (await recoverTicketsData());
     const filterSelect = document.getElementById("filterSelect");
 
@@ -107,7 +105,6 @@ async function handleExportToExcel() {
 // ==================== 🔹 Data Recovery Function ====================
 async function recoverTicketsData() {
   try {
-    // Try to get tickets from localStorage as backup
     const savedTickets = localStorage.getItem("tickets-backup");
     if (savedTickets) {
       const parsedTickets = JSON.parse(savedTickets);
@@ -115,7 +112,6 @@ async function recoverTicketsData() {
       return parsedTickets;
     }
 
-    // Try common global variables where tickets might be stored
     const possibleSources = [
       window.ticketData,
       window.tickets,
@@ -141,7 +137,6 @@ async function recoverTicketsData() {
 // ==================== 🔹 Main Export Function ====================
 async function exportToExcel(allTickets, filterSelect) {
   try {
-    // ✅ IMPROVED VALIDATION: Check if allTickets exists and is an array
     if (!allTickets) {
       console.error("❌ allTickets is undefined or null");
       throw new Error("Tickets data is not available (undefined)");
@@ -157,9 +152,8 @@ async function exportToExcel(allTickets, filterSelect) {
     }
 
     console.log("📊 Exporting tickets:", allTickets.length);
-    console.log("🔍 Sample ticket:", allTickets[0]); // Debug first ticket
+    console.log("🔍 Sample ticket:", allTickets[0]);
 
-    // Show loading state
     const { value: accept } = await Swal.fire({
       title: "Export to Excel",
       html: `
@@ -178,10 +172,8 @@ async function exportToExcel(allTickets, filterSelect) {
 
     if (!accept) return;
 
-    // Load ExcelJS library dynamically
     await loadExcelJS();
 
-    // ✅ FIX: Validasi lagi setelah user confirm
     if (!allTickets || allTickets.length === 0) {
       await Swal.fire({
         title: "No Data",
@@ -209,12 +201,15 @@ async function exportToExcel(allTickets, filterSelect) {
       bold: true,
     };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    
+    // BORDER TEBAAL untuk judul utama
     titleCell.border = {
-      top: { style: "medium" },
-      left: { style: "medium" },
-      bottom: { style: "medium" },
-      right: { style: "medium" },
+      top: { style: "thick" },
+      left: { style: "thick" },
+      bottom: { style: "thick" },
+      right: { style: "thick" },
     };
+    
     titleCell.fill = {
       type: "pattern",
       pattern: "solid",
@@ -235,11 +230,13 @@ async function exportToExcel(allTickets, filterSelect) {
     periodCell.value = `Period: ${periodText}`;
     periodCell.font = { name: "Arial", size: 11, bold: true };
     periodCell.alignment = { horizontal: "left", vertical: "middle" };
+    
+    // BORDER TEBAAL untuk period
     periodCell.border = {
-      top: { style: "medium" },
-      left: { style: "medium" },
-      bottom: { style: "thin" },
-      right: { style: "medium" },
+      top: { style: "thick" },
+      left: { style: "thick" },
+      bottom: { style: "thick" },
+      right: { style: "thick" },
     };
 
     // ===== BARIS KOSONG =====
@@ -270,13 +267,13 @@ async function exportToExcel(allTickets, filterSelect) {
       wrapText: true,
     };
 
-    // Set border untuk header
+    // BORDER TEBAAL untuk semua header
     headerRow.eachCell((cell, colNumber) => {
       cell.border = {
-        top: { style: "medium" },
-        left: { style: "medium" },
-        bottom: { style: "medium" },
-        right: { style: "medium" },
+        top: { style: "thick" },
+        left: { style: "thick" },
+        bottom: { style: "thick" },
+        right: { style: "thick" },
       };
       cell.fill = {
         type: "pattern",
@@ -295,7 +292,6 @@ async function exportToExcel(allTickets, filterSelect) {
 
     console.log("🔍 Filtered tickets for export:", filteredTickets.length);
 
-    // ✅ FIX: Gunakan device mapping dari CONFIG atau fallback
     const deviceMapping = window.CONFIG
       ? window.CONFIG.DEVICE_TYPE_MAPPING
       : {
@@ -314,7 +310,6 @@ async function exportToExcel(allTickets, filterSelect) {
         ticket.qa ||
         (ticket.status_ticket === "Closed" ? "Finish" : "Continue");
 
-      // ✅ FIX: Gunakan deviceMapping yang aman
       const deviceCode = ticket.code || deviceMapping[ticket.device] || "OT";
 
       const rowData = [
@@ -330,15 +325,18 @@ async function exportToExcel(allTickets, filterSelect) {
 
       const row = sheet.addRow(rowData);
 
-      // Set styling untuk data rows
+      // BORDER TITIK-TITIK KECIL untuk data rows
       row.eachCell((cell, colNumber) => {
         cell.font = { name: "Arial", size: 10 };
+        
+        // Gunakan dotted yang lebih kecil/halus
         cell.border = {
           top: { style: "dotted" },
           left: { style: "dotted" },
           bottom: { style: "dotted" },
           right: { style: "dotted" },
         };
+        
         cell.alignment = {
           vertical: "top",
           horizontal: "left",
@@ -368,11 +366,27 @@ async function exportToExcel(allTickets, filterSelect) {
       });
     });
 
-    // ===== BORDER BAGIAN BAWAH TABEL =====
+    // ===== BORDER TEBAAL UNTUK SELURUH TABEL =====
+    const totalRows = headerRow.number + filteredTickets.length;
+    
+    // Border tebal kiri untuk semua baris
+    for (let i = headerRow.number; i <= totalRows; i++) {
+      const leftCell = sheet.getCell(`A${i}`);
+      leftCell.border = { ...leftCell.border, left: { style: "thick" } };
+    }
+    
+    // Border tebal kanan untuk semua baris
+    for (let i = headerRow.number; i <= totalRows; i++) {
+      const rightCell = sheet.getCell(`H${i}`);
+      rightCell.border = { ...rightCell.border, right: { style: "thick" } };
+    }
+    
+    // Border tebal atas untuk header (sudah ada)
+    // Border tebal bawah untuk baris terakhir
     if (filteredTickets.length > 0) {
-      const lastRow = sheet.getRow(headerRow.number + filteredTickets.length);
+      const lastRow = sheet.getRow(totalRows);
       lastRow.eachCell((cell, colNumber) => {
-        cell.border = { ...cell.border, bottom: { style: "medium" } };
+        cell.border = { ...cell.border, bottom: { style: "thick" } };
       });
     }
 
@@ -427,14 +441,11 @@ async function exportToExcel(allTickets, filterSelect) {
 }
 
 // ==================== 🔹 Global Initialization ====================
-// Initialize global tickets array if it doesn't exist
 window.allTickets = window.allTickets || [];
 
-// Function to update the global tickets array (call this when you load tickets)
 function updateAllTickets(newTickets) {
   if (Array.isArray(newTickets)) {
     window.allTickets = newTickets;
-    // Backup to localStorage for recovery
     try {
       localStorage.setItem("tickets-backup", JSON.stringify(newTickets));
     } catch (e) {
