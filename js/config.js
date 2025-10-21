@@ -10,6 +10,7 @@ const DEVICE_TYPE_MAPPING = {
   Projector: "HW",
   "PC Software": "SW",
   Network: "NW",
+  "Backup Data": "DR",
   Others: "OT",
 };
 
@@ -19,8 +20,6 @@ const IT_STAFF = [
   "Devi Armanda",
   "Wahyu Nugroho",
   "Abdurahman Hakim",
-  "IT Support 1",
-  "IT Support 2",
 ];
 
 // ==================== 🔹 Admin Emails Whitelist ====================

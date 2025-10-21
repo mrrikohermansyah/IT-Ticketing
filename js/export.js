@@ -61,37 +61,134 @@ function calculateDurationForExport(ticket) {
   }
 }
 
+// ==================== 🔹 Get Currently Displayed Tickets ====================
+function getCurrentlyDisplayedTickets() {
+  try {
+    console.log("🔍 Getting currently displayed tickets...");
+
+    // ✅ OPTION 1: Jika ada admin.js dengan function getDisplayedTickets
+    if (typeof window.getDisplayedTickets === "function") {
+      const tickets = window.getDisplayedTickets();
+      console.log("✅ Using admin.js getDisplayedTickets:", tickets.length);
+      return tickets;
+    }
+
+    // ✅ OPTION 2: Coba deteksi filter dari DOM dan apply manual
+    const filterSelect = document.getElementById("filterSelect");
+    const actionByFilter = document.getElementById("actionByFilter");
+    const allTickets = window.allTickets || [];
+
+    if (allTickets.length === 0) {
+      console.warn("⚠️ No tickets available");
+      return [];
+    }
+
+    let filteredTickets = allTickets;
+
+    // Apply status filter
+    if (filterSelect && filterSelect.value !== "all") {
+      filteredTickets = filteredTickets.filter(
+        (t) => t.status_ticket === filterSelect.value,
+      );
+    }
+
+    // Apply action_by filter
+    if (actionByFilter && actionByFilter.value !== "all") {
+      filteredTickets = filteredTickets.filter(
+        (t) => t.action_by === actionByFilter.value,
+      );
+    }
+
+    console.log("✅ Applied filters manually:", {
+      original: allTickets.length,
+      filtered: filteredTickets.length,
+      statusFilter: filterSelect?.value,
+      actionByFilter: actionByFilter?.value,
+    });
+
+    return filteredTickets;
+  } catch (error) {
+    console.error("❌ Error getting displayed tickets:", error);
+    return window.allTickets || [];
+  }
+}
+
+// ==================== 🔹 Get Current Filter Info ====================
+function getCurrentFilterInfo() {
+  try {
+    const filterSelect = document.getElementById("filterSelect");
+    const actionByFilter = document.getElementById("actionByFilter");
+
+    const activeFilters = [];
+
+    if (filterSelect && filterSelect.value !== "all") {
+      activeFilters.push(
+        `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
+      );
+    }
+
+    if (actionByFilter && actionByFilter.value !== "all") {
+      activeFilters.push(
+        `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
+      );
+    }
+
+    return activeFilters.length > 0 ? activeFilters.join(", ") : "All Tickets";
+  } catch (error) {
+    console.error("❌ Error getting filter info:", error);
+    return "All Tickets";
+  }
+}
+
 // ==================== 🔹 Wrapper Function for HTML Button ====================
 async function handleExportToExcel() {
   try {
-    console.log("🔍 Debug export state:");
-    console.log("window.allTickets:", window.allTickets);
-    console.log("Type:", typeof window.allTickets);
-    console.log("Is Array:", Array.isArray(window.allTickets));
+    console.log("🔍 Starting export process...");
 
-    const allTickets = window.allTickets || (await recoverTicketsData());
-    const filterSelect = document.getElementById("filterSelect");
+    // ✅ GUNAKAN TICKETS YANG SEDANG DITAMPILKAN
+    const displayedTickets = getCurrentlyDisplayedTickets();
+    const filterInfo = getCurrentFilterInfo();
 
-    if (!allTickets || !Array.isArray(allTickets)) {
-      await Swal.fire({
-        title: "Data Not Available",
-        html: `
-          <div style="text-align: left;">
-            <p>Tickets data is not available for export.</p>
-            <p><strong>Possible solutions:</strong></p>
-            <ul>
-              <li>Refresh the page and try again</li>
-              <li>Wait for data to load completely</li>
-              <li>Check if you have any tickets created</li>
-            </ul>
-          </div>
-        `,
-        icon: "warning",
-      });
-      return;
+    if (
+      !displayedTickets ||
+      !Array.isArray(displayedTickets) ||
+      displayedTickets.length === 0
+    ) {
+      // Fallback ke semua tickets jika tidak ada yang ditampilkan
+      const allTickets = window.allTickets || [];
+
+      if (
+        !allTickets ||
+        !Array.isArray(allTickets) ||
+        allTickets.length === 0
+      ) {
+        await Swal.fire({
+          title: "Data Not Available",
+          html: `
+            <div style="text-align: left;">
+              <p>Tickets data is not available for export.</p>
+              <p><strong>Possible solutions:</strong></p>
+              <ul>
+                <li>Refresh the page and try again</li>
+                <li>Wait for data to load completely</li>
+                <li>Check if you have any tickets created</li>
+              </ul>
+            </div>
+          `,
+          icon: "warning",
+        });
+        return;
+      }
+
+      console.log("🔄 Using all tickets as fallback:", allTickets.length);
+      await exportToExcel(allTickets, "All Tickets");
+    } else {
+      console.log(
+        "📊 Exporting currently displayed tickets:",
+        displayedTickets.length,
+      );
+      await exportToExcel(displayedTickets, filterInfo);
     }
-
-    await exportToExcel(allTickets, filterSelect);
   } catch (error) {
     console.error("❌ Export handler error:", error);
     await Swal.fire({
@@ -135,31 +232,33 @@ async function recoverTicketsData() {
 }
 
 // ==================== 🔹 Main Export Function ====================
-async function exportToExcel(allTickets, filterSelect) {
+async function exportToExcel(displayedTickets, filterInfo = "All Tickets") {
   try {
-    if (!allTickets) {
-      console.error("❌ allTickets is undefined or null");
+    if (!displayedTickets) {
+      console.error("❌ displayedTickets is undefined or null");
       throw new Error("Tickets data is not available (undefined)");
     }
 
-    if (!Array.isArray(allTickets)) {
+    if (!Array.isArray(displayedTickets)) {
       console.error(
-        "❌ allTickets is not an array:",
-        typeof allTickets,
-        allTickets,
+        "❌ displayedTickets is not an array:",
+        typeof displayedTickets,
+        displayedTickets,
       );
       throw new Error("Tickets data is not a valid array");
     }
 
-    console.log("📊 Exporting tickets:", allTickets.length);
+    console.log("📊 Exporting tickets:", displayedTickets.length);
+    console.log("🔍 Active filter:", filterInfo);
 
     const { value: accept } = await Swal.fire({
       title: "Export to Excel",
       html: `
         <div style="text-align: center; padding: 1rem;">
           <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
-          <p>Export ${allTickets.length} tickets to Excel format?</p>
-          <p style="font-size: 0.9rem; color: #666;">File akan berisi semua data tiket yang terlihat.</p>
+          <p>Export ${displayedTickets.length} tickets to Excel format?</p>
+          <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
+          <p style="font-size: 0.8rem; color: #888;">Hanya data yang sedang ditampilkan yang akan diekspor</p>
         </div>
       `,
       icon: "question",
@@ -173,7 +272,7 @@ async function exportToExcel(allTickets, filterSelect) {
 
     await loadExcelJS();
 
-    if (!allTickets || allTickets.length === 0) {
+    if (!displayedTickets || displayedTickets.length === 0) {
       await Swal.fire({
         title: "No Data",
         text: "Tidak ada data tiket untuk diekspor.",
@@ -218,12 +317,13 @@ async function exportToExcel(allTickets, filterSelect) {
     // ===== BARIS KOSONG =====
     sheet.addRow([]);
 
-    // ===== BARIS PERIOD =====
+    // ===== BARIS PERIOD & FILTER INFO =====
     const now = new Date();
     const periodText = `${now.getFullYear()}-${String(
       now.getMonth() + 1,
     ).padStart(2, "0")}`;
 
+    // Baris Period
     sheet.mergeCells("A3:H3");
     const periodCell = sheet.getCell("A3");
     periodCell.value = `Period: ${periodText}`;
@@ -232,6 +332,21 @@ async function exportToExcel(allTickets, filterSelect) {
 
     // BORDER TEBAAL untuk period
     periodCell.border = {
+      top: { style: "thick" },
+      left: { style: "thick" },
+      bottom: { style: "thick" },
+      right: { style: "thick" },
+    };
+
+    // Baris Filter Info (baris baru)
+    sheet.mergeCells("A4:H4");
+    const filterCell = sheet.getCell("A4");
+    filterCell.value = `Filter: ${filterInfo}`;
+    filterCell.font = { name: "Arial", size: 10, italic: true };
+    filterCell.alignment = { horizontal: "left", vertical: "middle" };
+
+    // BORDER TEBAAL untuk filter info
+    filterCell.border = {
       top: { style: "thick" },
       left: { style: "thick" },
       bottom: { style: "thick" },
@@ -299,14 +414,7 @@ async function exportToExcel(allTickets, filterSelect) {
       });
     });
 
-    // ===== ISI DATA DARI TICKETS =====
-    const filteredTickets =
-      filterSelect && filterSelect.value !== "all"
-        ? allTickets.filter((t) => t.status_ticket === filterSelect.value)
-        : allTickets;
-
-    console.log("🔍 Filtered tickets for export:", filteredTickets.length);
-
+    // ===== ISI DATA DARI TICKETS YANG DITAMPILKAN =====
     const deviceMapping = window.CONFIG
       ? window.CONFIG.DEVICE_TYPE_MAPPING
       : {
@@ -316,10 +424,11 @@ async function exportToExcel(allTickets, filterSelect) {
           Projector: "HW",
           "PC Software": "SW",
           Network: "NW",
+          "Backup Data": "DR",
           Others: "OT",
         };
 
-    filteredTickets.forEach((ticket) => {
+    displayedTickets.forEach((ticket) => {
       const durationText = calculateDurationForExport(ticket);
       const kendaliMutu =
         ticket.qa ||
@@ -417,7 +526,7 @@ async function exportToExcel(allTickets, filterSelect) {
     });
 
     // ===== BORDER TEBAAL UNTUK SELURUH TABEL =====
-    const totalRows = headerRow.number + filteredTickets.length + 4; // +4 untuk 2 baris kosong atas + 2 baris kosong bawah
+    const totalRows = headerRow.number + displayedTickets.length + 4; // +4 untuk 2 baris kosong atas + 2 baris kosong bawah
 
     // Border tebal kiri untuk semua baris (dari header sampai baris kosong bawah terakhir)
     for (let i = headerRow.number; i <= totalRows; i++) {
@@ -454,9 +563,16 @@ async function exportToExcel(allTickets, filterSelect) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
+
+    // Buat nama file yang mencerminkan filter
+    const filterSuffix =
+      filterInfo !== "All Tickets"
+        ? `_${filterInfo.replace(/[^a-zA-Z0-9]/g, "_")}`
+        : "";
     a.download = `Aktivitas_IT_Report_${
       new Date().toISOString().split("T")[0]
-    }.xlsx`;
+    }${filterSuffix}.xlsx`;
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -468,7 +584,8 @@ async function exportToExcel(allTickets, filterSelect) {
       html: `
         <div style="text-align: center; padding: 1rem;">
           <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;"></i>
-          <p>${filteredTickets.length} tickets exported successfully!</p>
+          <p>${displayedTickets.length} tickets exported successfully!</p>
+          <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
           <p style="font-size: 0.9rem; color: #666;">File telah didownload ke perangkat Anda.</p>
         </div>
       `,
@@ -509,3 +626,6 @@ function updateAllTickets(newTickets) {
 window.exportToExcel = exportToExcel;
 window.handleExportToExcel = handleExportToExcel;
 window.updateAllTickets = updateAllTickets;
+window.getCurrentFilterInfo = getCurrentFilterInfo;
+
+console.log("✅ Export JS loaded successfully");

@@ -180,8 +180,9 @@ function initAdminApp() {
     logoutBtn.addEventListener("click", handleLogout);
   }
 
+  // ==================== 🔹 Export Handler ====================
   if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
+    exportBtn.addEventListener("click", async () => {
       console.log("📤 Export clicked, allTickets:", allTickets?.length);
 
       // ✅ FIX: Pastikan allTickets tersedia
@@ -194,21 +195,225 @@ function initAdminApp() {
         return;
       }
 
-      // ✅ APPLY SAME FILTERS FOR EXPORT
-      let filtered = allTickets;
+      try {
+        // ✅ LANGSUNG KIRIM TICKETS YANG DITAMPILKAN KE exportToExcel
+        const displayedTickets = getDisplayedTickets();
+        const filterInfo = getCurrentFilterInfo();
 
+        console.log("📊 Exporting displayed tickets:", {
+          allTickets: allTickets.length,
+          displayedTickets: displayedTickets.length,
+          filterInfo: filterInfo,
+        });
+
+        // ✅ PAKAI exportToExcel LANGSUNG dengan tickets yang difilter
+        if (typeof window.exportToExcel === "function") {
+          await window.exportToExcel(displayedTickets, filterInfo);
+        } else {
+          // Fallback ke built-in export
+          await handleBuiltInExport();
+        }
+      } catch (error) {
+        console.error("❌ Export error:", error);
+        Swal.fire({
+          title: "Export Failed",
+          text: "Terjadi kesalahan saat mengekspor. Silakan coba lagi.",
+          icon: "error",
+        });
+      }
+    });
+  }
+
+  // ✅ FUNCTION UNTUK DAPATKAN TICKETS YANG SEDANG DITAMPILKAN
+  function getDisplayedTickets() {
+    try {
+      // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
+      let filteredTickets = allTickets;
+
+      // Filter by status
       if (filterSelect && filterSelect.value !== "all") {
-        filtered = filtered.filter(
+        filteredTickets = filteredTickets.filter(
           (t) => t.status_ticket === filterSelect.value,
         );
       }
 
+      // Filter by Action By
       if (actionByFilter && actionByFilter.value !== "all") {
-        filtered = filtered.filter((t) => t.action_by === actionByFilter.value);
+        filteredTickets = filteredTickets.filter(
+          (t) => t.action_by === actionByFilter.value,
+        );
       }
 
-      exportToExcel(filtered, filterSelect);
+      console.log("🔍 Displayed tickets:", {
+        original: allTickets.length,
+        filtered: filteredTickets.length,
+        statusFilter: filterSelect?.value,
+        actionByFilter: actionByFilter?.value,
+      });
+
+      return filteredTickets;
+    } catch (error) {
+      console.error("❌ Error getting displayed tickets:", error);
+      return allTickets; // Fallback ke semua tickets
+    }
+  }
+
+  // ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
+  function getCurrentFilterInfo() {
+    try {
+      const filterSelect = document.getElementById("filterSelect");
+      const actionByFilter = document.getElementById("actionByFilter");
+
+      const activeFilters = [];
+
+      if (filterSelect && filterSelect.value !== "all") {
+        activeFilters.push(
+          `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
+        );
+      }
+
+      if (actionByFilter && actionByFilter.value !== "all") {
+        activeFilters.push(
+          `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
+        );
+      }
+
+      return activeFilters.length > 0
+        ? activeFilters.join(", ")
+        : "All Tickets";
+    } catch (error) {
+      console.error("❌ Error getting filter info:", error);
+      return "All Tickets";
+    }
+  }
+
+  // ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
+  async function handleBuiltInExport() {
+    // Apply current filters sama seperti di renderTickets
+    const displayedTickets = getDisplayedTickets();
+    const filterInfo = getCurrentFilterInfo();
+
+    console.log("📊 Built-in export:", {
+      tickets: displayedTickets.length,
+      filter: filterInfo,
     });
+
+    // Tampilkan konfirmasi dengan info filter
+    const { value: accept } = await Swal.fire({
+      title: "Export to Excel",
+      html: `
+      <div style="text-align: center; padding: 1rem;">
+        <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
+        <p>Export ${displayedTickets.length} tickets to Excel?</p>
+        <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
+      </div>
+    `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Export Now",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!accept) return;
+
+    // Lanjutkan dengan exportToExcel yang sudah ada
+    await exportToExcel(displayedTickets, filterInfo);
+  }
+
+  // ✅ FUNCTION UNTUK DAPATKAN TICKETS YANG SEDANG DITAMPILKAN
+  function getDisplayedTickets() {
+    try {
+      // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
+      let filteredTickets = allTickets;
+
+      // Filter by status
+      if (filterSelect && filterSelect.value !== "all") {
+        filteredTickets = filteredTickets.filter(
+          (t) => t.status_ticket === filterSelect.value,
+        );
+      }
+
+      // Filter by Action By
+      if (actionByFilter && actionByFilter.value !== "all") {
+        filteredTickets = filteredTickets.filter(
+          (t) => t.action_by === actionByFilter.value,
+        );
+      }
+
+      console.log("🔍 Displayed tickets:", {
+        original: allTickets.length,
+        filtered: filteredTickets.length,
+        statusFilter: filterSelect?.value,
+        actionByFilter: actionByFilter?.value,
+      });
+
+      return filteredTickets;
+    } catch (error) {
+      console.error("❌ Error getting displayed tickets:", error);
+      return allTickets; // Fallback ke semua tickets
+    }
+  }
+
+  // ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
+  function getCurrentFilterInfo() {
+    try {
+      const filterSelect = document.getElementById("filterSelect");
+      const actionByFilter = document.getElementById("actionByFilter");
+
+      const activeFilters = [];
+
+      if (filterSelect && filterSelect.value !== "all") {
+        activeFilters.push(
+          `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
+        );
+      }
+
+      if (actionByFilter && actionByFilter.value !== "all") {
+        activeFilters.push(
+          `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
+        );
+      }
+
+      return activeFilters.length > 0
+        ? activeFilters.join(", ")
+        : "All Tickets";
+    } catch (error) {
+      console.error("❌ Error getting filter info:", error);
+      return "All Tickets";
+    }
+  }
+
+  // ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
+  async function handleBuiltInExport() {
+    // Apply current filters sama seperti di renderTickets
+    const displayedTickets = getDisplayedTickets();
+    const filterInfo = getCurrentFilterInfo();
+
+    console.log("📊 Built-in export:", {
+      tickets: displayedTickets.length,
+      filter: filterInfo,
+    });
+
+    // Tampilkan konfirmasi dengan info filter
+    const { value: accept } = await Swal.fire({
+      title: "Export to Excel",
+      html: `
+      <div style="text-align: center; padding: 1rem;">
+        <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
+        <p>Export ${displayedTickets.length} tickets to Excel?</p>
+        <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
+      </div>
+    `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Export Now",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!accept) return;
+
+    // Lanjutkan dengan exportToExcel yang sudah ada
+    await exportToExcel(displayedTickets, filterInfo);
   }
 
   if (filterSelect) {
@@ -1197,6 +1402,7 @@ async function handleDelete(e) {
 }
 
 // ==================== 🔹 Handle Edit ====================
+// ==================== 🔹 Handle Edit (FIXED VERSION) ====================
 async function handleEdit(e) {
   const id = e.currentTarget.dataset.id;
 
@@ -1230,91 +1436,138 @@ async function handleEdit(e) {
       title: "Edit Ticket",
       html: `
         <div class="form-grid">
-        <!-- ✅ TAMBAH FIELD EMAIL -->
+          <!-- ✅ FIELD INVENTORY -->
+          <div class="form-group">
+            <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
+            <input type="text" id="inventory" class="swal2-input" value="${
+              data.inventory || ""
+            }" placeholder="Inventory Number">
+          </div>
+          
+          <!-- ✅ FIELD NAME -->
+          <div class="form-group">
+            <label><i class="fa-solid fa-user"></i> Name</label>
+            <input type="text" id="name" class="swal2-input" value="${
+              data.name || ""
+            }" placeholder="User Name">
+          </div>
+
+          <!-- ✅ FIELD EMAIL -->
           <div class="form-group">
             <label><i class="fa-solid fa-envelope"></i> User Email</label>
             <input type="email" id="user_email" class="swal2-input" value="${
               data.user_email || ""
             }" placeholder="user@company.com">
           </div>
-<!-- ✅ TAMBAH FIELD NAME YANG HILANG -->
-      <div class="form-group">
-        <label><i class="fa-solid fa-user"></i> Name</label>
-        <input type="text" id="name" class="swal2-input" value="${
-          data.name || ""
-        }" placeholder="User Name">
-      </div>
           
+          <!-- ✅ FIELD ACTION BY -->
           <div class="form-group">
-          <label><i class="fa-solid fa-user-gear"></i> Action By</label>
-          <select id="action_by" class="swal2-select">
-          <option value="">-- Select IT Staff --</option>
-          ${getActionByOptions(data.action_by || currentAdminName)}
-          </select>
+            <label><i class="fa-solid fa-user-gear"></i> Action By</label>
+            <select id="action_by" class="swal2-select">
+              <option value="">-- Select IT Staff --</option>
+              ${getActionByOptions(data.action_by || currentAdminName)}
+            </select>
           </div>
           
+          <!-- ✅ FIELD PHONE -->
           <div class="form-group">
-          <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-          <input type="tel" id="user_phone" class="swal2-select" value="${
-            data.user_phone || ""
-          }" placeholder="+62 XXX-XXXX-XXXX">
-            </div>
+            <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+            <input type="tel" id="user_phone" class="swal2-input" value="${
+              data.user_phone || ""
+            }" placeholder="+62 XXX-XXXX-XXXX">
+          </div>
             
-            <div class="form-group">
+          <!-- ✅ FIELD DEVICE TYPE (HANYA SATU) -->
+          <div class="form-group">
             <label><i class="fa-solid fa-computer"></i> Device Type</label>
-            <select id="device" class="swal2-select">
-            ${getDeviceOptions(data.device)}
+            <select id="device" class="swal2-select" required>
+              <option value="" disabled>Select Device Type</option>
+              <option value="PC Hardware" ${
+                data.device === "PC Hardware" ? "selected" : ""
+              }>PC Hardware</option>
+              <option value="PC Software" ${
+                data.device === "PC Software" ? "selected" : ""
+              }>PC Software</option>
+              <option value="Laptop" ${
+                data.device === "Laptop" ? "selected" : ""
+              }>Laptop</option>
+              <option value="Printer" ${
+                data.device === "Printer" ? "selected" : ""
+              }>Printer</option>
+              <option value="Network" ${
+                data.device === "Network" ? "selected" : ""
+              }>Network</option>
+              <option value="Projector" ${
+                data.device === "Projector" ? "selected" : ""
+              }>Projector</option>
+              <option value="Backup Data" ${
+                data.device === "Backup Data" ? "selected" : ""
+              }>Backup Data</option>
+              <option value="Others" ${
+                data.device === "Others" ? "selected" : ""
+              }>Others</option>
             </select>
-            </div>
-            <div class="form-group">
+          </div>
+          
+          <!-- ✅ FIELD LOCATION -->
+          <div class="form-group">
             <label><i class="fa-solid fa-location-dot"></i> Location</label>
             <select id="location" class="swal2-select">
-            ${getLocationOptions(data.location)}
+              ${getLocationOptions(data.location)}
             </select>
-            </div>
-            <div class="form-group">
+          </div>
+          
+          <!-- ✅ FIELD DEPARTMENT -->
+          <div class="form-group">
             <label><i class="fa-solid fa-building"></i> Department</label>
             <select id="department" class="swal2-select">
-            ${getDepartmentOptions(data.department)}
+              ${getDepartmentOptions(data.department)}
             </select>
-            </div>
-            <div class="form-group">
+          </div>
+          
+          <!-- ✅ FIELD PRIORITY -->
+          <div class="form-group">
             <label><i class="fa-solid fa-flag"></i> Priority</label>
             <select id="priority" class="swal2-select">
-            ${getPriorityOptions(data.priority)}
+              ${getPriorityOptions(data.priority)}
             </select>
-            </div>
-            <div class="form-group">
+          </div>
+          
+          <!-- ✅ FIELD STATUS -->
+          <div class="form-group">
             <label><i class="fa-solid fa-circle-check"></i> Status</label>
             <select id="status_ticket" class="swal2-select">
-            ${getStatusOptions(currentStatus)}
+              ${getStatusOptions(currentStatus)}
             </select>
-            </div>
-
-              <div class="form-group" style="grid-column: 1 / -1;">
-                <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
-                <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
-                  data.note || ""
-                }</textarea>
-                  <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
-                <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
-              </small>
-              </div>
-            </div>
-            </div>
-            <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
-            <i class="fa-solid fa-info-circle"></i> 
-            ${
-              currentStatus === "Closed"
-                ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
-                : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
-            }
-            
+          </div>
+          
+          <!-- ✅ FIELD NOTE -->
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
+            <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
+              data.note || ""
+            }</textarea>
+            <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
+              <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
+            </small>
+          </div>
+        </div>
+        
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+          <i class="fa-solid fa-info-circle"></i> 
+          ${
+            currentStatus === "Closed"
+              ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
+              : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
+          }
         </div>
         <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
           <i class="fa-solid fa-info-circle"></i> 
           QA akan otomatis di-set ke "Finish" ketika status Closed, "Continue" untuk status lainnya.
         </div>
+        
+        <!-- ✅ HIDDEN FIELD UNTUK AUTO CODE -->
+        <input type="hidden" id="code" value="${data.code || ""}">
       `,
       focusConfirm: false,
       showCancelButton: true,
@@ -1323,6 +1576,7 @@ async function handleEdit(e) {
       preConfirm: () => {
         const formData = {
           user_email: document.getElementById("user_email").value,
+          inventory: document.getElementById("inventory").value,
           name: document.getElementById("name").value,
           note: document.getElementById("note").value,
           action_by: document.getElementById("action_by").value,
@@ -1378,6 +1632,28 @@ async function handleEdit(e) {
           </style>
         `;
         document.head.insertAdjacentHTML("beforeend", styles);
+
+        // ✅ EVENT LISTENER UNTUK AUTO UPDATE CODE BERDASARKAN DEVICE TYPE
+        const deviceSelect = document.getElementById("device");
+        if (deviceSelect) {
+          deviceSelect.addEventListener("change", function () {
+            const selectedDevice = this.value;
+            const codeField = document.getElementById("code");
+
+            // Update code berdasarkan device type mapping
+            if (window.CONFIG && window.CONFIG.DEVICE_TYPE_MAPPING) {
+              const newCode =
+                window.CONFIG.DEVICE_TYPE_MAPPING[selectedDevice] || "OT";
+              if (codeField) {
+                codeField.value = newCode;
+              }
+              console.log("🔄 Device changed - Auto code:", {
+                device: selectedDevice,
+                code: newCode,
+              });
+            }
+          });
+        }
       },
     });
 
@@ -1389,26 +1665,26 @@ async function handleEdit(e) {
     // ✅ Tentukan QA berdasarkan status baru
     const newQA = getAutoQA(formValues.status_ticket);
 
+    // ✅ Dapatkan code yang sudah di-update (baik dari hidden field atau mapping)
+    const codeField = document.getElementById("code");
+    const updatedCode = codeField
+      ? codeField.value
+      : window.CONFIG.DEVICE_TYPE_MAPPING[formValues.device] || "OT";
+
     // Logic untuk menangani closedAt timestamp
     const updateData = {
       ...formValues,
+      code: updatedCode, // ✅ PAKAI CODE YANG SUDAH DIUPDATE
       qa: newQA, // ✅ SET QA OTOMATIS
       updatedAt: serverTimestamp(),
     };
-
-    // Update code berdasarkan device type yang baru
-    if (formValues.device) {
-      updateData.code =
-        window.CONFIG.DEVICE_TYPE_MAPPING[formValues.device] || "OT";
-    }
 
     console.log("🔍 Edit Debug:", {
       currentStatus: currentStatus,
       newStatus: formValues.status_ticket,
       newQA: newQA,
-      hasClosedAt: hasClosedAt,
       device: formValues.device,
-      code: updateData.code,
+      code: updateData.code, // ✅ CODE SUDAH TERUPDATE
       user_phone: formValues.user_phone,
       user_email: formValues.user_email,
       note: formValues.note,
@@ -1566,6 +1842,89 @@ function getStatusOptions(selected) {
     .join("");
 }
 
+// ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
+async function handleBuiltInExport() {
+  // Apply current filters sama seperti di renderTickets
+  let filteredTickets = allTickets;
+
+  // Filter by status
+  if (filterSelect && filterSelect.value !== "all") {
+    filteredTickets = filteredTickets.filter(
+      (t) => t.status_ticket === filterSelect.value,
+    );
+  }
+
+  // Filter by Action By
+  if (actionByFilter && actionByFilter.value !== "all") {
+    filteredTickets = filteredTickets.filter(
+      (t) => t.action_by === actionByFilter.value,
+    );
+  }
+
+  const filterInfo = getCurrentFilterInfo();
+
+  console.log("📊 Built-in export:", {
+    tickets: filteredTickets.length,
+    filter: filterInfo,
+  });
+
+  // Tampilkan konfirmasi dengan info filter
+  const { value: accept } = await Swal.fire({
+    title: "Export to Excel",
+    html: `
+      <div style="text-align: center; padding: 1rem;">
+        <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
+        <p>Export ${filteredTickets.length} tickets to Excel?</p>
+        <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
+      </div>
+    `,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Export Now",
+    cancelButtonText: "Cancel",
+  });
+
+  if (!accept) return;
+
+  // Lanjutkan dengan exportToExcel yang sudah ada
+  await exportToExcel(filteredTickets, filterInfo);
+}
+
+// ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
+function getDisplayedTickets() {
+  // ⚠️ BUKAN getCurrentlyDisplayedTickets
+  try {
+    // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
+    let filteredTickets = allTickets;
+
+    // Filter by status
+    if (filterSelect && filterSelect.value !== "all") {
+      filteredTickets = filteredTickets.filter(
+        (t) => t.status_ticket === filterSelect.value,
+      );
+    }
+
+    // Filter by Action By
+    if (actionByFilter && actionByFilter.value !== "all") {
+      filteredTickets = filteredTickets.filter(
+        (t) => t.action_by === actionByFilter.value,
+      );
+    }
+
+    console.log("🔍 Currently displayed tickets:", {
+      original: allTickets.length,
+      filtered: filteredTickets.length,
+      statusFilter: filterSelect?.value,
+      actionByFilter: actionByFilter?.value,
+    });
+
+    return filteredTickets;
+  } catch (error) {
+    console.error("❌ Error getting displayed tickets:", error);
+    return allTickets; // Fallback ke semua tickets
+  }
+}
+
 // Dynamic load ExcelJS
 function loadExcelJS() {
   return new Promise((resolve, reject) => {
@@ -1667,6 +2026,8 @@ window.addDataLabels = addDataLabels;
 window.redirectToLoginPage = redirectToLoginPage;
 window.initTickets = initTickets;
 window.exportToExcel = exportToExcel;
+window.handleBuiltInExport = handleBuiltInExport;
+window.getDisplayedTickets = getDisplayedTickets;
 
 // Cleanup on page unload
 window.addEventListener("beforeunload", cleanup);
