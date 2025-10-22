@@ -1276,40 +1276,44 @@ function renderTable(data) {
       </td>
       
       <!-- ✅ ACTIONS -->
-      <td>
-        <div class="action-buttons">
-          ${
-            isAvailable
-              ? `
-            <!-- ✅ TICKET AVAILABLE: Tombol GRAB -->
-            <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
-              <i class="fa-solid fa-hand"></i> Take
-            </button>
-          `
-              : isMine
-                ? `
-            <!-- ✅ MY TICKET: Bisa Edit & Release -->
-            <button class="edit-btn" data-id="${ticket.id}">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button class="release-btn" data-id="${ticket.id}" title="Release ticket">
-              <i class="fa-solid fa-rotate-left"></i>
-            </button>
-          `
-                : `
-            <!-- ✅ TICKET ORANG: Hanya View -->
-            <button class="view-btn" data-id="${ticket.id}" title="View only (handled by ${ticket.action_by})">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          `
-          }
-          
-          <!-- ❌ Delete (hanya untuk admin tertentu) -->
-          <button class="delete-btn" data-id="${ticket.id}">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      </td>
+<td>
+  <div class="action-buttons">
+    ${
+      isAvailable
+        ? `
+      <!-- ✅ TICKET AVAILABLE: Tombol GRAB & DELETE -->
+      <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
+        <i class="fa-solid fa-hand"></i> Take
+      </button>
+      <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `
+        : isMine
+          ? `
+      <!-- ✅ MY TICKET: Bisa Edit, Release & Delete -->
+      <button class="edit-btn" data-id="${ticket.id}" title="Edit ticket">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button class="release-btn" data-id="${ticket.id}" title="Release ticket">
+        <i class="fa-solid fa-rotate-left"></i>
+      </button>
+      <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `
+          : `
+      <!-- ✅ TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
+      <button class="view-btn" data-id="${ticket.id}" title="View only (handled by ${ticket.action_by})">
+        <i class="fa-solid fa-eye"></i>
+      </button>
+      <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" title="Cannot delete - handled by ${ticket.action_by}" disabled>
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `
+    }
+  </div>
+</td>
     `;
     ticketTableBody.appendChild(tr);
   });
@@ -1470,37 +1474,42 @@ function renderCards(data) {
       </div>
       
       <!-- ✅ CARD ACTIONS -->
-      <div class="card-actions">
-        ${
-          isAvailable
-            ? `
-          <!-- ✅ TICKET AVAILABLE: Tombol GRAB -->
-          <button class="grab-btn" data-id="${ticket.id}">
-            <i class="fa-solid fa-hand"></i> Take Ticket
-          </button>
-        `
-            : isMine
-              ? `
-          <!-- ✅ MY TICKET: Bisa Edit & Release -->
-          <button class="edit-btn" data-id="${ticket.id}">
-            <i class="fa-solid fa-pen"></i> Edit
-          </button>
-          <button class="release-btn" data-id="${ticket.id}">
-            <i class="fa-solid fa-rotate-left"></i> Release
-          </button>
-        `
-              : `
-          <!-- ✅ TICKET ORANG: Hanya View -->
-          <button class="view-btn" data-id="${ticket.id}">
-            <i class="fa-solid fa-eye"></i> View Only
-          </button>
-        `
-        }
-        
-        <button class="delete-btn" data-id="${ticket.id}">
-          <i class="fa-solid fa-trash"></i> Delete
-        </button>
-      </div>
+<div class="card-actions">
+  ${
+    isAvailable
+      ? `
+    <!-- ✅ TICKET AVAILABLE: Tombol GRAB & DELETE -->
+    <button class="grab-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-hand"></i> Take
+    </button>
+    <button class="delete-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
+  `
+      : isMine
+        ? `
+    <!-- ✅ MY TICKET: Bisa Edit, Release & Delete -->
+    <button class="edit-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-pen"></i> Edit
+    </button>
+    <button class="release-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-rotate-left"></i> Release
+    </button>
+    <button class="delete-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
+  `
+        : `
+    <!-- ✅ TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
+    <button class="view-btn" data-id="${ticket.id}">
+      <i class="fa-solid fa-eye"></i> View Only
+    </button>
+    <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" disabled>
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
+  `
+  }
+</div>
     `;
     cardContainer.appendChild(card);
   });
@@ -1683,24 +1692,112 @@ async function handleViewTicket(e) {
   }
 }
 
-// ==================== 🔹 Handle Delete ====================
+// ✅ CHECK DELETE PERMISSION
+function canDeleteTicket(ticket) {
+  if (!ticket) return false;
+
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+  const isMyTicket = ticket.action_by === currentAdmin;
+  const isAvailable = isTicketAvailable(ticket);
+
+  return isAvailable || isMyTicket;
+}
+
+// ✅ GET DELETE PERMISSION MESSAGE
+function getDeletePermissionMessage(ticket) {
+  if (!ticket) return "Ticket not found";
+
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+  const isMyTicket = ticket.action_by === currentAdmin;
+  const isAvailable = isTicketAvailable(ticket);
+
+  if (isAvailable) {
+    return "You can delete this available ticket";
+  } else if (isMyTicket) {
+    return "You can delete this ticket because you're handling it";
+  } else {
+    return `Cannot delete - currently handled by ${ticket.action_by}`;
+  }
+}
+
+// ==================== 🔹 Handle Delete dengan Permission Check ====================
 async function handleDelete(e) {
   const id = e.currentTarget.dataset.id;
 
+  // Cari ticket yang akan dihapus
+  const ticket = allTickets.find((t) => t.id === id);
+  if (!ticket) {
+    Swal.fire("Error!", "Ticket not found.", "error");
+    return;
+  }
+
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+  const isMyTicket = ticket.action_by === currentAdmin;
+  const isAvailable = isTicketAvailable(ticket);
+
+  // ✅ CHECK PERMISSION: Hanya boleh hapus jika:
+  // 1. Ticket available (belum diambil siapa pun), ATAU
+  // 2. Ticket milik sendiri (yang login)
+  if (!isAvailable && !isMyTicket) {
+    Swal.fire({
+      title: "Permission Denied! 🚫",
+      html: `
+        <div style="text-align: center;">
+          <i class="fa-solid fa-ban" style="font-size: 3rem; color: #e74c3c; margin-bottom: 1rem;"></i>
+          <h3>Cannot Delete Ticket</h3>
+          <p>This ticket is currently being handled by <strong>${ticket.action_by}</strong></p>
+          <p style="font-size: 0.9rem; color: #666;">
+            You can only delete tickets that are available or assigned to you.
+          </p>
+        </div>
+      `,
+      icon: "error",
+      confirmButtonText: "Understand",
+    });
+    return;
+  }
+
+  // Tampilkan konfirmasi delete dengan info tambahan
+  let confirmationMessage = `Are you sure you want to delete this ticket?`;
+  let confirmationTitle = "Delete this ticket?";
+
+  if (isMyTicket) {
+    confirmationMessage = `You are about to delete a ticket that you're currently handling. This action cannot be undone.`;
+    confirmationTitle = "Delete Your Ticket?";
+  }
+
   const confirmed = await Swal.fire({
-    title: "Delete this ticket?",
-    text: `Are you sure you want to delete this ticket?`,
+    title: confirmationTitle,
+    html: `
+      <div style="text-align: left;">
+        <p>${confirmationMessage}</p>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <p><strong>Ticket Details:</strong></p>
+          <p><strong>Subject:</strong> ${ticket.subject || "No subject"}</p>
+          <p><strong>Status:</strong> ${ticket.status_ticket || "Open"}</p>
+          <p><strong>Action By:</strong> ${ticket.action_by || "Available"}</p>
+          ${ticket.createdAt ? `<p><strong>Created:</strong> ${formatDate(ticket.createdAt)}</p>` : ""}
+        </div>
+      </div>
+    `,
     icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Yes, delete it",
     cancelButtonText: "Cancel",
+    confirmButtonColor: "#d33",
   });
 
   if (!confirmed.isConfirmed) return;
 
   try {
     await deleteDoc(doc(db, "tickets", id));
-    Swal.fire("Deleted!", "Ticket has been removed.", "success");
+
+    Swal.fire({
+      title: "Deleted!",
+      text: "Ticket has been permanently removed.",
+      icon: "success",
+      timer: 2000,
+    });
   } catch (error) {
     console.error("Delete error:", error);
     Swal.fire("Error!", "Failed to delete ticket.", "error");
