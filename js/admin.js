@@ -217,7 +217,7 @@ function addQuickFilterButtons() {
   filterContainer.innerHTML = `
     <div class="quick-filters">
       <button class="filter-btn active" data-filter="all">All Tickets</button>
-      <button class="filter-btn" data-filter="available">🟢 Available</button>
+      <button class="filter-btn" data-filter="available">🟢 Ticket Available</button>
       <button class="filter-btn" data-filter="my_tickets">👤 My Tickets</button>
       <button class="filter-btn" data-filter="others">👥 Others' Tickets</button>
     </div>
@@ -1197,29 +1197,23 @@ function renderTable(data) {
       <!-- ✅ Date -->
       <td>${formatDate(ticket.createdAt)}</td>
       
-      <!-- ✅ Duration (UPDATED) -->
-      <td>
-        <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
-          ${calculateDuration(ticket)}
-        </span>
-      </td>
       
       <!-- ✅ Inventory -->
       <td>${ticket.inventory || "-"}</td>
       
       <!-- ✅ Device -->
-        <td>${ticket.device || "-"}</td>
+      <td>${ticket.device || "-"}</td>
       
       <!-- ✅ Name -->
       <td>${ticket.name || "-"}</td>
-
+      
       <!-- ✅ Email (UPDATED - bisa diedit) -->
       <td>
-        <span class="email-cell" title="${ticket.user_email || "-"}">
-          ${ticket.user_email || "-"}
-        </span>
+      <span class="email-cell" title="${ticket.user_email || "-"}">
+      ${ticket.user_email || "-"}
+      </span>
       </td>
-
+      
       <!-- ✅ Phone -->
       <td>${ticket.user_phone || "-"}</td>
       
@@ -1231,40 +1225,46 @@ function renderTable(data) {
       
       <!-- ✅ Priority -->
       <td>
-        <span class="priority-badge priority-${
-          ticket.priority?.toLowerCase() || "medium"
-        }">
-          ${ticket.priority || "Medium"}
+      <span class="priority-badge priority-${
+        ticket.priority?.toLowerCase() || "medium"
+      }">
+        ${ticket.priority || "Medium"}
         </span>
-      </td>
-      
-      <!-- ✅ Subject -->
-      <td>${ticket.subject || "-"}</td>
-      
-      <!-- ✅ Message -->
-      <td class="note-cell">${ticket.message || "-"}</td>
-      
-      <!-- ✅ Note -->
-      <td class="note-cell">${ticket.note || "-"}</td>
-
-      <!-- ✅ Code -->
-      <td>${ticket.code || "-"}</td>
-      
-      <!-- ✅ Action By -->
-      <td>
+        </td>
+        
+        <!-- ✅ Subject -->
+        <td>${ticket.subject || "-"}</td>
+        
+        <!-- ✅ Message -->
+        <td class="note-cell">${ticket.message || "-"}</td>
+        
+        <!-- ✅ Note -->
+        <td class="note-cell">${ticket.note || "-"}</td>
+        
+        <!-- ✅ Code -->
+        <td>${ticket.code || "-"}</td>
+        
+        <!-- ✅ Action By -->
+        <td>
         ${
           ticket.action_by
             ? `<span class="assignee ${isMine ? "assignee-me" : ""}">${ticket.action_by}</span>`
             : '<span class="assignee available">Available</span>'
         }
-      </td>
-
-      <!-- ✅ QA (Auto) -->
-      <td>
+        </td>
+        
+        <!-- ✅ QA (Auto) -->
+        <td>
         <span class="qa-badge qa-${displayQA.toLowerCase()}">
-          ${displayQA}
+        ${displayQA}
         </span>
-      </td>
+        </td>
+        <!-- ✅ Duration (UPDATED) -->
+        <td>
+          <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
+            ${calculateDuration(ticket)}
+          </span>
+        </td>
       
       <!-- ✅ Status -->
       <td>
@@ -1365,115 +1365,115 @@ function renderCards(data) {
           <span>${formatDate(ticket.createdAt)}</span>
         </div>
         
-        <!-- ✅ Duration (UPDATED) -->
-        <div class="card-field">
-          <strong><i class="fa-solid fa-clock"></i> Duration</strong>
-          <span class="duration-badge ${getDurationClass(ticket)}" 
-                title="${getDurationTooltip(ticket)}">
-            ${calculateDuration(ticket)}
-          </span>
-        </div>
         
         <!-- ✅ Inventory -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-barcode"></i> Inventory</strong>
-          <span>${ticket.inventory || "-"}</span>
+        <strong><i class="fa-solid fa-barcode"></i> Inventory</strong>
+        <span>${ticket.inventory || "-"}</span>
         </div>
         
         <!-- ✅ Device -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-computer"></i> Device</strong>
-          <span>${ticket.device || "-"}</span>
+        <strong><i class="fa-solid fa-computer"></i> Device</strong>
+        <span>${ticket.device || "-"}</span>
         </div>
         
         <!-- ✅ Name -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-user"></i> Name</strong>
-          <span>${ticket.name || "-"}</span>
+        <strong><i class="fa-solid fa-user"></i> Name</strong>
+        <span>${ticket.name || "-"}</span>
         </div>
-
+        
         <!-- ✅ Email (UPDATED - bisa diedit) -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-envelope"></i> Email</strong>
-          <span class="email-cell" title="${ticket.user_email || "-"}">
-            ${ticket.user_email || "-"}
-          </span>
+        <strong><i class="fa-solid fa-envelope"></i> Email</strong>
+        <span class="email-cell" title="${ticket.user_email || "-"}">
+        ${ticket.user_email || "-"}
+        </span>
         </div>
-
+        
         <!-- ✅ Phone -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-phone"></i> Phone</strong>
-          <span>${ticket.user_phone || "-"}</span>
+        <strong><i class="fa-solid fa-phone"></i> Phone</strong>
+        <span>${ticket.user_phone || "-"}</span>
         </div>
         
         <!-- ✅ Department -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-building"></i> Department</strong>
-          <span>${ticket.department || "-"}</span>
+        <strong><i class="fa-solid fa-building"></i> Department</strong>
+        <span>${ticket.department || "-"}</span>
         </div>
         
         <!-- ✅ Location -->
         <div class="card-field">
-          <strong><i class="fa-solid fa-location-dot"></i> Location</strong>
+        <strong><i class="fa-solid fa-location-dot"></i> Location</strong>
           <span>${ticket.location || "-"}</span>
-        </div>
-        
-        <!-- ✅ Priority -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Priority -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-flag"></i> Priority</strong>
           <span class="priority-badge priority-${
             ticket.priority?.toLowerCase() || "medium"
           }">
-            ${ticket.priority || "Medium"}
+          ${ticket.priority || "Medium"}
           </span>
-        </div>
-        
-        <!-- ✅ Subject -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Subject -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-tag"></i> Subject</strong>
           <span>${ticket.subject || "-"}</span>
-        </div>
-        
-        <!-- ✅ Message -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Message -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-message"></i> Message</strong>
           <span>${ticket.message || "-"}</span>
-        </div>
-        
-        <!-- ✅ Note -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Note -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-note-sticky"></i> Note</strong>
           <span>${ticket.note || "-"}</span>
-        </div>
-
-        <!-- ✅ Code -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Code -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-code"></i> Code</strong>
           <span>${ticket.code || "-"}</span>
-        </div>
-        
-        <!-- ✅ Action By -->
-        <div class="card-field">
+          </div>
+          
+          <!-- ✅ Action By -->
+          <div class="card-field">
           <strong><i class="fa-solid fa-user-gear"></i> Action By</strong>
           <span>
-            ${
-              ticket.action_by
-                ? `<span class="assignee ${isMine ? "assignee-me" : ""}">${ticket.action_by}</span>`
-                : '<span class="assignee available">Available</span>'
-            }
-          </span>
-        </div>
-
-        <!-- ✅ QA (Auto) -->
-        <div class="card-field">
-          <strong><i class="fa-solid fa-check-double"></i> QA</strong>
-          <span class="qa-badge qa-${displayQA.toLowerCase()}">
+          ${
+            ticket.action_by
+              ? `<span class="assignee ${isMine ? "assignee-me" : ""}">${ticket.action_by}</span>`
+              : '<span class="assignee available">Available</span>'
+          }
+            </span>
+            </div>
+            
+            <!-- ✅ QA (Auto) -->
+            <div class="card-field">
+            <strong><i class="fa-solid fa-check-double"></i> QA</strong>
+            <span class="qa-badge qa-${displayQA.toLowerCase()}">
             ${displayQA}
-          </span>
-        </div>
-      </div>
-      
-      <!-- ✅ CARD ACTIONS -->
+            </span>
+            </div>
+            </div>
+            <!-- ✅ Duration (UPDATED) -->
+            <div class="card-field">
+              <strong><i class="fa-solid fa-clock"></i> Duration</strong>
+              <span class="duration-badge ${getDurationClass(ticket)}" 
+                    title="${getDurationTooltip(ticket)}">
+                ${calculateDuration(ticket)}
+              </span>
+            </div>
+            
+            <!-- ✅ CARD ACTIONS -->
 <div class="card-actions">
   ${
     isAvailable
