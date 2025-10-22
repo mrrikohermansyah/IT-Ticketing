@@ -693,3 +693,24 @@ button:hover {
   display: inline-block;
   vertical-align: middle;
 }
+
+/* Tombol Delete yang disabled */
+.disabled-delete-btn {
+  background: #6b7280 !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}
+
+.disabled-delete-btn:hover {
+  background: #6b7280 !important;
+  transform: none !important;
+}
+
+/* Hover effects untuk tombol aktif */
+.delete-btn:not(.disabled-delete-btn):hover {
+  background: #dc2626 !important;
+  transform: translateY(-1px);
+}
+
+
