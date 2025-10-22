@@ -60,6 +60,7 @@ let loginInProgress = false;
 let ticketsUnsubscribe = null;
 let durationIntervalId = null;
 let currentQuickFilter = "all";
+let resizeTimeout = null;
 
 // ==================== 🔹 Helper Functions ====================
 function getAdminDisplayName(user) {
@@ -68,10 +69,12 @@ function getAdminDisplayName(user) {
   const userEmail = user.email.toLowerCase();
 
   // Cek mapping dulu
-  const mappedName = window.CONFIG.ADMIN_NAME_MAPPING[userEmail];
-  if (mappedName) {
-    console.log("✅ Using mapped name:", mappedName);
-    return mappedName;
+  if (window.CONFIG && window.CONFIG.ADMIN_NAME_MAPPING) {
+    const mappedName = window.CONFIG.ADMIN_NAME_MAPPING[userEmail];
+    if (mappedName) {
+      console.log("✅ Using mapped name:", mappedName);
+      return mappedName;
+    }
   }
 
   // Jika tidak ada mapping, gunakan displayName dari Google
@@ -108,23 +111,34 @@ function validateTicketBeforeSave(ticketData) {
 
 // ✅ FUNCTION UNTUK POPULATE ACTION BY FILTER
 function populateActionByFilter() {
-  if (!actionByFilter) return;
+  if (!actionByFilter) {
+    console.error("❌ actionByFilter element not found");
+    return;
+  }
 
-  // Ambil daftar IT Staff dari CONFIG
-  const itStaff = window.CONFIG.IT_STAFF || [];
+  // ✅ VALIDATE CONFIG
+  if (!window.CONFIG || !Array.isArray(window.CONFIG.IT_STAFF)) {
+    console.error("❌ IT_STAFF config invalid");
+    actionByFilter.innerHTML = '<option value="all">No IT Staff</option>';
+    return;
+  }
+
+  const itStaff = window.CONFIG.IT_STAFF;
 
   // Clear existing options kecuali "All"
   actionByFilter.innerHTML = '<option value="all">All IT Staff</option>';
 
   // Tambahkan setiap IT Staff sebagai option
   itStaff.forEach((staff) => {
-    const option = document.createElement("option");
-    option.value = staff;
-    option.textContent = staff;
-    actionByFilter.appendChild(option);
+    if (staff && typeof staff === "string") {
+      const option = document.createElement("option");
+      option.value = staff;
+      option.textContent = staff;
+      actionByFilter.appendChild(option);
+    }
   });
 
-  console.log("✅ Action By filter populated with:", itStaff);
+  console.log("✅ Action By filter populated with:", itStaff.length, "staff");
 }
 
 // ==================== 🔹 TICKET GRAB SYSTEM ====================
@@ -133,7 +147,7 @@ function populateActionByFilter() {
 function isTicketAvailable(ticket) {
   return (
     (!ticket.action_by || ticket.action_by === "") &&
-    ticket.status_ticket === "Open" // ✅ DIPERBAIKI: harus === "Open"
+    ticket.status_ticket === "Open"
   );
 }
 
@@ -180,6 +194,7 @@ async function releaseTicket(ticketId) {
     Swal.fire("Released!", "Ticket is now available for others", "info");
   } catch (error) {
     console.error("❌ Release ticket error:", error);
+    Swal.fire("Error!", "Failed to release ticket", "error");
   }
 }
 
@@ -217,8 +232,8 @@ function addQuickFilterButtons() {
   // Event listeners untuk filter buttons - IMPROVED
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      e.preventDefault(); // ✅ PREVENT DEFAULT BEHAVIOR
-      e.stopPropagation(); // ✅ STOP EVENT BUBBLING
+      e.preventDefault();
+      e.stopPropagation();
 
       const filter = e.target.dataset.filter;
       console.log("🎯 Quick filter clicked:", filter);
@@ -278,7 +293,7 @@ function applyQuickFilter(filterType) {
   renderTickets(filtered);
 }
 
-// ✅ Function untuk refresh filter state - BARU DITAMBAHKAN
+// ✅ Function untuk refresh filter state
 function refreshFilterState() {
   console.log("🔄 Refreshing filter state:", currentQuickFilter);
 
@@ -333,6 +348,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function initAdminApp() {
   console.log("🔄 Initializing admin application...");
+
+  // ✅ CHECK CONFIG FIRST
+  if (!window.CONFIG) {
+    console.error("❌ CONFIG not loaded");
+    showErrorState("Configuration not loaded. Please refresh the page.");
+    return;
+  }
+
+  // ✅ VALIDATE REQUIRED CONFIG
+  if (!window.CONFIG.ADMIN_EMAILS || !window.CONFIG.IT_STAFF) {
+    console.error("❌ Required config missing");
+    showErrorState("Required configuration missing. Please check config.js");
+    return;
+  }
 
   // Setup session storage management
   setupSessionStorage();
@@ -429,6 +458,13 @@ function isAdminUser(user) {
   if (!user || !user.email) return false;
 
   const userEmail = user.email.toLowerCase();
+
+  // ✅ VALIDATE CONFIG
+  if (!window.CONFIG || !Array.isArray(window.CONFIG.ADMIN_EMAILS)) {
+    console.error("❌ ADMIN_EMAILS config invalid");
+    return false;
+  }
+
   const isAdmin = window.CONFIG.ADMIN_EMAILS.some(
     (adminEmail) => adminEmail.toLowerCase() === userEmail,
   );
@@ -711,16 +747,26 @@ async function handleLogout() {
 function cleanup() {
   console.log("🧹 Cleaning up resources...");
 
-  // Unsubscribe from real-time listeners
-  if (ticketsUnsubscribe) {
-    ticketsUnsubscribe();
-    ticketsUnsubscribe = null;
-  }
+  try {
+    // Unsubscribe from real-time listeners
+    if (ticketsUnsubscribe) {
+      ticketsUnsubscribe();
+      ticketsUnsubscribe = null;
+    }
 
-  // Clear intervals
-  if (durationIntervalId) {
-    clearInterval(durationIntervalId);
-    durationIntervalId = null;
+    // Clear intervals
+    if (durationIntervalId) {
+      clearInterval(durationIntervalId);
+      durationIntervalId = null;
+    }
+
+    // Clear any pending timeouts
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = null;
+    }
+  } catch (error) {
+    console.error("❌ Error during cleanup:", error);
   }
 }
 
@@ -817,136 +863,157 @@ function initTickets() {
 
 // ==================== 🔹 Duration Calculation ====================
 function calculateDuration(ticket) {
-  console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
+  try {
+    console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
 
-  // Handle missing fields dengan default values
-  const ticketStatus = ticket.status_ticket || "Open";
-  const hasClosedAt = !!ticket.closedAt;
-  const hasOnProgressAt = !!ticket.onProgressAt;
+    // ✅ VALIDASI INPUT
+    if (!ticket) {
+      console.error("❌ Ticket is null or undefined");
+      return "-";
+    }
 
-  console.log("🔍 Debug calculateDuration - PROCESSED:", {
-    ticketId: ticket.id,
-    status: ticketStatus,
-    closedAt: ticket.closedAt,
-    onProgressAt: ticket.onProgressAt,
-    createdAt: ticket.createdAt,
-    hasClosedAt: hasClosedAt,
-    hasOnProgressAt: hasOnProgressAt,
-  });
+    // Handle missing fields dengan default values
+    const ticketStatus = ticket.status_ticket || "Open";
+    const hasClosedAt = !!ticket.closedAt;
+    const hasOnProgressAt = !!ticket.onProgressAt;
 
-  // ❌ Untuk ticket Open, tidak ada duration
-  if (ticketStatus === "Open") {
-    console.log("❌ Ticket Open - no duration");
-    return "-";
-  }
+    console.log("🔍 Debug calculateDuration - PROCESSED:", {
+      ticketId: ticket.id,
+      status: ticketStatus,
+      closedAt: ticket.closedAt,
+      onProgressAt: ticket.onProgressAt,
+      createdAt: ticket.createdAt,
+      hasClosedAt: hasClosedAt,
+      hasOnProgressAt: hasOnProgressAt,
+    });
 
-  // ✅ LOGIC BARU: Handle berbagai skenario
-  let startDate;
-  let endDate;
-  let durationType = "";
+    // ❌ Untuk ticket Open, tidak ada duration
+    if (ticketStatus === "Open") {
+      console.log("❌ Ticket Open - no duration");
+      return "-";
+    }
 
-  if (ticketStatus === "Closed" && hasClosedAt) {
-    // ✅ SKENARIO 1: Ticket di-close (dengan atau tanpa onProgressAt)
-    if (hasOnProgressAt) {
-      // Case A: Normal flow - dari On Progress ke Closed
+    // ✅ LOGIC BARU: Handle berbagai skenario
+    let startDate;
+    let endDate;
+    let durationType = "";
+
+    if (ticketStatus === "Closed" && hasClosedAt) {
+      // ✅ SKENARIO 1: Ticket di-close (dengan atau tanpa onProgressAt)
+      if (hasOnProgressAt) {
+        // Case A: Normal flow - dari On Progress ke Closed
+        startDate = ticket.onProgressAt.toDate
+          ? ticket.onProgressAt.toDate()
+          : new Date(ticket.onProgressAt);
+        durationType = "closed-from-progress";
+      } else {
+        // Case B: Langsung di-close tanpa On Progress - gunakan createdAt
+        startDate = ticket.createdAt.toDate
+          ? ticket.createdAt.toDate()
+          : new Date(ticket.createdAt);
+        durationType = "closed-directly";
+      }
+      endDate = ticket.closedAt.toDate
+        ? ticket.closedAt.toDate()
+        : new Date(ticket.closedAt);
+    } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
+      // ✅ SKENARIO 2: Masih On Progress (real-time)
       startDate = ticket.onProgressAt.toDate
         ? ticket.onProgressAt.toDate()
         : new Date(ticket.onProgressAt);
-      durationType = "closed-from-progress";
+      endDate = new Date(); // Waktu sekarang untuk real-time duration
+      durationType = "onProgress";
     } else {
-      // Case B: Langsung di-close tanpa On Progress - gunakan createdAt
-      startDate = ticket.createdAt.toDate
-        ? ticket.createdAt.toDate()
-        : new Date(ticket.createdAt);
-      durationType = "closed-directly";
+      // ❌ Kondisi tidak memenuhi syarat
+      console.log("❌ Condition failed - status:", ticketStatus);
+      return "-";
     }
-    endDate = ticket.closedAt.toDate
-      ? ticket.closedAt.toDate()
-      : new Date(ticket.closedAt);
-  } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
-    // ✅ SKENARIO 2: Masih On Progress (real-time)
-    startDate = ticket.onProgressAt.toDate
-      ? ticket.onProgressAt.toDate()
-      : new Date(ticket.onProgressAt);
-    endDate = new Date(); // Waktu sekarang untuk real-time duration
-    durationType = "onProgress";
-  } else {
-    // ❌ Kondisi tidak memenuhi syarat
-    console.log("❌ Condition failed - status:", ticketStatus);
+
+    console.log("✅ Dates calculated:", {
+      startDate,
+      endDate,
+      durationType,
+      status: ticketStatus,
+    });
+
+    const duration = formatDuration(startDate, endDate);
+    console.log("✅ Final duration:", duration);
+
+    return duration;
+  } catch (error) {
+    console.error("❌ Error in calculateDuration:", error);
     return "-";
   }
-
-  console.log("✅ Dates calculated:", {
-    startDate,
-    endDate,
-    durationType,
-    status: ticketStatus,
-  });
-
-  const duration = formatDuration(startDate, endDate);
-  console.log("✅ Final duration:", duration);
-
-  return duration;
 }
 
 // ✅ ADD MISSING FUNCTION: formatDuration
 function formatDuration(startDate, endDate) {
-  const diffMs = endDate - startDate;
-  const diffMinutes = Math.floor(diffMs / (1000 * 60)); // Konversi langsung ke menit
+  try {
+    const diffMs = endDate - startDate;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60)); // Konversi langsung ke menit
 
-  if (diffMinutes > 0) {
-    return `${diffMinutes} Minute${diffMinutes > 1 ? "s" : ""}`;
-  } else {
-    return "Less than 1 Minute";
+    if (diffMinutes > 0) {
+      return `${diffMinutes} Minute${diffMinutes > 1 ? "s" : ""}`;
+    } else {
+      return "Less than 1 Minute";
+    }
+  } catch (error) {
+    console.error("❌ Error in formatDuration:", error);
+    return "-";
   }
 }
 
 // Helper function untuk duration badge color
 function getDurationClass(ticket) {
-  if (!ticket.onProgressAt && !ticket.closedAt) return "duration-neutral";
+  try {
+    if (!ticket.onProgressAt && !ticket.closedAt) return "duration-neutral";
 
-  const ticketStatus = ticket.status_ticket || "Open";
+    const ticketStatus = ticket.status_ticket || "Open";
 
-  // Untuk ticket yang belum On Progress atau Closed, gunakan class neutral
-  if (ticketStatus !== "On Progress" && ticketStatus !== "Closed") {
-    return "duration-neutral";
-  }
+    // Untuk ticket yang belum On Progress atau Closed, gunakan class neutral
+    if (ticketStatus !== "On Progress" && ticketStatus !== "Closed") {
+      return "duration-neutral";
+    }
 
-  let startDate;
-  let endDate;
+    let startDate;
+    let endDate;
 
-  if (ticketStatus === "Closed" && ticket.closedAt) {
-    if (ticket.onProgressAt) {
-      // Normal flow: dari On Progress ke Closed
+    if (ticketStatus === "Closed" && ticket.closedAt) {
+      if (ticket.onProgressAt) {
+        // Normal flow: dari On Progress ke Closed
+        startDate = ticket.onProgressAt.toDate
+          ? ticket.onProgressAt.toDate()
+          : new Date(ticket.onProgressAt);
+        endDate = ticket.closedAt.toDate
+          ? ticket.closedAt.toDate()
+          : new Date(ticket.closedAt);
+      } else {
+        // Direct close: dari Created ke Closed
+        startDate = ticket.createdAt.toDate
+          ? ticket.createdAt.toDate()
+          : new Date(ticket.createdAt);
+        endDate = ticket.closedAt.toDate
+          ? ticket.closedAt.toDate()
+          : new Date(ticket.closedAt);
+      }
+    } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
       startDate = ticket.onProgressAt.toDate
         ? ticket.onProgressAt.toDate()
         : new Date(ticket.onProgressAt);
-      endDate = ticket.closedAt.toDate
-        ? ticket.closedAt.toDate()
-        : new Date(ticket.closedAt);
+      endDate = new Date(); // Real-time untuk On Progress
     } else {
-      // Direct close: dari Created ke Closed
-      startDate = ticket.createdAt.toDate
-        ? ticket.createdAt.toDate()
-        : new Date(ticket.createdAt);
-      endDate = ticket.closedAt.toDate
-        ? ticket.closedAt.toDate()
-        : new Date(ticket.closedAt);
+      return "duration-neutral";
     }
-  } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
-    startDate = ticket.onProgressAt.toDate
-      ? ticket.onProgressAt.toDate()
-      : new Date(ticket.onProgressAt);
-    endDate = new Date(); // Real-time untuk On Progress
-  } else {
+
+    const diffHours = (endDate - startDate) / (1000 * 60 * 60);
+
+    if (diffHours > 24) return "duration-long";
+    if (diffHours > 4) return "duration-medium";
+    return "duration-short";
+  } catch (error) {
+    console.error("❌ Error in getDurationClass:", error);
     return "duration-neutral";
   }
-
-  const diffHours = (endDate - startDate) / (1000 * 60 * 60);
-
-  if (diffHours > 24) return "duration-long";
-  if (diffHours > 4) return "duration-medium";
-  return "duration-short";
 }
 
 // Helper function untuk duration tooltip
@@ -987,44 +1054,48 @@ function startDurationUpdates() {
 }
 
 function updateDurations() {
-  // Update table view - hanya untuk ticket yang On Progress atau Closed
-  document.querySelectorAll("#ticketTableBody tr").forEach((row, index) => {
-    const ticket = allTickets[index];
-    if (
-      ticket &&
-      (ticket.status_ticket === "On Progress" ||
-        ticket.status_ticket === "Closed")
-    ) {
-      const durationCell = row.cells[1]; // Kolom ke-2 (Duration)
-      if (durationCell) {
-        durationCell.innerHTML = `<span class="duration-badge ${getDurationClass(
-          ticket,
-        )}" title="${getDurationTooltip(ticket)}">
-          ${calculateDuration(ticket)}
-        </span>`;
-      }
-    }
-  });
-
-  // Update card view - hanya untuk ticket yang On Progress atau Closed
-  document.querySelectorAll(".ticket-card").forEach((card, index) => {
-    const ticket = allTickets[index];
-    if (
-      ticket &&
-      (ticket.status_ticket === "On Progress" ||
-        ticket.status_ticket === "Closed")
-    ) {
-      const durationField = card.querySelector(".card-field:nth-child(2)"); // Field duration ke-2
-      if (durationField) {
-        durationField.querySelector("span").innerHTML =
-          `<span class="duration-badge ${getDurationClass(
+  try {
+    // Update table view - hanya untuk ticket yang On Progress atau Closed
+    document.querySelectorAll("#ticketTableBody tr").forEach((row, index) => {
+      const ticket = allTickets[index];
+      if (
+        ticket &&
+        (ticket.status_ticket === "On Progress" ||
+          ticket.status_ticket === "Closed")
+      ) {
+        const durationCell = row.cells[1]; // Kolom ke-2 (Duration)
+        if (durationCell) {
+          durationCell.innerHTML = `<span class="duration-badge ${getDurationClass(
             ticket,
           )}" title="${getDurationTooltip(ticket)}">
-          ${calculateDuration(ticket)}
-        </span>`;
+            ${calculateDuration(ticket)}
+          </span>`;
+        }
       }
-    }
-  });
+    });
+
+    // Update card view - hanya untuk ticket yang On Progress atau Closed
+    document.querySelectorAll(".ticket-card").forEach((card, index) => {
+      const ticket = allTickets[index];
+      if (
+        ticket &&
+        (ticket.status_ticket === "On Progress" ||
+          ticket.status_ticket === "Closed")
+      ) {
+        const durationField = card.querySelector(".card-field:nth-child(2)"); // Field duration ke-2
+        if (durationField) {
+          durationField.querySelector("span").innerHTML =
+            `<span class="duration-badge ${getDurationClass(
+              ticket,
+            )}" title="${getDurationTooltip(ticket)}">
+            ${calculateDuration(ticket)}
+          </span>`;
+        }
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error in updateDurations:", error);
+  }
 }
 
 // ==================== 🔹 Render Functions ====================
@@ -1516,7 +1587,6 @@ function handleResponsiveView() {
 }
 
 // ✅ GANTI event listener dengan debounce untuk hindari re-render berlebihan
-let resizeTimeout;
 window.addEventListener("resize", function () {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
@@ -1525,16 +1595,19 @@ window.addEventListener("resize", function () {
   }, 250); // Debounce 250ms
 });
 
-window.addEventListener("resize", handleResponsiveView);
-
 // ==================== 🔹 Format Date ====================
 function formatDate(ts) {
   if (!ts) return "-";
-  const date = ts.toDate ? ts.toDate() : new Date(ts);
-  return date.toLocaleString("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  try {
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch (error) {
+    console.error("❌ Error formatting date:", error);
+    return "-";
+  }
 }
 
 // ==================== 🔹 Attach Edit/Delete Events ====================
@@ -1987,13 +2060,19 @@ function getDeviceOptions(selected) {
     .join("");
 }
 
+// ✅ FIXED: Tambahkan fungsi getActionByOptions yang hilang
 function getActionByOptions(selected) {
-  return window.CONFIG.IT_STAFF.map(
+  if (!window.CONFIG || !window.CONFIG.IT_STAFF) {
+    console.error("❌ IT_STAFF config not found");
+    return '<option value="">No IT Staff</option>';
+  }
+
+  const options = window.CONFIG.IT_STAFF.map(
     (staff) =>
-      `<option value="${staff}" ${
-        staff === selected ? "selected" : ""
-      }>${staff}</option>`,
-  ).join("");
+      `<option value="${staff}" ${staff === selected ? "selected" : ""}>${staff}</option>`,
+  );
+
+  return options.join("");
 }
 
 function getLocationOptions(selected) {
@@ -2278,17 +2357,21 @@ function addDataLabels() {
   const table = document.getElementById("ticketsTable");
   if (!table) return;
 
-  const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
-    th.innerText.trim(),
-  );
+  try {
+    const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
+      th.innerText.trim(),
+    );
 
-  table.querySelectorAll("tbody tr").forEach((row) => {
-    row.querySelectorAll("td").forEach((td, i) => {
-      if (headers[i]) {
-        td.setAttribute("data-label", headers[i]);
-      }
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      row.querySelectorAll("td").forEach((td, i) => {
+        if (headers[i]) {
+          td.setAttribute("data-label", headers[i]);
+        }
+      });
     });
-  });
+  } catch (error) {
+    console.error("❌ Error in addDataLabels:", error);
+  }
 }
 
 // Add CSS untuk Ticket Grab System
