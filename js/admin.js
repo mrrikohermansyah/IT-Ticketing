@@ -772,7 +772,7 @@ function initTickets() {
   );
 }
 
-// ==================== 🔹 Duration Calculation (UPDATED LOGIC) ====================
+// ==================== 🔹 Duration Calculation (NEW LOGIC) ====================
 function calculateDuration(ticket) {
   console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
 
@@ -791,43 +791,47 @@ function calculateDuration(ticket) {
     hasOnProgressAt: hasOnProgressAt,
   });
 
-  if (!ticket.createdAt) {
-    console.log("❌ No createdAt found");
+  // ❌ Untuk ticket Open, tidak ada duration
+  if (ticketStatus === "Open") {
+    console.log("❌ Ticket Open - no duration");
     return "-";
   }
 
-  const createdDate = ticket.createdAt.toDate
-    ? ticket.createdAt.toDate()
-    : new Date(ticket.createdAt);
-
+  // ✅ LOGIC BARU: Duration dihitung dari onProgressAt sampai closedAt (atau sekarang untuk On Progress)
+  let startDate;
   let endDate;
   let durationType = "";
 
-  // LOGIC BARU: Duration dihitung berdasarkan status
-  if (ticketStatus === "Closed" && hasClosedAt) {
-    // ✅ Untuk Closed: gunakan closedAt
+  if (ticketStatus === "Closed" && hasClosedAt && hasOnProgressAt) {
+    // ✅ Untuk Closed: hitung dari onProgressAt sampai closedAt
+    startDate = ticket.onProgressAt.toDate
+      ? ticket.onProgressAt.toDate()
+      : new Date(ticket.onProgressAt);
     endDate = ticket.closedAt.toDate
       ? ticket.closedAt.toDate()
       : new Date(ticket.closedAt);
     durationType = "closed";
   } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
-    // ✅ Untuk On Progress: gunakan onProgressAt (real-time)
+    // ✅ Untuk On Progress: hitung dari onProgressAt sampai sekarang (real-time)
+    startDate = ticket.onProgressAt.toDate
+      ? ticket.onProgressAt.toDate()
+      : new Date(ticket.onProgressAt);
     endDate = new Date(); // Waktu sekarang untuk real-time duration
     durationType = "onProgress";
   } else {
-    // ❌ Untuk Open atau status lain tanpa timestamp yang sesuai
+    // ❌ Kondisi tidak memenuhi syarat
     console.log("❌ Condition failed - status:", ticketStatus);
     return "-";
   }
 
   console.log("✅ Dates:", {
-    createdDate,
+    startDate,
     endDate,
     durationType,
     status: ticketStatus,
   });
 
-  const duration = formatDuration(createdDate, endDate);
+  const duration = formatDuration(startDate, endDate);
   console.log("✅ Calculated duration:", duration);
 
   return duration;
@@ -844,14 +848,14 @@ function formatDuration(startDate, endDate) {
   }
 }
 
-// ==================== 🔹 Start Duration Updates (UPDATED) ====================
+// ==================== 🔹 Start Duration Updates ====================
 function startDurationUpdates() {
   // Clear existing interval
   if (durationIntervalId) {
     clearInterval(durationIntervalId);
   }
 
-  // ✅ INTERVAL DIPERLUKAN LAGI untuk update real-time On Progress tickets
+  // ✅ INTERVAL untuk update real-time On Progress tickets
   durationIntervalId = setInterval(() => {
     const hasOnProgressTickets = allTickets.some(
       (ticket) => ticket.status_ticket === "On Progress" && ticket.onProgressAt,
@@ -906,7 +910,7 @@ function updateDurations() {
 
 // Helper function untuk duration badge color (UPDATED)
 function getDurationClass(ticket) {
-  if (!ticket.createdAt) return "duration-neutral";
+  if (!ticket.onProgressAt) return "duration-neutral";
 
   const ticketStatus = ticket.status_ticket || "Open";
 
@@ -919,23 +923,26 @@ function getDurationClass(ticket) {
     return "duration-neutral";
   }
 
-  const createdDate = ticket.createdAt.toDate
-    ? ticket.createdAt.toDate()
-    : new Date(ticket.createdAt);
-
+  let startDate;
   let endDate;
 
-  if (ticketStatus === "Closed" && ticket.closedAt) {
+  if (ticketStatus === "Closed" && ticket.closedAt && ticket.onProgressAt) {
+    startDate = ticket.onProgressAt.toDate
+      ? ticket.onProgressAt.toDate()
+      : new Date(ticket.onProgressAt);
     endDate = ticket.closedAt.toDate
       ? ticket.closedAt.toDate()
       : new Date(ticket.closedAt);
   } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
+    startDate = ticket.onProgressAt.toDate
+      ? ticket.onProgressAt.toDate()
+      : new Date(ticket.onProgressAt);
     endDate = new Date(); // Real-time untuk On Progress
   } else {
     return "duration-neutral";
   }
 
-  const diffHours = (endDate - createdDate) / (1000 * 60 * 60);
+  const diffHours = (endDate - startDate) / (1000 * 60 * 60);
 
   if (diffHours > 24) return "duration-long";
   if (diffHours > 4) return "duration-medium";
@@ -947,15 +954,15 @@ function getDurationTooltip(ticket) {
   const status = ticket.status_ticket || "Open";
 
   if (status === "On Progress") {
-    return "Duration real-time sejak tiket dibuat sampai sekarang";
+    return "Duration real-time sejak tiket di-take sampai sekarang";
   } else if (status === "Closed") {
-    return "Duration sejak tiket dibuat sampai pertama kali ditutup";
+    return "Duration sejak tiket di-take sampai ditutup";
   } else {
     return "Duration akan muncul ketika status On Progress atau Closed";
   }
 }
 
-// ==================== 🔹 Render Functions (UPDATED WITH TICKET GRAB SYSTEM) ====================
+// ==================== 🔹 Render Functions ====================
 function renderTickets(tickets) {
   if (!tickets || tickets.length === 0) {
     showEmptyState();
@@ -1107,7 +1114,7 @@ function renderTable(data) {
         </span>
       </td>
       
-      <!-- ✅ ACTIONS (UPDATED WITH TICKET GRAB SYSTEM) -->
+      <!-- ✅ ACTIONS -->
       <td>
         <div class="action-buttons">
           ${
@@ -1301,7 +1308,7 @@ function renderCards(data) {
         </div>
       </div>
       
-      <!-- ✅ CARD ACTIONS (UPDATED WITH TICKET GRAB SYSTEM) -->
+      <!-- ✅ CARD ACTIONS -->
       <div class="card-actions">
         ${
           isAvailable
@@ -1430,7 +1437,7 @@ function formatDate(ts) {
   });
 }
 
-// ==================== 🔹 Attach Edit/Delete Events (UPDATED WITH TICKET GRAB SYSTEM) ====================
+// ==================== 🔹 Attach Edit/Delete Events ====================
 function attachRowEvents() {
   // Existing events
   document.querySelectorAll(".edit-btn").forEach((btn) => {
