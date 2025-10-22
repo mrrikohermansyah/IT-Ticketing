@@ -1,5 +1,5 @@
 // ======================================================
-// 🔹 js/admin.js — Responsive Admin Panel (Fixed Version)
+// 🔹 js/admin.js — Responsive Admin Panel with Ticket Grab System
 // ======================================================
 
 // ==================== 🔹 Firebase Imports ====================
@@ -126,6 +126,140 @@ function populateActionByFilter() {
   console.log("✅ Action By filter populated with:", itStaff);
 }
 
+// ==================== 🔹 TICKET GRAB SYSTEM ====================
+
+// ✅ Cek apakah ticket available untuk diambil
+function isTicketAvailable(ticket) {
+  return (
+    (!ticket.action_by || ticket.action_by === "") &&
+    ticket.status_ticket !== "Closed"
+  );
+}
+
+// ✅ Cek apakah ticket milik admin yang login
+function isMyTicket(ticket) {
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+  return ticket.action_by === currentAdmin;
+}
+
+// ✅ Ambil ticket (assign ke admin yang login)
+async function grabTicket(ticketId) {
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+
+  try {
+    await updateDoc(doc(db, "tickets", ticketId), {
+      action_by: currentAdmin,
+      status_ticket: "On Progress",
+      onProgressAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    Swal.fire({
+      title: "Ticket Taken! 🎯",
+      text: `You are now handling this ticket`,
+      icon: "success",
+      timer: 1500,
+    });
+  } catch (error) {
+    console.error("❌ Grab ticket error:", error);
+    Swal.fire("Error!", "Failed to take ticket", "error");
+  }
+}
+
+// ✅ Lepaskan ticket (jadi available lagi)
+async function releaseTicket(ticketId) {
+  try {
+    await updateDoc(doc(db, "tickets", ticketId), {
+      action_by: "",
+      status_ticket: "Open",
+      onProgressAt: null,
+      updatedAt: serverTimestamp(),
+    });
+
+    Swal.fire("Released!", "Ticket is now available for others", "info");
+  } catch (error) {
+    console.error("❌ Release ticket error:", error);
+  }
+}
+
+// ✅ Inisialisasi Ticket Grab System
+function initTicketGrabSystem() {
+  console.log("🔄 Initializing Ticket Grab System...");
+
+  // Tambahkan Quick Filter Buttons
+  addQuickFilterButtons();
+}
+
+// ✅ Tambahkan Quick Filter Buttons
+function addQuickFilterButtons() {
+  const filterContainer = document.createElement("div");
+  filterContainer.className = "quick-filter-container";
+  filterContainer.innerHTML = `
+    <div class="quick-filters">
+      <button class="filter-btn active" data-filter="all">All Tickets</button>
+      <button class="filter-btn" data-filter="available">🟢 Available</button>
+      <button class="filter-btn" data-filter="my_tickets">👤 My Tickets</button>
+      <button class="filter-btn" data-filter="others">👥 Others' Tickets</button>
+    </div>
+  `;
+
+  // Sisipkan sebelum table wrapper
+  const tableWrapper = document.querySelector(".table-wrapper");
+  if (tableWrapper) {
+    tableWrapper.parentNode.insertBefore(filterContainer, tableWrapper);
+  }
+
+  // Event listeners untuk filter buttons
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const filter = e.target.dataset.filter;
+
+      // Update active state
+      document
+        .querySelectorAll(".filter-btn")
+        .forEach((b) => b.classList.remove("active"));
+      e.target.classList.add("active");
+
+      // Apply filter
+      applyQuickFilter(filter);
+    });
+  });
+}
+
+// ✅ Apply Quick Filter
+function applyQuickFilter(filterType) {
+  let filtered = allTickets;
+  const currentAdmin = getAdminDisplayName(auth.currentUser);
+
+  switch (filterType) {
+    case "available":
+      filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
+      break;
+
+    case "my_tickets":
+      filtered = filtered.filter((ticket) => isMyTicket(ticket));
+      break;
+
+    case "others":
+      filtered = filtered.filter(
+        (ticket) => ticket.action_by && ticket.action_by !== currentAdmin,
+      );
+      break;
+
+    case "all":
+    default:
+      // No additional filtering
+      break;
+  }
+
+  console.log(`🔍 Quick Filter: ${filterType}`, {
+    total: allTickets.length,
+    filtered: filtered.length,
+  });
+
+  renderTickets(filtered);
+}
+
 // ==================== 🔹 Session Storage Management ====================
 function setupSessionStorage() {
   const sessionData = sessionStorage.getItem("adminFirstLogin");
@@ -196,21 +330,12 @@ function initAdminApp() {
       }
 
       try {
-        // ✅ LANGSUNG KIRIM TICKETS YANG DITAMPILKAN KE exportToExcel
-        const displayedTickets = getDisplayedTickets();
-        const filterInfo = getCurrentFilterInfo();
-
-        console.log("📊 Exporting displayed tickets:", {
-          allTickets: allTickets.length,
-          displayedTickets: displayedTickets.length,
-          filterInfo: filterInfo,
-        });
-
-        // ✅ PAKAI exportToExcel LANGSUNG dengan tickets yang difilter
-        if (typeof window.exportToExcel === "function") {
-          await window.exportToExcel(displayedTickets, filterInfo);
+        // ✅ GUNAKAN FUNGSI EXPORT DARI export.js
+        if (typeof window.handleExportToExcel === "function") {
+          console.log("✅ Using export.js handleExportToExcel function");
+          await window.handleExportToExcel();
         } else {
-          // Fallback ke built-in export
+          // Fallback jika export.js tidak tersedia
           await handleBuiltInExport();
         }
       } catch (error) {
@@ -222,198 +347,6 @@ function initAdminApp() {
         });
       }
     });
-  }
-
-  // ✅ FUNCTION UNTUK DAPATKAN TICKETS YANG SEDANG DITAMPILKAN
-  function getDisplayedTickets() {
-    try {
-      // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
-      let filteredTickets = allTickets;
-
-      // Filter by status
-      if (filterSelect && filterSelect.value !== "all") {
-        filteredTickets = filteredTickets.filter(
-          (t) => t.status_ticket === filterSelect.value,
-        );
-      }
-
-      // Filter by Action By
-      if (actionByFilter && actionByFilter.value !== "all") {
-        filteredTickets = filteredTickets.filter(
-          (t) => t.action_by === actionByFilter.value,
-        );
-      }
-
-      console.log("🔍 Displayed tickets:", {
-        original: allTickets.length,
-        filtered: filteredTickets.length,
-        statusFilter: filterSelect?.value,
-        actionByFilter: actionByFilter?.value,
-      });
-
-      return filteredTickets;
-    } catch (error) {
-      console.error("❌ Error getting displayed tickets:", error);
-      return allTickets; // Fallback ke semua tickets
-    }
-  }
-
-  // ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
-  function getCurrentFilterInfo() {
-    try {
-      const filterSelect = document.getElementById("filterSelect");
-      const actionByFilter = document.getElementById("actionByFilter");
-
-      const activeFilters = [];
-
-      if (filterSelect && filterSelect.value !== "all") {
-        activeFilters.push(
-          `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
-        );
-      }
-
-      if (actionByFilter && actionByFilter.value !== "all") {
-        activeFilters.push(
-          `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
-        );
-      }
-
-      return activeFilters.length > 0
-        ? activeFilters.join(", ")
-        : "All Tickets";
-    } catch (error) {
-      console.error("❌ Error getting filter info:", error);
-      return "All Tickets";
-    }
-  }
-
-  // ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
-  async function handleBuiltInExport() {
-    // Apply current filters sama seperti di renderTickets
-    const displayedTickets = getDisplayedTickets();
-    const filterInfo = getCurrentFilterInfo();
-
-    console.log("📊 Built-in export:", {
-      tickets: displayedTickets.length,
-      filter: filterInfo,
-    });
-
-    // Tampilkan konfirmasi dengan info filter
-    const { value: accept } = await Swal.fire({
-      title: "Export to Excel",
-      html: `
-      <div style="text-align: center; padding: 1rem;">
-        <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
-        <p>Export ${displayedTickets.length} tickets to Excel?</p>
-        <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
-      </div>
-    `,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Export Now",
-      cancelButtonText: "Cancel",
-    });
-
-    if (!accept) return;
-
-    // Lanjutkan dengan exportToExcel yang sudah ada
-    await exportToExcel(displayedTickets, filterInfo);
-  }
-
-  // ✅ FUNCTION UNTUK DAPATKAN TICKETS YANG SEDANG DITAMPILKAN
-  function getDisplayedTickets() {
-    try {
-      // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
-      let filteredTickets = allTickets;
-
-      // Filter by status
-      if (filterSelect && filterSelect.value !== "all") {
-        filteredTickets = filteredTickets.filter(
-          (t) => t.status_ticket === filterSelect.value,
-        );
-      }
-
-      // Filter by Action By
-      if (actionByFilter && actionByFilter.value !== "all") {
-        filteredTickets = filteredTickets.filter(
-          (t) => t.action_by === actionByFilter.value,
-        );
-      }
-
-      console.log("🔍 Displayed tickets:", {
-        original: allTickets.length,
-        filtered: filteredTickets.length,
-        statusFilter: filterSelect?.value,
-        actionByFilter: actionByFilter?.value,
-      });
-
-      return filteredTickets;
-    } catch (error) {
-      console.error("❌ Error getting displayed tickets:", error);
-      return allTickets; // Fallback ke semua tickets
-    }
-  }
-
-  // ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
-  function getCurrentFilterInfo() {
-    try {
-      const filterSelect = document.getElementById("filterSelect");
-      const actionByFilter = document.getElementById("actionByFilter");
-
-      const activeFilters = [];
-
-      if (filterSelect && filterSelect.value !== "all") {
-        activeFilters.push(
-          `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
-        );
-      }
-
-      if (actionByFilter && actionByFilter.value !== "all") {
-        activeFilters.push(
-          `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
-        );
-      }
-
-      return activeFilters.length > 0
-        ? activeFilters.join(", ")
-        : "All Tickets";
-    } catch (error) {
-      console.error("❌ Error getting filter info:", error);
-      return "All Tickets";
-    }
-  }
-
-  // ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
-  async function handleBuiltInExport() {
-    // Apply current filters sama seperti di renderTickets
-    const displayedTickets = getDisplayedTickets();
-    const filterInfo = getCurrentFilterInfo();
-
-    console.log("📊 Built-in export:", {
-      tickets: displayedTickets.length,
-      filter: filterInfo,
-    });
-
-    // Tampilkan konfirmasi dengan info filter
-    const { value: accept } = await Swal.fire({
-      title: "Export to Excel",
-      html: `
-      <div style="text-align: center; padding: 1rem;">
-        <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #217346; margin-bottom: 1rem;"></i>
-        <p>Export ${displayedTickets.length} tickets to Excel?</p>
-        <p style="font-size: 0.9rem; color: #666;"><strong>Filter:</strong> ${filterInfo}</p>
-      </div>
-    `,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Export Now",
-      cancelButtonText: "Cancel",
-    });
-
-    if (!accept) return;
-
-    // Lanjutkan dengan exportToExcel yang sudah ada
-    await exportToExcel(displayedTickets, filterInfo);
   }
 
   if (filterSelect) {
@@ -516,6 +449,9 @@ function initAuth() {
       console.log("✅ Admin access granted for:", user.email);
       showAuthButtons(true, user);
       initTickets();
+
+      // ✅ INIT TICKET GRAB SYSTEM
+      initTicketGrabSystem();
 
       // ✅ CHECK: Apakah ini login pertama kali atau page refresh?
       const isFirstLogin = !sessionStorage.getItem("adminFirstLogin");
@@ -804,9 +740,12 @@ function initTickets() {
 
       console.log("✅ Tickets loaded:", tickets.length);
       allTickets = tickets;
-      if (typeof updateAllTickets === "function") {
-        updateAllTickets(tickets);
+
+      // ✅ UPDATE GLOBAL VARIABLE UNTUK EXPORT.JS
+      if (typeof window.updateAllTickets === "function") {
+        window.updateAllTickets(tickets);
       }
+
       renderTickets(tickets);
 
       // Start auto-updating durations
@@ -833,20 +772,23 @@ function initTickets() {
   );
 }
 
-// ==================== 🔹 Duration Calculation ====================
+// ==================== 🔹 Duration Calculation (UPDATED LOGIC) ====================
 function calculateDuration(ticket) {
   console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
 
   // Handle missing fields dengan default values
   const ticketStatus = ticket.status_ticket || "Open";
   const hasClosedAt = !!ticket.closedAt;
+  const hasOnProgressAt = !!ticket.onProgressAt;
 
   console.log("🔍 Debug calculateDuration - PROCESSED:", {
     ticketId: ticket.id,
     status: ticketStatus,
     closedAt: ticket.closedAt,
+    onProgressAt: ticket.onProgressAt,
     createdAt: ticket.createdAt,
     hasClosedAt: hasClosedAt,
+    hasOnProgressAt: hasOnProgressAt,
   });
 
   if (!ticket.createdAt) {
@@ -854,27 +796,36 @@ function calculateDuration(ticket) {
     return "-";
   }
 
-  // Jika ticket belum closed atau tidak ada closedAt, tampilkan "-"
-  if (ticketStatus !== "Closed" || !hasClosedAt) {
-    console.log(
-      "❌ Condition failed - status:",
-      ticketStatus,
-      "closedAt exists:",
-      hasClosedAt,
-    );
-    return "-";
-  }
-
   const createdDate = ticket.createdAt.toDate
     ? ticket.createdAt.toDate()
     : new Date(ticket.createdAt);
 
-  // HANYA gunakan closedAt (timestamp ketika pertama kali di-close)
-  const endDate = ticket.closedAt.toDate
-    ? ticket.closedAt.toDate()
-    : new Date(ticket.closedAt);
+  let endDate;
+  let durationType = "";
 
-  console.log("✅ Dates:", { createdDate, endDate });
+  // LOGIC BARU: Duration dihitung berdasarkan status
+  if (ticketStatus === "Closed" && hasClosedAt) {
+    // ✅ Untuk Closed: gunakan closedAt
+    endDate = ticket.closedAt.toDate
+      ? ticket.closedAt.toDate()
+      : new Date(ticket.closedAt);
+    durationType = "closed";
+  } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
+    // ✅ Untuk On Progress: gunakan onProgressAt (real-time)
+    endDate = new Date(); // Waktu sekarang untuk real-time duration
+    durationType = "onProgress";
+  } else {
+    // ❌ Untuk Open atau status lain tanpa timestamp yang sesuai
+    console.log("❌ Condition failed - status:", ticketStatus);
+    return "-";
+  }
+
+  console.log("✅ Dates:", {
+    createdDate,
+    endDate,
+    durationType,
+    status: ticketStatus,
+  });
 
   const duration = formatDuration(createdDate, endDate);
   console.log("✅ Calculated duration:", duration);
@@ -893,44 +844,59 @@ function formatDuration(startDate, endDate) {
   }
 }
 
-// ==================== 🔹 Start Duration Updates ====================
+// ==================== 🔹 Start Duration Updates (UPDATED) ====================
 function startDurationUpdates() {
   // Clear existing interval
   if (durationIntervalId) {
     clearInterval(durationIntervalId);
   }
 
-  // Sekarang tidak perlu auto-update karena duration hanya untuk closed tickets
-  // Interval dihapus karena tidak diperlukan lagi
-  durationIntervalId = null;
+  // ✅ INTERVAL DIPERLUKAN LAGI untuk update real-time On Progress tickets
+  durationIntervalId = setInterval(() => {
+    const hasOnProgressTickets = allTickets.some(
+      (ticket) => ticket.status_ticket === "On Progress" && ticket.onProgressAt,
+    );
+
+    if (hasOnProgressTickets) {
+      updateDurations();
+    }
+  }, 60000); // Update setiap 1 menit
 }
 
 function updateDurations() {
-  // Update table view - hanya untuk ticket yang closed
+  // Update table view - hanya untuk ticket yang On Progress atau Closed
   document.querySelectorAll("#ticketTableBody tr").forEach((row, index) => {
     const ticket = allTickets[index];
-    if (ticket && ticket.status_ticket === "Closed") {
+    if (
+      ticket &&
+      (ticket.status_ticket === "On Progress" ||
+        ticket.status_ticket === "Closed")
+    ) {
       const durationCell = row.cells[1]; // Kolom ke-2 (Duration)
       if (durationCell) {
         durationCell.innerHTML = `<span class="duration-badge ${getDurationClass(
           ticket,
-        )}" title="Duration sejak tiket dibuat sampai pertama kali ditutup">
+        )}" title="${getDurationTooltip(ticket)}">
           ${calculateDuration(ticket)}
         </span>`;
       }
     }
   });
 
-  // Update card view - hanya untuk ticket yang closed
+  // Update card view - hanya untuk ticket yang On Progress atau Closed
   document.querySelectorAll(".ticket-card").forEach((card, index) => {
     const ticket = allTickets[index];
-    if (ticket && ticket.status_ticket === "Closed") {
+    if (
+      ticket &&
+      (ticket.status_ticket === "On Progress" ||
+        ticket.status_ticket === "Closed")
+    ) {
       const durationField = card.querySelector(".card-field:nth-child(2)"); // Field duration ke-2
       if (durationField) {
         durationField.querySelector("span").innerHTML =
           `<span class="duration-badge ${getDurationClass(
             ticket,
-          )}" title="Duration sejak tiket dibuat sampai pertama kali ditutup">
+          )}" title="${getDurationTooltip(ticket)}">
           ${calculateDuration(ticket)}
         </span>`;
       }
@@ -938,15 +904,18 @@ function updateDurations() {
   });
 }
 
-// Helper function untuk duration badge color
+// Helper function untuk duration badge color (UPDATED)
 function getDurationClass(ticket) {
   if (!ticket.createdAt) return "duration-neutral";
 
-  // Handle missing status
   const ticketStatus = ticket.status_ticket || "Open";
 
-  // Untuk ticket yang belum closed, gunakan class neutral
-  if (ticketStatus !== "Closed" || !ticket.closedAt) {
+  // Untuk ticket yang belum On Progress atau Closed, gunakan class neutral
+  if (
+    (ticketStatus !== "On Progress" && ticketStatus !== "Closed") ||
+    (ticketStatus === "On Progress" && !ticket.onProgressAt) ||
+    (ticketStatus === "Closed" && !ticket.closedAt)
+  ) {
     return "duration-neutral";
   }
 
@@ -954,9 +923,17 @@ function getDurationClass(ticket) {
     ? ticket.createdAt.toDate()
     : new Date(ticket.createdAt);
 
-  const endDate = ticket.closedAt.toDate
-    ? ticket.closedAt.toDate()
-    : new Date(ticket.closedAt);
+  let endDate;
+
+  if (ticketStatus === "Closed" && ticket.closedAt) {
+    endDate = ticket.closedAt.toDate
+      ? ticket.closedAt.toDate()
+      : new Date(ticket.closedAt);
+  } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
+    endDate = new Date(); // Real-time untuk On Progress
+  } else {
+    return "duration-neutral";
+  }
 
   const diffHours = (endDate - createdDate) / (1000 * 60 * 60);
 
@@ -965,7 +942,20 @@ function getDurationClass(ticket) {
   return "duration-short";
 }
 
-// ==================== 🔹 Render Functions ====================
+// Helper function untuk duration tooltip (UPDATED)
+function getDurationTooltip(ticket) {
+  const status = ticket.status_ticket || "Open";
+
+  if (status === "On Progress") {
+    return "Duration real-time sejak tiket dibuat sampai sekarang";
+  } else if (status === "Closed") {
+    return "Duration sejak tiket dibuat sampai pertama kali ditutup";
+  } else {
+    return "Duration akan muncul ketika status On Progress atau Closed";
+  }
+}
+
+// ==================== 🔹 Render Functions (UPDATED WITH TICKET GRAB SYSTEM) ====================
 function renderTickets(tickets) {
   if (!tickets || tickets.length === 0) {
     showEmptyState();
@@ -1014,24 +1004,34 @@ function renderTable(data) {
       id: ticket.id,
       status: ticket.status_ticket,
       closedAt: ticket.closedAt,
+      onProgressAt: ticket.onProgressAt,
       duration: calculateDuration(ticket),
     });
 
     // ✅ AUTO QA: Tentukan nilai QA untuk display
     const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
+    // ✅ TICKET GRAB SYSTEM: Tentukan status ticket
+    const isAvailable = isTicketAvailable(ticket);
+    const isMine = isMyTicket(ticket);
+
+    // Tentukan class untuk row styling
+    const rowClass = isAvailable
+      ? "ticket-available"
+      : isMine
+        ? "ticket-mine"
+        : "ticket-others";
+
     const tr = document.createElement("tr");
+    tr.className = rowClass;
+
     tr.innerHTML = `
       <!-- ✅ Date -->
       <td>${formatDate(ticket.createdAt)}</td>
       
-      <!-- ✅ Duration (NEW) -->
+      <!-- ✅ Duration (UPDATED) -->
       <td>
-        <span class="duration-badge ${getDurationClass(ticket)}" title="${
-          ticket.status_ticket === "Closed"
-            ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
-            : "Duration akan muncul ketika tiket ditutup"
-        }">
+        <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
           ${calculateDuration(ticket)}
         </span>
       </td>
@@ -1083,7 +1083,13 @@ function renderTable(data) {
       <td>${ticket.code || "-"}</td>
       
       <!-- ✅ Action By -->
-      <td>${ticket.action_by || "-"}</td>
+      <td>
+        ${
+          ticket.action_by
+            ? `<span class="assignee ${isMine ? "assignee-me" : ""}">${ticket.action_by}</span>`
+            : '<span class="assignee available">Available</span>'
+        }
+      </td>
 
       <!-- ✅ QA (Auto) -->
       <td>
@@ -1101,17 +1107,37 @@ function renderTable(data) {
         </span>
       </td>
       
-      <!-- ✅ Actions -->
+      <!-- ✅ ACTIONS (UPDATED WITH TICKET GRAB SYSTEM) -->
       <td>
         <div class="action-buttons">
-          <button class="edit-btn" data-id="${
-            ticket.id
-          }" aria-label="Edit ticket ${ticket.id}">
-            <i class="fa-solid fa-pen"></i>
-          </button>
-          <button class="delete-btn" data-id="${
-            ticket.id
-          }" aria-label="Delete ticket ${ticket.id}">
+          ${
+            isAvailable
+              ? `
+            <!-- ✅ TICKET AVAILABLE: Tombol GRAB -->
+            <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
+              <i class="fa-solid fa-hand"></i> Take
+            </button>
+          `
+              : isMine
+                ? `
+            <!-- ✅ MY TICKET: Bisa Edit & Release -->
+            <button class="edit-btn" data-id="${ticket.id}">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="release-btn" data-id="${ticket.id}" title="Release ticket">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          `
+                : `
+            <!-- ✅ TICKET ORANG: Hanya View -->
+            <button class="view-btn" data-id="${ticket.id}" title="View only (handled by ${ticket.action_by})">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          `
+          }
+          
+          <!-- ❌ Delete (hanya untuk admin tertentu) -->
+          <button class="delete-btn" data-id="${ticket.id}">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -1137,11 +1163,22 @@ function renderCards(data) {
     // ✅ AUTO QA: Tentukan nilai QA untuk display
     const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
+    // ✅ TICKET GRAB SYSTEM: Tentukan status ticket
+    const isAvailable = isTicketAvailable(ticket);
+    const isMine = isMyTicket(ticket);
+
+    // Tentukan class untuk card styling
+    const cardClass = isAvailable
+      ? "ticket-card ticket-available"
+      : isMine
+        ? "ticket-card ticket-mine"
+        : "ticket-card ticket-others";
+
     const card = document.createElement("div");
-    card.className = "ticket-card";
+    card.className = cardClass;
     card.innerHTML = `
       <div class="card-header">
-        <h3>Ticket</h3>
+        <h3>Ticket ${ticket.id}</h3>
         <span class="status-badge status-${
           ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"
         }">
@@ -1156,15 +1193,11 @@ function renderCards(data) {
           <span>${formatDate(ticket.createdAt)}</span>
         </div>
         
-        <!-- ✅ Duration (NEW) -->
+        <!-- ✅ Duration (UPDATED) -->
         <div class="card-field">
           <strong><i class="fa-solid fa-clock"></i> Duration</strong>
           <span class="duration-badge ${getDurationClass(ticket)}" 
-                title="${
-                  ticket.status_ticket === "Closed"
-                    ? "Duration sejak tiket dibuat sampai pertama kali ditutup"
-                    : "Duration akan muncul ketika tiket ditutup"
-                }">
+                title="${getDurationTooltip(ticket)}">
             ${calculateDuration(ticket)}
           </span>
         </div>
@@ -1250,7 +1283,13 @@ function renderCards(data) {
         <!-- ✅ Action By -->
         <div class="card-field">
           <strong><i class="fa-solid fa-user-gear"></i> Action By</strong>
-          <span>${ticket.action_by || "-"}</span>
+          <span>
+            ${
+              ticket.action_by
+                ? `<span class="assignee ${isMine ? "assignee-me" : ""}">${ticket.action_by}</span>`
+                : '<span class="assignee available">Available</span>'
+            }
+          </span>
         </div>
 
         <!-- ✅ QA (Auto) -->
@@ -1262,10 +1301,34 @@ function renderCards(data) {
         </div>
       </div>
       
+      <!-- ✅ CARD ACTIONS (UPDATED WITH TICKET GRAB SYSTEM) -->
       <div class="card-actions">
-        <button class="edit-btn" data-id="${ticket.id}">
-          <i class="fa-solid fa-pen"></i> Edit
-        </button>
+        ${
+          isAvailable
+            ? `
+          <!-- ✅ TICKET AVAILABLE: Tombol GRAB -->
+          <button class="grab-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-hand"></i> Take Ticket
+          </button>
+        `
+            : isMine
+              ? `
+          <!-- ✅ MY TICKET: Bisa Edit & Release -->
+          <button class="edit-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-pen"></i> Edit
+          </button>
+          <button class="release-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-rotate-left"></i> Release
+          </button>
+        `
+              : `
+          <!-- ✅ TICKET ORANG: Hanya View -->
+          <button class="view-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-eye"></i> View Only
+          </button>
+        `
+        }
+        
         <button class="delete-btn" data-id="${ticket.id}">
           <i class="fa-solid fa-trash"></i> Delete
         </button>
@@ -1367,14 +1430,77 @@ function formatDate(ts) {
   });
 }
 
-// ==================== 🔹 Attach Edit/Delete Events ====================
+// ==================== 🔹 Attach Edit/Delete Events (UPDATED WITH TICKET GRAB SYSTEM) ====================
 function attachRowEvents() {
+  // Existing events
   document.querySelectorAll(".edit-btn").forEach((btn) => {
     btn.addEventListener("click", handleEdit);
   });
   document.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.addEventListener("click", handleDelete);
   });
+
+  // ✅ NEW: Grab ticket events
+  document.querySelectorAll(".grab-btn").forEach((btn) => {
+    btn.addEventListener("click", handleGrabTicket);
+  });
+
+  // ✅ NEW: Release ticket events
+  document.querySelectorAll(".release-btn").forEach((btn) => {
+    btn.addEventListener("click", handleReleaseTicket);
+  });
+
+  // ✅ NEW: View only events
+  document.querySelectorAll(".view-btn").forEach((btn) => {
+    btn.addEventListener("click", handleViewTicket);
+  });
+}
+
+// ✅ Handle Grab Ticket
+async function handleGrabTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+  await grabTicket(ticketId);
+}
+
+// ✅ Handle Release Ticket
+async function handleReleaseTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+
+  const confirmed = await Swal.fire({
+    title: "Release Ticket?",
+    text: "This ticket will become available for other admins",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Release",
+    cancelButtonText: "Keep It",
+  });
+
+  if (confirmed.isConfirmed) {
+    await releaseTicket(ticketId);
+  }
+}
+
+// ✅ Handle View Ticket (Read Only)
+async function handleViewTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+  const ticket = allTickets.find((t) => t.id === ticketId);
+
+  if (ticket) {
+    Swal.fire({
+      title: "View Only 👀",
+      html: `
+        <div style="text-align: left;">
+          <p><strong>This ticket is being handled by:</strong> ${ticket.action_by}</p>
+          <p>You can only view this ticket until it's released or completed.</p>
+          <hr>
+          <p><strong>Subject:</strong> ${ticket.subject}</p>
+          <p><strong>Message:</strong> ${ticket.message}</p>
+          ${ticket.note ? `<p><strong>Current Notes:</strong> ${ticket.note}</p>` : ""}
+        </div>
+      `,
+      icon: "info",
+    });
+  }
 }
 
 // ==================== 🔹 Handle Delete ====================
@@ -1401,8 +1527,7 @@ async function handleDelete(e) {
   }
 }
 
-// ==================== 🔹 Handle Edit ====================
-// ==================== 🔹 Handle Edit (FIXED VERSION) ====================
+// ==================== 🔹 Handle Edit (UPDATED VERSION) ====================
 async function handleEdit(e) {
   const id = e.currentTarget.dataset.id;
 
@@ -1424,6 +1549,7 @@ async function handleEdit(e) {
     // Handle missing fields in existing data
     const currentStatus = data.status_ticket || "Open";
     const hasClosedAt = !!data.closedAt;
+    const hasOnProgressAt = !!data.onProgressAt;
 
     // ✅ AUTO QA: Tentukan nilai QA berdasarkan status
     const getAutoQA = (status) => {
@@ -1556,9 +1682,9 @@ async function handleEdit(e) {
         <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
           <i class="fa-solid fa-info-circle"></i> 
           ${
-            currentStatus === "Closed"
-              ? 'Duration sudah terkalkulasi. Ubah status ke "Open" untuk reset duration.'
-              : 'Duration akan terkalkulasi ketika status diubah ke "Closed"'
+            currentStatus === "Closed" || currentStatus === "On Progress"
+              ? `Duration ${currentStatus === "Closed" ? "sudah terkalkulasi" : "sedang berjalan real-time"}. Ubah status ke "Open" untuk reset duration.`
+              : 'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"'
           }
         </div>
         <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
@@ -1671,7 +1797,7 @@ async function handleEdit(e) {
       ? codeField.value
       : window.CONFIG.DEVICE_TYPE_MAPPING[formValues.device] || "OT";
 
-    // Logic untuk menangani closedAt timestamp
+    // Logic untuk menangani timestamp (UPDATED LOGIC)
     const updateData = {
       ...formValues,
       code: updatedCode, // ✅ PAKAI CODE YANG SUDAH DIUPDATE
@@ -1690,26 +1816,34 @@ async function handleEdit(e) {
       note: formValues.note,
     });
 
-    // HANYA jika status berubah dari non-Closed ke Closed
-    if (formValues.status_ticket === "Closed" && currentStatus !== "Closed") {
-      updateData.closedAt = serverTimestamp();
-      console.log("🔄 First time closed - setting closedAt timestamp");
-    }
-    // Jika status berubah dari Closed ke non-Closed, hapus closedAt untuk reset
-    else if (
-      formValues.status_ticket !== "Closed" &&
-      currentStatus === "Closed"
+    // ✅ LOGIC BARU: Handle timestamp berdasarkan status perubahan
+    if (
+      formValues.status_ticket === "On Progress" &&
+      currentStatus !== "On Progress"
     ) {
-      updateData.closedAt = null;
-      console.log("🔄 Reopened ticket - clearing closedAt timestamp");
-    }
-    // Jika sudah closed dan tetap closed, JANGAN ubah closedAt
-    else if (
+      // Status berubah ke On Progress untuk pertama kali
+      updateData.onProgressAt = serverTimestamp();
+      console.log("🔄 First time On Progress - setting onProgressAt timestamp");
+    } else if (
       formValues.status_ticket === "Closed" &&
-      currentStatus === "Closed"
+      currentStatus !== "Closed"
     ) {
-      console.log("🔒 Ticket tetap closed - closedAt tidak diubah");
+      // Status berubah ke Closed untuk pertama kali
+      updateData.closedAt = serverTimestamp();
+      console.log("🔄 First time Closed - setting closedAt timestamp");
+
+      // Jika sebelumnya On Progress, pertahankan onProgressAt untuk history
+      if (currentStatus === "On Progress" && data.onProgressAt) {
+        updateData.onProgressAt = data.onProgressAt;
+      }
+    } else if (formValues.status_ticket === "Open") {
+      // Status kembali ke Open - reset semua timestamp
+      updateData.onProgressAt = null;
+      updateData.closedAt = null;
+      console.log("🔄 Back to Open - clearing all timestamps");
     }
+    // Jika status tetap On Progress, JANGAN ubah onProgressAt (biarkan yang pertama)
+    // Jika status tetap Closed, JANGAN ubah closedAt (biarkan yang pertama)
 
     console.log("📤 Update data:", updateData);
     await updateDoc(docRef, updateData);
@@ -1890,9 +2024,8 @@ async function handleBuiltInExport() {
   await exportToExcel(filteredTickets, filterInfo);
 }
 
-// ✅ HELPER FUNCTION UNTUK DAPATKAN INFO FILTER
+// ==================== 🔹 Export Helper Functions ====================
 function getDisplayedTickets() {
-  // ⚠️ BUKAN getCurrentlyDisplayedTickets
   try {
     // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
     let filteredTickets = allTickets;
@@ -1911,7 +2044,7 @@ function getDisplayedTickets() {
       );
     }
 
-    console.log("🔍 Currently displayed tickets:", {
+    console.log("🔍 Displayed tickets:", {
       original: allTickets.length,
       filtered: filteredTickets.length,
       statusFilter: filterSelect?.value,
@@ -1925,34 +2058,30 @@ function getDisplayedTickets() {
   }
 }
 
-// Dynamic load ExcelJS
-function loadExcelJS() {
-  return new Promise((resolve, reject) => {
-    if (window.ExcelJS) {
-      resolve();
-      return;
+function getCurrentFilterInfo() {
+  try {
+    const filterSelect = document.getElementById("filterSelect");
+    const actionByFilter = document.getElementById("actionByFilter");
+
+    const activeFilters = [];
+
+    if (filterSelect && filterSelect.value !== "all") {
+      activeFilters.push(
+        `Status: ${filterSelect.options[filterSelect.selectedIndex].text}`,
+      );
     }
 
-    const script = document.createElement("script");
-    script.src =
-      "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
+    if (actionByFilter && actionByFilter.value !== "all") {
+      activeFilters.push(
+        `IT Staff: ${actionByFilter.options[actionByFilter.selectedIndex].text}`,
+      );
+    }
 
-// Helper function untuk format date Excel
-function formatDateForExcel(ts) {
-  if (!ts) return "-";
-  const date = ts.toDate ? ts.toDate() : new Date(ts);
-
-  // Validasi tanggal
-  if (isNaN(date.getTime())) {
-    return "-";
+    return activeFilters.length > 0 ? activeFilters.join(", ") : "All Tickets";
+  } catch (error) {
+    console.error("❌ Error getting filter info:", error);
+    return "All Tickets";
   }
-
-  return date;
 }
 
 // ==================== 🔹 Utility Functions ====================
@@ -1973,10 +2102,9 @@ function addDataLabels() {
   });
 }
 
-// Add CSS untuk Duration Badge, QA Badge dan Login Button
+// Add CSS untuk Ticket Grab System
 const style = document.createElement("style");
 style.textContent = `
-  
   .login-redirect-btn {
     padding: 10px 20px;
     background: #2563eb;
@@ -1991,7 +2119,7 @@ style.textContent = `
   .login-redirect-btn:hover {
     background: #1d4ed8;
   }
-    /* ✅ STYLE BARU UNTUK EMAIL CELL */
+
   .email-cell {
     word-break: break-all;
     max-width: 150px;
@@ -1999,24 +2127,140 @@ style.textContent = `
     vertical-align: middle;
   }
 
-/* CSS khusus untuk hide kolom DEVICE dengan colgroup */
-#ticketsTable th:nth-of-type(4),
-#ticketsTable td:nth-of-type(4),
-#ticketsTable th:nth-of-type(11),
-#ticketsTable td:nth-of-type(11)  {
+  /* CSS khusus untuk hide kolom DEVICE dengan colgroup */
+  #ticketsTable th:nth-of-type(4),
+  #ticketsTable td:nth-of-type(4),
+  #ticketsTable th:nth-of-type(11),
+  #ticketsTable td:nth-of-type(11)  {
     display: none !important;
     width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
     visibility: hidden !important;
-}
+  }
 
-/* Juga hide col ke-4 di colgroup */
-#ticketsTable col:nth-child(4) {
+  #ticketsTable col:nth-child(4) {
     width: 0 !important;
-}
+  }
 
+  /* ✅ TICKET GRAB SYSTEM STYLES */
+  .quick-filter-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .quick-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 8px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover {
+    background: #f3f4f6;
+  }
+
+  .filter-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+
+  /* Ticket Status Colors */
+  .ticket-available {
+    background: #f0fdf4 !important;
+    border-left: 4px solid #22c55e !important;
+  }
+
+  .ticket-mine {
+    background: #f0f9ff !important;
+    border-left: 4px solid #3b82f6 !important;
+  }
+
+  .ticket-others {
+    background: #f8fafc !important;
+    opacity: 0.8;
+  }
+
+  /* Assignee Badges */
+  .assignee.available {
+    color: #16a34a;
+    font-weight: bold;
+  }
+
+  .assignee.assignee-me {
+    color: #3b82f6;
+    font-weight: bold;
+  }
+
+  /* Action Buttons */
+  .grab-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+  }
+
+  .grab-btn:hover {
+    background: #16a34a;
+  }
+
+  .release-btn {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+  }
+
+  .release-btn:hover {
+    background: #d97706;
+  }
+
+  .view-btn {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: not-allowed;
+    opacity: 0.6;
+    margin-right: 5px;
+  }
+
+  /* Card specific styles */
+  .ticket-card.ticket-available {
+    border-left: 4px solid #22c55e !important;
+    background: #f0fdf4 !important;
+  }
+
+  .ticket-card.ticket-mine {
+    border-left: 4px solid #3b82f6 !important;
+    background: #f0f9ff !important;
+  }
+
+  .ticket-card.ticket-others {
+    border-left: 4px solid #6b7280 !important;
+    background: #f8fafc !important;
+    opacity: 0.8;
+  }
 `;
 document.head.appendChild(style);
 
@@ -2025,11 +2269,10 @@ window.handleResponsiveView = handleResponsiveView;
 window.addDataLabels = addDataLabels;
 window.redirectToLoginPage = redirectToLoginPage;
 window.initTickets = initTickets;
-window.exportToExcel = exportToExcel;
-window.handleBuiltInExport = handleBuiltInExport;
 window.getDisplayedTickets = getDisplayedTickets;
+window.getCurrentFilterInfo = getCurrentFilterInfo;
 
 // Cleanup on page unload
 window.addEventListener("beforeunload", cleanup);
 
-console.log("✅ Admin JS loaded successfully");
+console.log("✅ Admin JS with Ticket Grab System loaded successfully");

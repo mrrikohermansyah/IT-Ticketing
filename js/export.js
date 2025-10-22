@@ -38,18 +38,37 @@ function calculateDurationForExport(ticket) {
 
   const ticketStatus = ticket.status_ticket || "Open";
   const hasClosedAt = !!ticket.closedAt;
+  const hasOnProgressAt = !!ticket.onProgressAt;
 
-  if (ticketStatus !== "Closed" || !hasClosedAt) {
-    return "-";
-  }
+  console.log("🔍 Export Duration Debug:", {
+    ticketId: ticket.id,
+    status: ticketStatus,
+    closedAt: ticket.closedAt,
+    onProgressAt: ticket.onProgressAt,
+    hasClosedAt: hasClosedAt,
+    hasOnProgressAt: hasOnProgressAt,
+  });
 
   const createdDate = ticket.createdAt.toDate
     ? ticket.createdAt.toDate()
     : new Date(ticket.createdAt);
 
-  const endDate = ticket.closedAt.toDate
-    ? ticket.closedAt.toDate()
-    : new Date(ticket.closedAt);
+  let endDate;
+
+  // ✅ LOGIC BARU: Hitung duration untuk On Progress dan Closed
+  if (ticketStatus === "Closed" && hasClosedAt) {
+    // ✅ Untuk Closed: gunakan closedAt
+    endDate = ticket.closedAt.toDate
+      ? ticket.closedAt.toDate()
+      : new Date(ticket.closedAt);
+  } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
+    // ✅ Untuk On Progress: gunakan waktu sekarang (real-time)
+    endDate = new Date();
+  } else {
+    // ❌ Untuk Open atau status lain tanpa timestamp yang sesuai
+    console.log("❌ Duration condition failed - status:", ticketStatus);
+    return "-";
+  }
 
   const diffMs = endDate - createdDate;
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
@@ -430,9 +449,10 @@ async function exportToExcel(displayedTickets, filterInfo = "All Tickets") {
 
     displayedTickets.forEach((ticket) => {
       const durationText = calculateDurationForExport(ticket);
+
+      // ✅ AUTO QA: Tentukan nilai QA berdasarkan status
       const kendaliMutu =
-        ticket.qa ||
-        (ticket.status_ticket === "Closed" ? "Finish" : "Continue");
+        ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
       const deviceCode = ticket.code || deviceMapping[ticket.device] || "OT";
 
@@ -446,6 +466,13 @@ async function exportToExcel(displayedTickets, filterInfo = "All Tickets") {
         durationText,
         kendaliMutu,
       ];
+
+      console.log("📝 Export Row Data:", {
+        ticketId: ticket.id,
+        status: ticket.status_ticket,
+        duration: durationText,
+        qa: kendaliMutu,
+      });
 
       const row = sheet.addRow(rowData);
 
