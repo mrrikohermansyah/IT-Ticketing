@@ -1,8 +1,8 @@
 // ======================================================
-// 🔹 js/admin.js — Responsive Admin Panel with Ticket Grab System
+// ?? js/admin.js — Responsive Admin Panel with Ticket Grab System
 // ======================================================
 
-// ==================== 🔹 Firebase Imports ====================
+// ==================== ?? Firebase Imports ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
@@ -15,6 +15,8 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  getDocs,
+  limit,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth,
@@ -24,7 +26,7 @@ import {
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// ==================== 🔹 Firebase Config ====================
+// ==================== ?? Firebase Config ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCQR--hn0RDvDduCjA2Opa9HLzyYn_GFIs",
   authDomain: "itticketing-f926e.firebaseapp.com",
@@ -40,7 +42,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// ==================== 🔹 DOM Elements ====================
+// ==================== ?? DOM Elements ====================
 const ticketTableBody = document.getElementById("ticketTableBody");
 const cardContainer = document.getElementById("cardContainer");
 const switchViewBtn = document.getElementById("switchViewBtn");
@@ -53,7 +55,7 @@ const goLoginBtn = document.getElementById("goLoginBtn");
 const userInfo = document.getElementById("userInfo");
 const userName = document.getElementById("userName");
 
-// ==================== 🔹 State ====================
+// ==================== ?? State ====================
 let isCardView = false;
 let allTickets = [];
 let loginInProgress = false;
@@ -62,7 +64,7 @@ let durationIntervalId = null;
 let currentQuickFilter = "all";
 let resizeTimeout = null;
 
-// ==================== 🔹 Helper Functions ====================
+// ==================== ?? Helper Functions ====================
 function getAdminDisplayName(user) {
   if (!user || !user.email) return "IT Support";
 
@@ -72,14 +74,14 @@ function getAdminDisplayName(user) {
   if (window.CONFIG && window.CONFIG.ADMIN_NAME_MAPPING) {
     const mappedName = window.CONFIG.ADMIN_NAME_MAPPING[userEmail];
     if (mappedName) {
-      console.log("✅ Using mapped name:", mappedName);
+      console.log("? Using mapped name:", mappedName);
       return mappedName;
     }
   }
 
   // Jika tidak ada mapping, gunakan displayName dari Google
   if (user.displayName) {
-    console.log("✅ Using Google displayName:", user.displayName);
+    console.log("? Using Google displayName:", user.displayName);
     return user.displayName;
   }
 
@@ -90,35 +92,142 @@ function getAdminDisplayName(user) {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 
-  console.log("✅ Using name from email:", nameFromEmail);
+  console.log("? Using name from email:", nameFromEmail);
   return nameFromEmail;
 }
 
-// ✅ VALIDASI FUNCTION
+// ? Format Ticket ID untuk display yang readable
+function formatTicketId(ticket) {
+  // Gunakan ticketId jika sudah ada dan sesuai format
+  if (ticket.ticketId && ticket.ticketId.includes("-")) {
+    return ticket.ticketId;
+  }
+
+  // Extract department code
+  const getDeptCode = (dept) => {
+    if (!dept) return "IT";
+    const deptMap = {
+      IT: "IT",
+      HR: "HR",
+      HSE: "HSE",
+      QC: "QC",
+      Finance: "FIN",
+      Maintenance: "MNT",
+      Warehouse: "WH",
+      Management: "MGT",
+      Procurement: "PRO",
+      Engineer: "ENG",
+      "Document Control": "DOC",
+      Completion: "COM",
+      Vendor: "VEN",
+      Clinic: "CLN",
+      Lainlain: "GEN",
+    };
+    return deptMap[dept] || dept.substring(0, 3).toUpperCase();
+  };
+
+  // Extract location code
+  const getLocCode = (location) => {
+    if (!location) return "GEN";
+    const locMap = {
+      "Blue Office": "BLU",
+      "White Office": "WHT",
+      "Green Office": "GRN",
+      "Red Office": "RED",
+      "White Office 2nd Fl": "W2F",
+      "White Office 3rd Fl": "W3F",
+      "Control Room": "CTL",
+      "Dark Room": "DRK",
+      HRD: "HRD",
+      "IT Store": "ITS",
+      "HSE Yard": "HSY",
+      Maintenance: "MNT",
+      "Multi Purposes Building": "MPB",
+      Security: "SEC",
+      Warehouse: "WH",
+      "Welding School": "WLD",
+      Workshop9: "WS9",
+      Workshop10: "WS10",
+      Workshop11: "WS11",
+      Workshop12: "WS12",
+      Lainlain: "GEN",
+    };
+    return locMap[location] || location.substring(0, 3).toUpperCase();
+  };
+
+  // Extract device code
+  const getDeviceCode = (device) => {
+    if (!device) return "OT";
+    const deviceMap = {
+      "PC Hardware": "HW",
+      "PC Software": "SW",
+      Laptop: "LP",
+      Printer: "PR",
+      Network: "NET",
+      Projector: "PJ",
+      "Backup Data": "BU",
+      Others: "OT",
+    };
+    return deviceMap[device] || device.substring(0, 2).toUpperCase();
+  };
+
+  // Format date (YYMMDD)
+  const getDateCode = (timestamp) => {
+    if (!timestamp) {
+      const now = new Date();
+      return now.toISOString().slice(2, 8).replace(/-/g, "");
+    }
+
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toISOString().slice(2, 8).replace(/-/g, "");
+    } catch (error) {
+      const now = new Date();
+      return now.toISOString().slice(2, 8).replace(/-/g, "");
+    }
+  };
+
+  // Generate random string (3 chars)
+  const getRandomCode = (ticketId) => {
+    // Use last 3 chars of Firebase ID for consistency
+    return ticketId.substring(ticketId.length - 3).toUpperCase();
+  };
+
+  // Build the formatted ID: DEPT-LOC-DEVICE-DATE-RANDOM
+  const deptCode = getDeptCode(ticket.department);
+  const locCode = getLocCode(ticket.location);
+  const deviceCode = getDeviceCode(ticket.device);
+  const dateCode = getDateCode(ticket.createdAt);
+  const randomCode = getRandomCode(ticket.id);
+
+  return `${deptCode}-${locCode}-${deviceCode}-${dateCode}-${randomCode}`;
+}
+
+// ? VALIDASI FUNCTION
 function validateTicketBeforeSave(ticketData) {
-  console.log("🔍 Validating ticket data:", ticketData);
+  console.log("?? Validating ticket data:", ticketData);
 
   if (
     (ticketData.status_ticket === "Closed" ||
       ticketData.status_ticket === "Resolved") &&
     !ticketData.note
   ) {
-    throw new Error("📝 Harap isi Technician Notes sebelum menutup ticket!");
+    throw new Error("?? Harap isi Technician Notes sebelum menutup ticket!");
   }
 
   return true;
 }
 
-// ✅ FUNCTION UNTUK POPULATE ACTION BY FILTER
+// ? FUNCTION UNTUK POPULATE ACTION BY FILTER
 function populateActionByFilter() {
   if (!actionByFilter) {
-    console.error("❌ actionByFilter element not found");
+    console.error("? actionByFilter element not found");
     return;
   }
 
-  // ✅ VALIDATE CONFIG
+  // ? VALIDATE CONFIG
   if (!window.CONFIG || !Array.isArray(window.CONFIG.IT_STAFF)) {
-    console.error("❌ IT_STAFF config invalid");
+    console.error("? IT_STAFF config invalid");
     actionByFilter.innerHTML = '<option value="all">No IT Staff</option>';
     return;
   }
@@ -138,12 +247,12 @@ function populateActionByFilter() {
     }
   });
 
-  console.log("✅ Action By filter populated with:", itStaff.length, "staff");
+  console.log("? Action By filter populated with:", itStaff.length, "staff");
 }
 
-// ==================== 🔹 TICKET GRAB SYSTEM ====================
+// ==================== ?? TICKET GRAB SYSTEM ====================
 
-// ✅ Cek apakah ticket available untuk diambil - FIXED!
+// ? Cek apakah ticket available untuk diambil - FIXED!
 function isTicketAvailable(ticket) {
   return (
     (!ticket.action_by || ticket.action_by === "") &&
@@ -151,13 +260,13 @@ function isTicketAvailable(ticket) {
   );
 }
 
-// ✅ Cek apakah ticket milik admin yang login
+// ? Cek apakah ticket milik admin yang login
 function isMyTicket(ticket) {
   const currentAdmin = getAdminDisplayName(auth.currentUser);
   return ticket.action_by === currentAdmin;
 }
 
-// ✅ Ambil ticket (assign ke admin yang login)
+// ? Ambil ticket (assign ke admin yang login)
 async function grabTicket(ticketId) {
   const currentAdmin = getAdminDisplayName(auth.currentUser);
 
@@ -170,18 +279,18 @@ async function grabTicket(ticketId) {
     });
 
     Swal.fire({
-      title: "Ticket Taken! 🎯",
+      title: "Ticket Taken! ??",
       text: `You are now handling this ticket`,
       icon: "success",
       timer: 1500,
     });
   } catch (error) {
-    console.error("❌ Grab ticket error:", error);
+    console.error("? Grab ticket error:", error);
     Swal.fire("Error!", "Failed to take ticket", "error");
   }
 }
 
-// ✅ Lepaskan ticket (jadi available lagi)
+// ? Lepaskan ticket (jadi available lagi)
 async function releaseTicket(ticketId) {
   try {
     await updateDoc(doc(db, "tickets", ticketId), {
@@ -193,14 +302,14 @@ async function releaseTicket(ticketId) {
 
     Swal.fire("Released!", "Ticket is now available for others", "info");
   } catch (error) {
-    console.error("❌ Release ticket error:", error);
+    console.error("? Release ticket error:", error);
     Swal.fire("Error!", "Failed to release ticket", "error");
   }
 }
 
-// ✅ Inisialisasi Ticket Grab System
+// ? Inisialisasi Ticket Grab System
 function initTicketGrabSystem() {
-  console.log("🔄 Initializing Ticket Grab System...");
+  console.log("?? Initializing Ticket Grab System...");
   // Set initial filter state
   currentQuickFilter = "all";
   // Tambahkan Quick Filter Buttons
@@ -210,7 +319,7 @@ function initTicketGrabSystem() {
   }, 100);
 }
 
-// ✅ Tambahkan Quick Filter Buttons
+// ? Tambahkan Quick Filter Buttons
 function addQuickFilterButtons() {
   const filterContainer = document.createElement("div");
   filterContainer.className = "quick-filter-container";
@@ -236,7 +345,7 @@ function addQuickFilterButtons() {
       e.stopPropagation();
 
       const filter = e.target.dataset.filter;
-      console.log("🎯 Quick filter clicked:", filter);
+      console.log("?? Quick filter clicked:", filter);
 
       // Update active state
       document
@@ -250,7 +359,7 @@ function addQuickFilterButtons() {
   });
 }
 
-// ✅ Apply Quick Filter - FIXED!
+// ? Apply Quick Filter - FIXED!
 function applyQuickFilter(filterType) {
   currentQuickFilter = filterType;
   let filtered = allTickets;
@@ -260,7 +369,7 @@ function applyQuickFilter(filterType) {
     case "available":
       filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
       console.log(
-        "🔍 Available tickets:",
+        "?? Available tickets:",
         filtered.map((t) => ({
           id: t.id,
           status: t.status_ticket,
@@ -285,7 +394,7 @@ function applyQuickFilter(filterType) {
       break;
   }
 
-  console.log(`🔍 Quick Filter: ${filterType}`, {
+  console.log(`?? Quick Filter: ${filterType}`, {
     total: allTickets.length,
     filtered: filtered.length,
   });
@@ -293,9 +402,9 @@ function applyQuickFilter(filterType) {
   renderTickets(filtered);
 }
 
-// ✅ Function untuk refresh filter state
+// ? Function untuk refresh filter state
 function refreshFilterState() {
-  console.log("🔄 Refreshing filter state:", currentQuickFilter);
+  console.log("?? Refreshing filter state:", currentQuickFilter);
 
   if (currentQuickFilter && currentQuickFilter !== "all") {
     // Re-apply quick filter
@@ -317,7 +426,7 @@ function refreshFilterState() {
   }
 }
 
-// ==================== 🔹 Session Storage Management ====================
+// ==================== ?? Session Storage Management ====================
 function setupSessionStorage() {
   const sessionData = sessionStorage.getItem("adminFirstLogin");
   if (sessionData) {
@@ -331,7 +440,7 @@ function setupSessionStorage() {
         // Session terlalu lama, clear dan anggap sebagai login baru
         sessionStorage.removeItem("adminFirstLogin");
         sessionStorage.removeItem("adminSessionTime");
-        console.log("🕒 Session expired - cleared storage");
+        console.log("?? Session expired - cleared storage");
       }
     } else {
       // Set session time jika belum ada
@@ -340,25 +449,25 @@ function setupSessionStorage() {
   }
 }
 
-// ==================== 🔹 Initialize App ====================
+// ==================== ?? Initialize App ====================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM loaded, initializing app...");
   initAdminApp();
 });
 
 function initAdminApp() {
-  console.log("🔄 Initializing admin application...");
+  console.log("?? Initializing admin application...");
 
-  // ✅ CHECK CONFIG FIRST
+  // ? CHECK CONFIG FIRST
   if (!window.CONFIG) {
-    console.error("❌ CONFIG not loaded");
+    console.error("? CONFIG not loaded");
     showErrorState("Configuration not loaded. Please refresh the page.");
     return;
   }
 
-  // ✅ VALIDATE REQUIRED CONFIG
+  // ? VALIDATE REQUIRED CONFIG
   if (!window.CONFIG.ADMIN_EMAILS || !window.CONFIG.IT_STAFF) {
-    console.error("❌ Required config missing");
+    console.error("? Required config missing");
     showErrorState("Required configuration missing. Please check config.js");
     return;
   }
@@ -368,29 +477,29 @@ function initAdminApp() {
 
   // Check if DOM elements exist
   if (!ticketTableBody) {
-    console.error("❌ ticketTableBody not found");
+    console.error("? ticketTableBody not found");
   }
   if (!cardContainer) {
-    console.error("❌ cardContainer not found");
+    console.error("? cardContainer not found");
   }
 
   // Add event listeners with null checks
   if (switchViewBtn) {
     switchViewBtn.addEventListener("click", toggleView);
   } else {
-    console.warn("⚠️ switchViewBtn not found");
+    console.warn("?? switchViewBtn not found");
   }
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", handleLogout);
   }
 
-  // ==================== 🔹 Export Handler ====================
+  // ==================== ?? Export Handler ====================
   if (exportBtn) {
     exportBtn.addEventListener("click", async () => {
-      console.log("📤 Export clicked, allTickets:", allTickets?.length);
+      console.log("?? Export clicked, allTickets:", allTickets?.length);
 
-      // ✅ FIX: Pastikan allTickets tersedia
+      // ? FIX: Pastikan allTickets tersedia
       if (!allTickets || allTickets.length === 0) {
         Swal.fire({
           title: "No Data",
@@ -401,16 +510,16 @@ function initAdminApp() {
       }
 
       try {
-        // ✅ GUNAKAN FUNGSI EXPORT DARI export.js
+        // ? GUNAKAN FUNGSI EXPORT DARI export.js
         if (typeof window.handleExportToExcel === "function") {
-          console.log("✅ Using export.js handleExportToExcel function");
+          console.log("? Using export.js handleExportToExcel function");
           await window.handleExportToExcel();
         } else {
           // Fallback jika export.js tidak tersedia
           await handleBuiltInExport();
         }
       } catch (error) {
-        console.error("❌ Export error:", error);
+        console.error("? Export error:", error);
         Swal.fire({
           title: "Export Failed",
           text: "Terjadi kesalahan saat mengekspor. Silakan coba lagi.",
@@ -424,7 +533,7 @@ function initAdminApp() {
     filterSelect.addEventListener("change", handleFilterChange);
   }
 
-  // ✅ TAMBAHKAN EVENT LISTENER UNTUK ACTION BY FILTER
+  // ? TAMBAHKAN EVENT LISTENER UNTUK ACTION BY FILTER
   if (actionByFilter) {
     actionByFilter.addEventListener("change", handleFilterChange);
     // Populate filter options
@@ -440,28 +549,28 @@ function initAdminApp() {
     goLoginBtn.addEventListener("click", redirectToLoginPage);
   }
 
+  // Initialize auth
+  initAuth();
+
   // Initialize responsive view
   handleResponsiveView();
-
-  // Start auth state listener
-  initAuth();
 }
 
-// ==================== 🔹 Redirect to Login Page ====================
+// ==================== ?? Redirect to Login Page ====================
 function redirectToLoginPage() {
-  console.log("🔀 Redirecting to login page...");
+  console.log("?? Redirecting to login page...");
   window.location.href = "../login/index.html";
 }
 
-// ==================== 🔹 Check Admin Access ====================
+// ==================== ?? Check Admin Access ====================
 function isAdminUser(user) {
   if (!user || !user.email) return false;
 
   const userEmail = user.email.toLowerCase();
 
-  // ✅ VALIDATE CONFIG
+  // ? VALIDATE CONFIG
   if (!window.CONFIG || !Array.isArray(window.CONFIG.ADMIN_EMAILS)) {
-    console.error("❌ ADMIN_EMAILS config invalid");
+    console.error("? ADMIN_EMAILS config invalid");
     return false;
   }
 
@@ -469,7 +578,7 @@ function isAdminUser(user) {
     (adminEmail) => adminEmail.toLowerCase() === userEmail,
   );
 
-  console.log("🔐 Admin Check:", {
+  console.log("?? Admin Check:", {
     userEmail: userEmail,
     isAdmin: isAdmin,
     adminEmails: window.CONFIG.ADMIN_EMAILS,
@@ -478,12 +587,12 @@ function isAdminUser(user) {
   return isAdmin;
 }
 
-// ==================== 🔹 Admin Auth Control ====================
+// ==================== ?? Admin Auth Control ====================
 function initAuth() {
   onAuthStateChanged(
     auth,
     (user) => {
-      console.log("🔄 Auth state changed:", user ? "Logged in" : "Logged out");
+      console.log("?? Auth state changed:", user ? "Logged in" : "Logged out");
 
       // Cleanup on logout
       if (!user) {
@@ -496,11 +605,11 @@ function initAuth() {
         return;
       }
 
-      console.log("📧 User email:", user.email);
-      console.log("👤 User displayName:", user.displayName);
+      console.log("?? User email:", user.email);
+      console.log("?? User displayName:", user.displayName);
 
       if (!isAdminUser(user)) {
-        console.log("🚫 Access denied for email:", user.email);
+        console.log("?? Access denied for email:", user.email);
         sessionStorage.removeItem("adminFirstLogin");
         sessionStorage.removeItem("adminSessionTime");
         cleanup();
@@ -524,14 +633,14 @@ function initAuth() {
       }
 
       // User is authenticated admin
-      console.log("✅ Admin access granted for:", user.email);
+      console.log("? Admin access granted for:", user.email);
       showAuthButtons(true, user);
       initTickets();
 
-      // ✅ INIT TICKET GRAB SYSTEM
+      // ? INIT TICKET GRAB SYSTEM
       initTicketGrabSystem();
 
-      // ✅ CHECK: Apakah ini login pertama kali atau page refresh?
+      // ? CHECK: Apakah ini login pertama kali atau page refresh?
       const isFirstLogin = !sessionStorage.getItem("adminFirstLogin");
 
       if (isFirstLogin) {
@@ -558,13 +667,13 @@ function initAuth() {
         // Set session storage untuk menandai sudah login
         sessionStorage.setItem("adminFirstLogin", "true");
         sessionStorage.setItem("adminSessionTime", Date.now().toString());
-        console.log("🎉 First login - welcome message shown");
+        console.log("?? First login - welcome message shown");
       } else {
-        console.log("🔄 Page refresh - no welcome message");
+        console.log("?? Page refresh - no welcome message");
       }
     },
     (error) => {
-      console.error("❌ Auth state error:", error);
+      console.error("? Auth state error:", error);
       sessionStorage.removeItem("adminFirstLogin");
       sessionStorage.removeItem("adminSessionTime");
       cleanup();
@@ -596,7 +705,7 @@ function showAuthButtons(isLoggedIn, user = null) {
     const displayName = getAdminDisplayName(user);
     userName.textContent = displayName;
 
-    console.log("👤 User display info:", {
+    console.log("?? User display info:", {
       email: user.email,
       googleDisplayName: user.displayName,
       finalDisplayName: displayName,
@@ -604,7 +713,7 @@ function showAuthButtons(isLoggedIn, user = null) {
   }
 }
 
-// ==================== 🔹 Show Login Screen ====================
+// ==================== ?? Show Login Screen ====================
 function showLoginScreen() {
   // Cleanup data
   allTickets = [];
@@ -640,29 +749,29 @@ function showLoginScreen() {
   }
 }
 
-// ==================== 🔹 Google Login Handler ====================
+// ==================== ?? Google Login Handler ====================
 async function handleGoogleLogin() {
   if (loginInProgress) {
-    console.log("⏳ Login already in progress...");
+    console.log("? Login already in progress...");
     return;
   }
 
   loginInProgress = true;
 
   try {
-    console.log("🔄 Attempting Google login...");
+    console.log("?? Attempting Google login...");
 
     if (loginBtn) loginBtn.disabled = true;
     if (goLoginBtn) goLoginBtn.disabled = true;
 
     const result = await signInWithPopup(auth, provider);
-    console.log("✅ Login successful:", result.user.email);
+    console.log("? Login successful:", result.user.email);
 
     // Set session storage untuk menandai first login
     sessionStorage.setItem("adminFirstLogin", "true");
     sessionStorage.setItem("adminSessionTime", Date.now().toString());
   } catch (error) {
-    console.error("❌ Login error details:", error);
+    console.error("? Login error details:", error);
 
     if (error.code === "auth/popup-blocked") {
       await Swal.fire({
@@ -671,9 +780,9 @@ async function handleGoogleLogin() {
         icon: "warning",
       });
     } else if (error.code === "auth/popup-closed-by-user") {
-      console.log("👤 User closed the popup");
+      console.log("?? User closed the popup");
     } else if (error.code === "auth/cancelled-popup-request") {
-      console.log("🔄 Popup request cancelled");
+      console.log("?? Popup request cancelled");
     } else if (error.code === "auth/network-request-failed") {
       await Swal.fire({
         title: "Network Error",
@@ -694,10 +803,10 @@ async function handleGoogleLogin() {
   }
 }
 
-// ==================== 🔹 Handle Logout dengan Cleanup ====================
+// ==================== ?? Handle Logout dengan Cleanup ====================
 async function handleLogout() {
   try {
-    console.log("🚪 Logging out...");
+    console.log("?? Logging out...");
 
     // Cleanup first
     cleanup();
@@ -722,9 +831,9 @@ async function handleLogout() {
     // Perform logout
     await signOut(auth);
 
-    console.log("✅ Logout successful");
+    console.log("? Logout successful");
   } catch (error) {
-    console.error("❌ Logout error:", error);
+    console.error("? Logout error:", error);
 
     // Even if logout fails, clear local data and show login screen
     cleanup();
@@ -743,9 +852,9 @@ async function handleLogout() {
   }
 }
 
-// ==================== 🔹 Cleanup Function ====================
+// ==================== ?? Cleanup Function ====================
 function cleanup() {
-  console.log("🧹 Cleaning up resources...");
+  console.log("?? Cleaning up resources...");
 
   try {
     // Unsubscribe from real-time listeners
@@ -766,20 +875,20 @@ function cleanup() {
       resizeTimeout = null;
     }
   } catch (error) {
-    console.error("❌ Error during cleanup:", error);
+    console.error("? Error during cleanup:", error);
   }
 }
 
-// ==================== 🔹 Load Tickets ====================
+// ==================== ?? Load Tickets ====================
 function initTickets() {
-  console.log("🔄 Initializing tickets...");
+  console.log("?? Initializing tickets...");
 
   // Clear previous data
   allTickets = [];
 
   // Check authentication first
   if (!auth.currentUser) {
-    console.log("🚫 User not authenticated, showing login screen");
+    console.log("?? User not authenticated, showing login screen");
     showLoginScreen();
     return;
   }
@@ -816,7 +925,7 @@ function initTickets() {
     (snapshot) => {
       // Check if user is still logged in
       if (!auth.currentUser) {
-        console.log("🚫 User logged out during data fetch");
+        console.log("?? User logged out during data fetch");
         showLoginScreen();
         return;
       }
@@ -826,15 +935,15 @@ function initTickets() {
         ...doc.data(),
       }));
 
-      console.log("✅ Tickets loaded:", tickets.length);
+      console.log("? Tickets loaded:", tickets.length);
       allTickets = tickets;
 
-      // ✅ UPDATE GLOBAL VARIABLE UNTUK EXPORT.JS
+      // ? UPDATE GLOBAL VARIABLE UNTUK EXPORT.JS
       if (typeof window.updateAllTickets === "function") {
         window.updateAllTickets(tickets);
       }
 
-      // ✅ GUNAKAN refreshFilterState DARIPADA renderTickets LANGSUNG
+      // ? GUNAKAN refreshFilterState DARIPADA renderTickets LANGSUNG
       refreshFilterState();
 
       // Start auto-updating durations
@@ -843,7 +952,7 @@ function initTickets() {
       setTimeout(addDataLabels, 100);
     },
     (error) => {
-      console.error("❌ Error loading tickets:", error);
+      console.error("? Error loading tickets:", error);
 
       // Handle permission errors gracefully
       if (
@@ -851,7 +960,7 @@ function initTickets() {
         error.code === "missing-or-insufficient-permissions"
       ) {
         console.log(
-          "🔐 Permission denied - user might be logged out or not admin",
+          "?? Permission denied - user might be logged out or not admin",
         );
         showLoginScreen();
       } else {
@@ -861,14 +970,12 @@ function initTickets() {
   );
 }
 
-// ==================== 🔹 Duration Calculation ====================
+// ==================== ?? Duration Calculation ====================
 function calculateDuration(ticket) {
   try {
-    console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
-
-    // ✅ VALIDASI INPUT
+    // ? VALIDASI INPUT
     if (!ticket) {
-      console.error("❌ Ticket is null or undefined");
+      console.error("? Ticket is null or undefined");
       return "-";
     }
 
@@ -877,76 +984,51 @@ function calculateDuration(ticket) {
     const hasClosedAt = !!ticket.closedAt;
     const hasOnProgressAt = !!ticket.onProgressAt;
 
-    console.log("🔍 Debug calculateDuration - PROCESSED:", {
-      ticketId: ticket.id,
-      status: ticketStatus,
-      closedAt: ticket.closedAt,
-      onProgressAt: ticket.onProgressAt,
-      createdAt: ticket.createdAt,
-      hasClosedAt: hasClosedAt,
-      hasOnProgressAt: hasOnProgressAt,
-    });
-
-    // ❌ Untuk ticket Open, tidak ada duration
+    // ? Untuk ticket Open, tidak ada duration
     if (ticketStatus === "Open") {
-      console.log("❌ Ticket Open - no duration");
       return "-";
     }
 
-    // ✅ LOGIC BARU: Handle berbagai skenario
+    // ? LOGIC BARU: Handle berbagai skenario
     let startDate;
     let endDate;
-    let durationType = "";
 
     if (ticketStatus === "Closed" && hasClosedAt) {
-      // ✅ SKENARIO 1: Ticket di-close (dengan atau tanpa onProgressAt)
+      // ? SKENARIO 1: Ticket di-close (dengan atau tanpa onProgressAt)
       if (hasOnProgressAt) {
         // Case A: Normal flow - dari On Progress ke Closed
         startDate = ticket.onProgressAt.toDate
           ? ticket.onProgressAt.toDate()
           : new Date(ticket.onProgressAt);
-        durationType = "closed-from-progress";
       } else {
         // Case B: Langsung di-close tanpa On Progress - gunakan createdAt
         startDate = ticket.createdAt.toDate
           ? ticket.createdAt.toDate()
           : new Date(ticket.createdAt);
-        durationType = "closed-directly";
       }
       endDate = ticket.closedAt.toDate
         ? ticket.closedAt.toDate()
         : new Date(ticket.closedAt);
     } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
-      // ✅ SKENARIO 2: Masih On Progress (real-time)
+      // ? SKENARIO 2: Masih On Progress (real-time)
       startDate = ticket.onProgressAt.toDate
         ? ticket.onProgressAt.toDate()
         : new Date(ticket.onProgressAt);
       endDate = new Date(); // Waktu sekarang untuk real-time duration
-      durationType = "onProgress";
     } else {
-      // ❌ Kondisi tidak memenuhi syarat
-      console.log("❌ Condition failed - status:", ticketStatus);
+      // ? Kondisi tidak memenuhi syarat
       return "-";
     }
 
-    console.log("✅ Dates calculated:", {
-      startDate,
-      endDate,
-      durationType,
-      status: ticketStatus,
-    });
-
     const duration = formatDuration(startDate, endDate);
-    console.log("✅ Final duration:", duration);
-
     return duration;
   } catch (error) {
-    console.error("❌ Error in calculateDuration:", error);
+    console.error("? Error in calculateDuration:", error);
     return "-";
   }
 }
 
-// ✅ ADD MISSING FUNCTION: formatDuration
+// ? ADD MISSING FUNCTION: formatDuration
 function formatDuration(startDate, endDate) {
   try {
     const diffMs = endDate - startDate;
@@ -958,7 +1040,7 @@ function formatDuration(startDate, endDate) {
       return "Less than 1 Minute";
     }
   } catch (error) {
-    console.error("❌ Error in formatDuration:", error);
+    console.error("? Error in formatDuration:", error);
     return "-";
   }
 }
@@ -1011,7 +1093,7 @@ function getDurationClass(ticket) {
     if (diffHours > 4) return "duration-medium";
     return "duration-short";
   } catch (error) {
-    console.error("❌ Error in getDurationClass:", error);
+    console.error("? Error in getDurationClass:", error);
     return "duration-neutral";
   }
 }
@@ -1034,14 +1116,14 @@ function getDurationTooltip(ticket) {
   }
 }
 
-// ==================== 🔹 Start Duration Updates ====================
+// ==================== ?? Start Duration Updates ====================
 function startDurationUpdates() {
   // Clear existing interval
   if (durationIntervalId) {
     clearInterval(durationIntervalId);
   }
 
-  // ✅ INTERVAL untuk update real-time On Progress tickets
+  // ? INTERVAL untuk update real-time On Progress tickets
   durationIntervalId = setInterval(() => {
     const hasOnProgressTickets = allTickets.some(
       (ticket) => ticket.status_ticket === "On Progress" && ticket.onProgressAt,
@@ -1094,21 +1176,21 @@ function updateDurations() {
       }
     });
   } catch (error) {
-    console.error("❌ Error in updateDurations:", error);
+    console.error("? Error in updateDurations:", error);
   }
 }
 
-// ==================== 🔹 Render Functions ====================
+// ==================== ?? Render Functions ====================
 function renderTickets(tickets) {
   if (!tickets || tickets.length === 0) {
     showEmptyState();
     return;
   }
 
-  // ✅ APPLY MULTIPLE FILTERS + QUICK FILTER
+  // ? APPLY MULTIPLE FILTERS + QUICK FILTER
   let filtered = tickets;
 
-  // ✅ TERAPKAN QUICK FILTER JIKA ADA
+  // ? TERAPKAN QUICK FILTER JIKA ADA
   if (currentQuickFilter && currentQuickFilter !== "all") {
     const currentAdmin = getAdminDisplayName(auth.currentUser);
 
@@ -1125,11 +1207,6 @@ function renderTickets(tickets) {
         );
         break;
     }
-
-    console.log("🔍 Applied quick filter:", currentQuickFilter, {
-      before: tickets.length,
-      after: filtered.length,
-    });
   }
 
   // Filter by status (dropdown)
@@ -1141,14 +1218,6 @@ function renderTickets(tickets) {
   if (actionByFilter && actionByFilter.value !== "all") {
     filtered = filtered.filter((t) => t.action_by === actionByFilter.value);
   }
-
-  console.log("🔍 Final filtered tickets:", {
-    original: tickets.length,
-    filtered: filtered.length,
-    quickFilter: currentQuickFilter,
-    statusFilter: filterSelect?.value,
-    actionByFilter: actionByFilter?.value,
-  });
 
   if (isCardView) {
     renderCards(filtered);
@@ -1168,18 +1237,10 @@ function renderTable(data) {
   ticketTableBody.innerHTML = "";
 
   data.forEach((ticket) => {
-    console.log("🔍 Render Ticket:", {
-      id: ticket.id,
-      status: ticket.status_ticket,
-      closedAt: ticket.closedAt,
-      onProgressAt: ticket.onProgressAt,
-      duration: calculateDuration(ticket),
-    });
-
-    // ✅ AUTO QA: Tentukan nilai QA untuk display
+    // ? AUTO QA: Tentukan nilai QA untuk display
     const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
-    // ✅ TICKET GRAB SYSTEM: Tentukan status ticket
+    // ? TICKET GRAB SYSTEM: Tentukan status ticket
     const isAvailable = isTicketAvailable(ticket);
     const isMine = isMyTicket(ticket);
 
@@ -1194,57 +1255,57 @@ function renderTable(data) {
     tr.className = rowClass;
 
     tr.innerHTML = `
-      <!-- ✅ Date -->
+      <!-- ? Date -->
       <td>${formatDate(ticket.createdAt)}</td>
       
       
-      <!-- ✅ Inventory -->
+      <!-- ? Inventory -->
       <td>${ticket.inventory || "-"}</td>
       
-      <!-- ✅ Device -->
+      <!-- ? Device -->
       <td>${ticket.device || "-"}</td>
       
-      <!-- ✅ Name -->
+      <!-- ? Name -->
       <td>${ticket.name || "-"}</td>
       
-      <!-- ✅ Email (UPDATED - bisa diedit) -->
+      <!-- ? Email -->
       <td>
       <span class="email-cell" title="${ticket.user_email || "-"}">
       ${ticket.user_email || "-"}
       </span>
       </td>
       
-      <!-- ✅ Phone -->
+      <!-- ? Phone -->
       <td>${ticket.user_phone || "-"}</td>
       
-      <!-- ✅ Department -->
+      <!-- ? Department -->
       <td>${ticket.department || "-"}</td>
       
-      <!-- ✅ Location -->
+      <!-- ? Location -->
       <td>${ticket.location || "-"}</td>
       
-      <!-- ✅ Priority -->
+      <!-- ? Priority -->
       <td>
       <span class="priority-badge priority-${
         ticket.priority?.toLowerCase() || "medium"
       }">
-        ${ticket.priority || "Medium"}
+          ${ticket.priority || "Medium"}
         </span>
         </td>
         
-        <!-- ✅ Subject -->
+        <!-- ? Subject -->
         <td>${ticket.subject || "-"}</td>
         
-        <!-- ✅ Message -->
+        <!-- ? Message -->
         <td class="note-cell">${ticket.message || "-"}</td>
         
-        <!-- ✅ Note -->
+        <!-- ? Note -->
         <td class="note-cell">${ticket.note || "-"}</td>
         
-        <!-- ✅ Code -->
+        <!-- ? Code -->
         <td>${ticket.code || "-"}</td>
         
-        <!-- ✅ Action By -->
+        <!-- ? Action By -->
         <td>
         ${
           ticket.action_by
@@ -1253,67 +1314,67 @@ function renderTable(data) {
         }
         </td>
         
-        <!-- ✅ QA (Auto) -->
+        <!-- ? QA (Auto) -->
         <td>
         <span class="qa-badge qa-${displayQA.toLowerCase()}">
         ${displayQA}
         </span>
         </td>
-        <!-- ✅ Duration (UPDATED) -->
+        
+        <!-- ? Duration -->
         <td>
           <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
             ${calculateDuration(ticket)}
           </span>
         </td>
-      
-      <!-- ✅ Status -->
-      <td>
+        <!-- ? Status -->
+        <td>
         <span class="status-badge status-${
           ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"
         }">
-          ${ticket.status_ticket || "Open"}
+        ${ticket.status_ticket || "Open"}
         </span>
+        </td>
+        
+      <!-- ? ACTIONS -->
+      <td>
+        <div class="action-buttons">
+          ${
+            isAvailable
+              ? `
+            <!-- ? TICKET AVAILABLE: Tombol GRAB & DELETE -->
+            <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
+              <i class="fa-solid fa-hand"></i> Take
+            </button>
+            <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          `
+              : isMine
+                ? `
+            <!-- ? MY TICKET: Bisa Edit, Release & Delete -->
+            <button class="edit-btn" data-id="${ticket.id}" title="Edit ticket">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="release-btn" data-id="${ticket.id}" title="Release ticket">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          `
+                : `
+            <!-- ? TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
+            <button class="view-btn" data-id="${ticket.id}" title="View only (handled by ${ticket.action_by})">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" title="Cannot delete - handled by ${ticket.action_by}" disabled>
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          `
+          }
+        </div>
       </td>
-      
-      <!-- ✅ ACTIONS -->
-<td>
-  <div class="action-buttons">
-    ${
-      isAvailable
-        ? `
-      <!-- ✅ TICKET AVAILABLE: Tombol GRAB & DELETE -->
-      <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
-        <i class="fa-solid fa-hand"></i> Take
-      </button>
-      <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-    `
-        : isMine
-          ? `
-      <!-- ✅ MY TICKET: Bisa Edit, Release & Delete -->
-      <button class="edit-btn" data-id="${ticket.id}" title="Edit ticket">
-        <i class="fa-solid fa-pen"></i>
-      </button>
-      <button class="release-btn" data-id="${ticket.id}" title="Release ticket">
-        <i class="fa-solid fa-rotate-left"></i>
-      </button>
-      <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-    `
-          : `
-      <!-- ✅ TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
-      <button class="view-btn" data-id="${ticket.id}" title="View only (handled by ${ticket.action_by})">
-        <i class="fa-solid fa-eye"></i>
-      </button>
-      <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" title="Cannot delete - handled by ${ticket.action_by}" disabled>
-        <i class="fa-solid fa-trash"></i>
-      </button>
-    `
-    }
-  </div>
-</td>
     `;
     ticketTableBody.appendChild(tr);
   });
@@ -1332,10 +1393,10 @@ function renderCards(data) {
   cardContainer.innerHTML = "";
 
   data.forEach((ticket) => {
-    // ✅ AUTO QA: Tentukan nilai QA untuk display
+    // ? AUTO QA: Tentukan nilai QA untuk display
     const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
 
-    // ✅ TICKET GRAB SYSTEM: Tentukan status ticket
+    // ? TICKET GRAB SYSTEM: Tentukan status ticket
     const isAvailable = isTicketAvailable(ticket);
     const isMine = isMyTicket(ticket);
 
@@ -1350,7 +1411,7 @@ function renderCards(data) {
     card.className = cardClass;
     card.innerHTML = `
       <div class="card-header">
-        <h3>Ticket ${ticket.id}</h3>
+        <h3 title="Original ID: ${ticket.id}">${formatTicketId(ticket)}</h3>
         <span class="status-badge status-${
           ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"
         }">
@@ -1359,32 +1420,32 @@ function renderCards(data) {
       </div>
       
       <div class="card-content">
-        <!-- ✅ Date -->
+        <!-- ? Date -->
         <div class="card-field">
           <strong><i class="fa-solid fa-calendar"></i> Date</strong>
           <span>${formatDate(ticket.createdAt)}</span>
         </div>
         
         
-        <!-- ✅ Inventory -->
+        <!-- ? Inventory -->
         <div class="card-field">
         <strong><i class="fa-solid fa-barcode"></i> Inventory</strong>
         <span>${ticket.inventory || "-"}</span>
         </div>
         
-        <!-- ✅ Device -->
+        <!-- ? Device -->
         <div class="card-field">
         <strong><i class="fa-solid fa-computer"></i> Device</strong>
         <span>${ticket.device || "-"}</span>
         </div>
         
-        <!-- ✅ Name -->
+        <!-- ? Name -->
         <div class="card-field">
         <strong><i class="fa-solid fa-user"></i> Name</strong>
         <span>${ticket.name || "-"}</span>
         </div>
         
-        <!-- ✅ Email (UPDATED - bisa diedit) -->
+        <!-- ? Email -->
         <div class="card-field">
         <strong><i class="fa-solid fa-envelope"></i> Email</strong>
         <span class="email-cell" title="${ticket.user_email || "-"}">
@@ -1392,59 +1453,59 @@ function renderCards(data) {
         </span>
         </div>
         
-        <!-- ✅ Phone -->
+        <!-- ? Phone -->
         <div class="card-field">
         <strong><i class="fa-solid fa-phone"></i> Phone</strong>
         <span>${ticket.user_phone || "-"}</span>
         </div>
         
-        <!-- ✅ Department -->
+        <!-- ? Department -->
         <div class="card-field">
         <strong><i class="fa-solid fa-building"></i> Department</strong>
         <span>${ticket.department || "-"}</span>
         </div>
         
-        <!-- ✅ Location -->
+        <!-- ? Location -->
         <div class="card-field">
         <strong><i class="fa-solid fa-location-dot"></i> Location</strong>
-          <span>${ticket.location || "-"}</span>
-          </div>
-          
-          <!-- ✅ Priority -->
-          <div class="card-field">
-          <strong><i class="fa-solid fa-flag"></i> Priority</strong>
-          <span class="priority-badge priority-${
-            ticket.priority?.toLowerCase() || "medium"
-          }">
+        <span>${ticket.location || "-"}</span>
+        </div>
+        
+        <!-- ? Priority -->
+        <div class="card-field">
+        <strong><i class="fa-solid fa-flag"></i> Priority</strong>
+        <span class="priority-badge priority-${
+          ticket.priority?.toLowerCase() || "medium"
+        }">
           ${ticket.priority || "Medium"}
           </span>
           </div>
           
-          <!-- ✅ Subject -->
+          <!-- ? Subject -->
           <div class="card-field">
           <strong><i class="fa-solid fa-tag"></i> Subject</strong>
           <span>${ticket.subject || "-"}</span>
           </div>
           
-          <!-- ✅ Message -->
+          <!-- ? Message -->
           <div class="card-field">
           <strong><i class="fa-solid fa-message"></i> Message</strong>
           <span>${ticket.message || "-"}</span>
           </div>
           
-          <!-- ✅ Note -->
+          <!-- ? Note -->
           <div class="card-field">
           <strong><i class="fa-solid fa-note-sticky"></i> Note</strong>
           <span>${ticket.note || "-"}</span>
           </div>
           
-          <!-- ✅ Code -->
+          <!-- ? Code -->
           <div class="card-field">
           <strong><i class="fa-solid fa-code"></i> Code</strong>
           <span>${ticket.code || "-"}</span>
           </div>
           
-          <!-- ✅ Action By -->
+          <!-- ? Action By -->
           <div class="card-field">
           <strong><i class="fa-solid fa-user-gear"></i> Action By</strong>
           <span>
@@ -1455,16 +1516,7 @@ function renderCards(data) {
           }
             </span>
             </div>
-            
-            <!-- ✅ QA (Auto) -->
-            <div class="card-field">
-            <strong><i class="fa-solid fa-check-double"></i> QA</strong>
-            <span class="qa-badge qa-${displayQA.toLowerCase()}">
-            ${displayQA}
-            </span>
-            </div>
-            </div>
-            <!-- ✅ Duration (UPDATED) -->
+            <!-- ? Duration -->
             <div class="card-field">
               <strong><i class="fa-solid fa-clock"></i> Duration</strong>
               <span class="duration-badge ${getDurationClass(ticket)}" 
@@ -1473,43 +1525,52 @@ function renderCards(data) {
               </span>
             </div>
             
-            <!-- ✅ CARD ACTIONS -->
-<div class="card-actions">
-  ${
-    isAvailable
-      ? `
-    <!-- ✅ TICKET AVAILABLE: Tombol GRAB & DELETE -->
-    <button class="grab-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-hand"></i> Take
-    </button>
-    <button class="delete-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-trash"></i> Delete
-    </button>
-  `
-      : isMine
-        ? `
-    <!-- ✅ MY TICKET: Bisa Edit, Release & Delete -->
-    <button class="edit-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-pen"></i> Edit
-    </button>
-    <button class="release-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-rotate-left"></i> Release
-    </button>
-    <button class="delete-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-trash"></i> Delete
-    </button>
-  `
-        : `
-    <!-- ✅ TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
-    <button class="view-btn" data-id="${ticket.id}">
-      <i class="fa-solid fa-eye"></i> View Only
-    </button>
-    <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" disabled>
-      <i class="fa-solid fa-trash"></i> Delete
-    </button>
-  `
-  }
-</div>
+            <!-- ? QA (Auto) -->
+            <div class="card-field">
+            <strong><i class="fa-solid fa-check-double"></i> QA</strong>
+            <span class="qa-badge qa-${displayQA.toLowerCase()}">
+            ${displayQA}
+            </span>
+            </div>
+            </div>
+            
+            <!-- ? CARD ACTIONS -->
+            <div class="card-actions">
+            ${
+              isAvailable
+                ? `
+            <!-- ? TICKET AVAILABLE: Tombol GRAB & DELETE -->
+            <button class="grab-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-hand"></i> Take
+          </button>
+          <button class="delete-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        `
+                : isMine
+                  ? `
+          <!-- ? MY TICKET: Bisa Edit, Release & Delete -->
+          <button class="edit-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-pen"></i> Edit
+          </button>
+          <button class="release-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-rotate-left"></i> Release
+          </button>
+          <button class="delete-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        `
+                  : `
+          <!-- ? TICKET ORANG: Hanya View, TIDAK BISA DELETE -->
+          <button class="view-btn" data-id="${ticket.id}">
+            <i class="fa-solid fa-eye"></i> View Only
+          </button>
+          <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" disabled>
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        `
+            }
+      </div>
     `;
     cardContainer.appendChild(card);
   });
@@ -1563,7 +1624,7 @@ function showErrorState(message) {
   }
 }
 
-// ==================== 🔹 View Controls ====================
+// ==================== ?? View Controls ====================
 function toggleView() {
   isCardView = !isCardView;
 
@@ -1580,7 +1641,7 @@ function handleFilterChange() {
   renderTickets(allTickets);
 }
 
-// ==================== 🔹 Responsive Auto Mode ====================
+// ==================== ?? Responsive Auto Mode ====================
 function handleResponsiveView() {
   if (window.innerWidth <= 768) {
     isCardView = true;
@@ -1595,16 +1656,16 @@ function handleResponsiveView() {
   }
 }
 
-// ✅ GANTI event listener dengan debounce untuk hindari re-render berlebihan
+// ? GANTI event listener dengan debounce untuk hindari re-render berlebihan
 window.addEventListener("resize", function () {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
-    console.log("🔄 Responsive view adjusted");
+    console.log("?? Responsive view adjusted");
     handleResponsiveView();
   }, 250); // Debounce 250ms
 });
 
-// ==================== 🔹 Format Date ====================
+// ==================== ?? Format Date ====================
 function formatDate(ts) {
   if (!ts) return "-";
   try {
@@ -1614,12 +1675,12 @@ function formatDate(ts) {
       timeStyle: "short",
     });
   } catch (error) {
-    console.error("❌ Error formatting date:", error);
+    console.error("? Error formatting date:", error);
     return "-";
   }
 }
 
-// ==================== 🔹 Attach Edit/Delete Events ====================
+// ==================== ?? Attach Edit/Delete Events ====================
 function attachRowEvents() {
   // Existing events
   document.querySelectorAll(".edit-btn").forEach((btn) => {
@@ -1629,29 +1690,29 @@ function attachRowEvents() {
     btn.addEventListener("click", handleDelete);
   });
 
-  // ✅ NEW: Grab ticket events
+  // ? NEW: Grab ticket events
   document.querySelectorAll(".grab-btn").forEach((btn) => {
     btn.addEventListener("click", handleGrabTicket);
   });
 
-  // ✅ NEW: Release ticket events
+  // ? NEW: Release ticket events
   document.querySelectorAll(".release-btn").forEach((btn) => {
     btn.addEventListener("click", handleReleaseTicket);
   });
 
-  // ✅ NEW: View only events
+  // ? NEW: View only events
   document.querySelectorAll(".view-btn").forEach((btn) => {
     btn.addEventListener("click", handleViewTicket);
   });
 }
 
-// ✅ Handle Grab Ticket
+// ? Handle Grab Ticket
 async function handleGrabTicket(e) {
   const ticketId = e.currentTarget.dataset.id;
   await grabTicket(ticketId);
 }
 
-// ✅ Handle Release Ticket
+// ? Handle Release Ticket
 async function handleReleaseTicket(e) {
   const ticketId = e.currentTarget.dataset.id;
 
@@ -1669,14 +1730,14 @@ async function handleReleaseTicket(e) {
   }
 }
 
-// ✅ Handle View Ticket (Read Only)
+// ? Handle View Ticket (Read Only)
 async function handleViewTicket(e) {
   const ticketId = e.currentTarget.dataset.id;
   const ticket = allTickets.find((t) => t.id === ticketId);
 
   if (ticket) {
     Swal.fire({
-      title: "View Only 👀",
+      title: "View Only ??",
       html: `
         <div style="text-align: left;">
           <p><strong>This ticket is being handled by:</strong> ${ticket.action_by}</p>
@@ -1692,7 +1753,7 @@ async function handleViewTicket(e) {
   }
 }
 
-// ✅ CHECK DELETE PERMISSION
+// ? CHECK DELETE PERMISSION
 function canDeleteTicket(ticket) {
   if (!ticket) return false;
 
@@ -1703,24 +1764,7 @@ function canDeleteTicket(ticket) {
   return isAvailable || isMyTicket;
 }
 
-// ✅ GET DELETE PERMISSION MESSAGE
-function getDeletePermissionMessage(ticket) {
-  if (!ticket) return "Ticket not found";
-
-  const currentAdmin = getAdminDisplayName(auth.currentUser);
-  const isMyTicket = ticket.action_by === currentAdmin;
-  const isAvailable = isTicketAvailable(ticket);
-
-  if (isAvailable) {
-    return "You can delete this available ticket";
-  } else if (isMyTicket) {
-    return "You can delete this ticket because you're handling it";
-  } else {
-    return `Cannot delete - currently handled by ${ticket.action_by}`;
-  }
-}
-
-// ==================== 🔹 Handle Delete dengan Permission Check ====================
+// ==================== ?? Handle Delete dengan Permission Check ====================
 async function handleDelete(e) {
   const id = e.currentTarget.dataset.id;
 
@@ -1735,12 +1779,12 @@ async function handleDelete(e) {
   const isMyTicket = ticket.action_by === currentAdmin;
   const isAvailable = isTicketAvailable(ticket);
 
-  // ✅ CHECK PERMISSION: Hanya boleh hapus jika:
+  // ? CHECK PERMISSION: Hanya boleh hapus jika:
   // 1. Ticket available (belum diambil siapa pun), ATAU
   // 2. Ticket milik sendiri (yang login)
   if (!isAvailable && !isMyTicket) {
     Swal.fire({
-      title: "Permission Denied! 🚫",
+      title: "Permission Denied! ??",
       html: `
         <div style="text-align: center;">
           <i class="fa-solid fa-ban" style="font-size: 3rem; color: #e74c3c; margin-bottom: 1rem;"></i>
@@ -1804,7 +1848,7 @@ async function handleDelete(e) {
   }
 }
 
-// ==================== 🔹 Handle Edit ====================
+// ==================== ?? Handle Edit ====================
 async function handleEdit(e) {
   const id = e.currentTarget.dataset.id;
 
@@ -1828,7 +1872,7 @@ async function handleEdit(e) {
     const hasClosedAt = !!data.closedAt;
     const hasOnProgressAt = !!data.onProgressAt;
 
-    // ✅ AUTO QA: Tentukan nilai QA berdasarkan status
+    // ? AUTO QA: Tentukan nilai QA berdasarkan status
     const getAutoQA = (status) => {
       return status === "Closed" ? "Finish" : "Continue";
     };
@@ -1839,7 +1883,16 @@ async function handleEdit(e) {
       title: "Edit Ticket",
       html: `
         <div class="form-grid">
-          <!-- ✅ FIELD INVENTORY -->
+          <!-- ? TICKET ID (Readonly) -->
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label><i class="fa-solid fa-ticket"></i> Ticket ID</label>
+            <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly style="background: #f3f4f6; font-family: monospace; font-weight: bold;">
+            <small style="color: #666; font-size: 0.8rem;">
+              <i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM
+            </small>
+          </div>
+          
+          <!-- ? FIELD INVENTORY -->
           <div class="form-group">
             <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
             <input type="text" id="inventory" class="swal2-input" value="${
@@ -1847,7 +1900,7 @@ async function handleEdit(e) {
             }" placeholder="Inventory Number">
           </div>
           
-          <!-- ✅ FIELD NAME -->
+          <!-- ? FIELD NAME -->
           <div class="form-group">
             <label><i class="fa-solid fa-user"></i> Name</label>
             <input type="text" id="name" class="swal2-input" value="${
@@ -1855,7 +1908,7 @@ async function handleEdit(e) {
             }" placeholder="User Name">
           </div>
 
-          <!-- ✅ FIELD EMAIL -->
+          <!-- ? FIELD EMAIL -->
           <div class="form-group">
             <label><i class="fa-solid fa-envelope"></i> User Email</label>
             <input type="email" id="user_email" class="swal2-input" value="${
@@ -1863,7 +1916,7 @@ async function handleEdit(e) {
             }" placeholder="user@company.com">
           </div>
           
-          <!-- ✅ FIELD ACTION BY -->
+          <!-- ? FIELD ACTION By -->
           <div class="form-group">
             <label><i class="fa-solid fa-user-gear"></i> Action By</label>
             <select id="action_by" class="swal2-select">
@@ -1872,7 +1925,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD PHONE -->
+          <!-- ? FIELD PHONE -->
           <div class="form-group">
             <label><i class="fa-solid fa-phone"></i> Phone Number</label>
             <input type="tel" id="user_phone" class="swal2-input" value="${
@@ -1880,7 +1933,7 @@ async function handleEdit(e) {
             }" placeholder="+62 XXX-XXXX-XXXX">
           </div>
             
-          <!-- ✅ FIELD DEVICE TYPE (HANYA SATU) -->
+          <!-- ? FIELD DEVICE TYPE -->
           <div class="form-group">
             <label><i class="fa-solid fa-computer"></i> Device Type</label>
             <select id="device" class="swal2-select" required>
@@ -1912,7 +1965,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD LOCATION -->
+          <!-- ? FIELD LOCATION -->
           <div class="form-group">
             <label><i class="fa-solid fa-location-dot"></i> Location</label>
             <select id="location" class="swal2-select">
@@ -1920,7 +1973,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD DEPARTMENT -->
+          <!-- ? FIELD DEPARTMENT -->
           <div class="form-group">
             <label><i class="fa-solid fa-building"></i> Department</label>
             <select id="department" class="swal2-select">
@@ -1928,7 +1981,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD PRIORITY -->
+          <!-- ? FIELD PRIORITY -->
           <div class="form-group">
             <label><i class="fa-solid fa-flag"></i> Priority</label>
             <select id="priority" class="swal2-select">
@@ -1936,7 +1989,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD STATUS -->
+          <!-- ? FIELD STATUS -->
           <div class="form-group">
             <label><i class="fa-solid fa-circle-check"></i> Status</label>
             <select id="status_ticket" class="swal2-select">
@@ -1944,7 +1997,7 @@ async function handleEdit(e) {
             </select>
           </div>
           
-          <!-- ✅ FIELD NOTE -->
+          <!-- ? FIELD NOTE -->
           <div class="form-group" style="grid-column: 1 / -1;">
             <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
             <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${
@@ -1969,7 +2022,7 @@ async function handleEdit(e) {
           QA akan otomatis di-set ke "Finish" ketika status Closed, "Continue" untuk status lainnya.
         </div>
         
-        <!-- ✅ HIDDEN FIELD UNTUK AUTO CODE -->
+        <!-- ? HIDDEN FIELD UNTUK AUTO CODE -->
         <input type="hidden" id="code" value="${data.code || ""}">
       `,
       focusConfirm: false,
@@ -1991,7 +2044,7 @@ async function handleEdit(e) {
           status_ticket: document.getElementById("status_ticket").value,
         };
 
-        // ✅ VALIDASI
+        // ? VALIDASI
         try {
           validateTicketBeforeSave(formData);
         } catch (error) {
@@ -2035,28 +2088,6 @@ async function handleEdit(e) {
           </style>
         `;
         document.head.insertAdjacentHTML("beforeend", styles);
-
-        // ✅ EVENT LISTENER UNTUK AUTO UPDATE CODE BERDASARKAN DEVICE TYPE
-        const deviceSelect = document.getElementById("device");
-        if (deviceSelect) {
-          deviceSelect.addEventListener("change", function () {
-            const selectedDevice = this.value;
-            const codeField = document.getElementById("code");
-
-            // Update code berdasarkan device type mapping
-            if (window.CONFIG && window.CONFIG.DEVICE_TYPE_MAPPING) {
-              const newCode =
-                window.CONFIG.DEVICE_TYPE_MAPPING[selectedDevice] || "OT";
-              if (codeField) {
-                codeField.value = newCode;
-              }
-              console.log("🔄 Device changed - Auto code:", {
-                device: selectedDevice,
-                code: newCode,
-              });
-            }
-          });
-        }
       },
     });
 
@@ -2065,49 +2096,36 @@ async function handleEdit(e) {
     // Validasi ulang sebelum update
     validateTicketBeforeSave(formValues);
 
-    // ✅ Tentukan QA berdasarkan status baru
+    // ? Tentukan QA berdasarkan status baru
     const newQA = getAutoQA(formValues.status_ticket);
 
-    // ✅ Dapatkan code yang sudah di-update (baik dari hidden field atau mapping)
+    // ? Dapatkan code yang sudah di-update
     const codeField = document.getElementById("code");
     const updatedCode = codeField
       ? codeField.value
       : window.CONFIG.DEVICE_TYPE_MAPPING[formValues.device] || "OT";
 
-    // Logic untuk menangani timestamp (UPDATED LOGIC)
+    // Logic untuk menangani timestamp
     const updateData = {
       ...formValues,
-      code: updatedCode, // ✅ PAKAI CODE YANG SUDAH DIUPDATE
-      qa: newQA, // ✅ SET QA OTOMATIS
+      code: updatedCode,
+      qa: newQA,
       updatedAt: serverTimestamp(),
     };
 
-    console.log("🔍 Edit Debug:", {
-      currentStatus: currentStatus,
-      newStatus: formValues.status_ticket,
-      newQA: newQA,
-      device: formValues.device,
-      code: updateData.code, // ✅ CODE SUDAH TERUPDATE
-      user_phone: formValues.user_phone,
-      user_email: formValues.user_email,
-      note: formValues.note,
-    });
-
-    // ✅ LOGIC BARU: Handle timestamp berdasarkan status perubahan
+    // ? LOGIC BARU: Handle timestamp berdasarkan status perubahan
     if (
       formValues.status_ticket === "On Progress" &&
       currentStatus !== "On Progress"
     ) {
       // Status berubah ke On Progress untuk pertama kali
       updateData.onProgressAt = serverTimestamp();
-      console.log("🔄 First time On Progress - setting onProgressAt timestamp");
     } else if (
       formValues.status_ticket === "Closed" &&
       currentStatus !== "Closed"
     ) {
       // Status berubah ke Closed untuk pertama kali
       updateData.closedAt = serverTimestamp();
-      console.log("🔄 First time Closed - setting closedAt timestamp");
 
       // Jika sebelumnya On Progress, pertahankan onProgressAt untuk history
       if (currentStatus === "On Progress" && data.onProgressAt) {
@@ -2117,12 +2135,8 @@ async function handleEdit(e) {
       // Status kembali ke Open - reset semua timestamp
       updateData.onProgressAt = null;
       updateData.closedAt = null;
-      console.log("🔄 Back to Open - clearing all timestamps");
     }
-    // Jika status tetap On Progress, JANGAN ubah onProgressAt (biarkan yang pertama)
-    // Jika status tetap Closed, JANGAN ubah closedAt (biarkan yang pertama)
 
-    console.log("📤 Update data:", updateData);
     await updateDoc(docRef, updateData);
 
     Swal.fire("Updated!", "Ticket updated successfully.", "success");
@@ -2135,32 +2149,10 @@ async function handleEdit(e) {
   }
 }
 
-// ==================== 🔹 Dropdown Option Generators ====================
-function getDeviceOptions(selected) {
-  const devices = [
-    "PC Hardware",
-    "PC Software",
-    "Laptop",
-    "Printer",
-    "Network",
-    "Projector",
-    "Others",
-  ];
-
-  return devices
-    .map(
-      (device) =>
-        `<option value="${device}" ${
-          device === selected ? "selected" : ""
-        }>${device}</option>`,
-    )
-    .join("");
-}
-
-// ✅ FIXED: Tambahkan fungsi getActionByOptions yang hilang
+// ==================== ?? Dropdown Option Generators ====================
 function getActionByOptions(selected) {
   if (!window.CONFIG || !window.CONFIG.IT_STAFF) {
-    console.error("❌ IT_STAFF config not found");
+    console.error("? IT_STAFF config not found");
     return '<option value="">No IT Staff</option>';
   }
 
@@ -2259,7 +2251,7 @@ function getStatusOptions(selected) {
     .join("");
 }
 
-// ==================== 🔹 BUILT-IN EXPORT FUNCTION (Fallback) ====================
+// ==================== ?? BUILT-IN EXPORT FUNCTION (Fallback) ====================
 async function handleBuiltInExport() {
   // Apply current filters sama seperti di renderTickets
   let filteredTickets = allTickets;
@@ -2280,7 +2272,7 @@ async function handleBuiltInExport() {
 
   const filterInfo = getCurrentFilterInfo();
 
-  console.log("📊 Built-in export:", {
+  console.log("?? Built-in export:", {
     tickets: filteredTickets.length,
     filter: filterInfo,
   });
@@ -2303,11 +2295,11 @@ async function handleBuiltInExport() {
 
   if (!accept) return;
 
-  // Lanjutkan dengan exportToExcel yang sudah ada
+  // Lanjutkan dengan exportToExcel
   await exportToExcel(filteredTickets, filterInfo);
 }
 
-// ✅ ADD MISSING FUNCTION: exportToExcel (Fallback)
+// ? ADD MISSING FUNCTION: exportToExcel (Fallback)
 async function exportToExcel(tickets, filterInfo) {
   try {
     // Simple fallback export
@@ -2338,7 +2330,7 @@ async function exportToExcel(tickets, filterInfo) {
   }
 }
 
-// ✅ ADD MISSING FUNCTION: convertToCSV
+// ? ADD MISSING FUNCTION: convertToCSV
 function convertToCSV(tickets) {
   const headers = [
     "Date",
@@ -2389,10 +2381,10 @@ function convertToCSV(tickets) {
     .join("\n");
 }
 
-// ==================== 🔹 Export Helper Functions ====================
+// ==================== ?? Export Helper Functions ====================
 function getDisplayedTickets() {
   try {
-    // ✅ APPLY SAME FILTERS SEPERTI DI renderTickets()
+    // ? APPLY SAME FILTERS SEPERTI DI renderTickets()
     let filteredTickets = allTickets;
 
     // Filter by status
@@ -2409,16 +2401,9 @@ function getDisplayedTickets() {
       );
     }
 
-    console.log("🔍 Displayed tickets:", {
-      original: allTickets.length,
-      filtered: filteredTickets.length,
-      statusFilter: filterSelect?.value,
-      actionByFilter: actionByFilter?.value,
-    });
-
     return filteredTickets;
   } catch (error) {
-    console.error("❌ Error getting displayed tickets:", error);
+    console.error("? Error getting displayed tickets:", error);
     return allTickets; // Fallback ke semua tickets
   }
 }
@@ -2444,12 +2429,12 @@ function getCurrentFilterInfo() {
 
     return activeFilters.length > 0 ? activeFilters.join(", ") : "All Tickets";
   } catch (error) {
-    console.error("❌ Error getting filter info:", error);
+    console.error("? Error getting filter info:", error);
     return "All Tickets";
   }
 }
 
-// ==================== 🔹 Utility Functions ====================
+// ==================== ?? Utility Functions ====================
 function addDataLabels() {
   const table = document.getElementById("ticketsTable");
   if (!table) return;
@@ -2467,7 +2452,7 @@ function addDataLabels() {
       });
     });
   } catch (error) {
-    console.error("❌ Error in addDataLabels:", error);
+    console.error("? Error in addDataLabels:", error);
   }
 }
 
@@ -2496,24 +2481,7 @@ style.textContent = `
     vertical-align: middle;
   }
 
-  /* CSS khusus untuk hide kolom DEVICE dengan colgroup */
-  #ticketsTable th:nth-of-type(4),
-  #ticketsTable td:nth-of-type(4),
-  #ticketsTable th:nth-of-type(11),
-  #ticketsTable td:nth-of-type(11)  {
-    display: none !important;
-    width: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    visibility: hidden !important;
-  }
-
-  #ticketsTable col:nth-child(4) {
-    width: 0 !important;
-  }
-
-  /* ✅ TICKET GRAB SYSTEM STYLES */
+  /* ? TICKET GRAB SYSTEM STYLES */
   .quick-filter-container {
     margin-bottom: 20px;
     padding: 15px;
@@ -2633,7 +2601,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Export functions for global access (if needed)
+// Export functions for global access
 window.handleResponsiveView = handleResponsiveView;
 window.addDataLabels = addDataLabels;
 window.redirectToLoginPage = redirectToLoginPage;
@@ -2644,4 +2612,4 @@ window.getCurrentFilterInfo = getCurrentFilterInfo;
 // Cleanup on page unload
 window.addEventListener("beforeunload", cleanup);
 
-console.log("✅ Admin JS with Ticket Grab System loaded successfully");
+console.log("? Admin JS with Ticket Grab System loaded successfully");
