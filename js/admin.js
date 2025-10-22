@@ -59,6 +59,7 @@ let allTickets = [];
 let loginInProgress = false;
 let ticketsUnsubscribe = null;
 let durationIntervalId = null;
+let currentQuickFilter = "all";
 
 // ==================== 🔹 Helper Functions ====================
 function getAdminDisplayName(user) {
@@ -132,7 +133,7 @@ function populateActionByFilter() {
 function isTicketAvailable(ticket) {
   return (
     (!ticket.action_by || ticket.action_by === "") &&
-    ticket.status_ticket === "Open"  // ✅ DIPERBAIKI: harus === "Open"
+    ticket.status_ticket === "Open" // ✅ DIPERBAIKI: harus === "Open"
   );
 }
 
@@ -185,9 +186,13 @@ async function releaseTicket(ticketId) {
 // ✅ Inisialisasi Ticket Grab System
 function initTicketGrabSystem() {
   console.log("🔄 Initializing Ticket Grab System...");
-
+  // Set initial filter state
+  currentQuickFilter = "all";
   // Tambahkan Quick Filter Buttons
   addQuickFilterButtons();
+  setTimeout(() => {
+    refreshFilterState();
+  }, 100);
 }
 
 // ✅ Tambahkan Quick Filter Buttons
@@ -209,10 +214,14 @@ function addQuickFilterButtons() {
     tableWrapper.parentNode.insertBefore(filterContainer, tableWrapper);
   }
 
-  // Event listeners untuk filter buttons
+  // Event listeners untuk filter buttons - IMPROVED
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
+      e.preventDefault(); // ✅ PREVENT DEFAULT BEHAVIOR
+      e.stopPropagation(); // ✅ STOP EVENT BUBBLING
+
       const filter = e.target.dataset.filter;
+      console.log("🎯 Quick filter clicked:", filter);
 
       // Update active state
       document
@@ -228,17 +237,21 @@ function addQuickFilterButtons() {
 
 // ✅ Apply Quick Filter - FIXED!
 function applyQuickFilter(filterType) {
+  currentQuickFilter = filterType;
   let filtered = allTickets;
   const currentAdmin = getAdminDisplayName(auth.currentUser);
 
   switch (filterType) {
     case "available":
       filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
-      console.log("🔍 Available tickets:", filtered.map(t => ({ 
-        id: t.id, 
-        status: t.status_ticket, 
-        action_by: t.action_by 
-      })));
+      console.log(
+        "🔍 Available tickets:",
+        filtered.map((t) => ({
+          id: t.id,
+          status: t.status_ticket,
+          action_by: t.action_by,
+        })),
+      );
       break;
 
     case "my_tickets":
@@ -263,6 +276,30 @@ function applyQuickFilter(filterType) {
   });
 
   renderTickets(filtered);
+}
+
+// ✅ Function untuk refresh filter state - BARU DITAMBAHKAN
+function refreshFilterState() {
+  console.log("🔄 Refreshing filter state:", currentQuickFilter);
+
+  if (currentQuickFilter && currentQuickFilter !== "all") {
+    // Re-apply quick filter
+    applyQuickFilter(currentQuickFilter);
+  } else {
+    // Just re-render with current filters
+    renderTickets(allTickets);
+  }
+
+  // Update button active state
+  const activeBtn = document.querySelector(
+    `.filter-btn[data-filter="${currentQuickFilter}"]`,
+  );
+  if (activeBtn) {
+    document
+      .querySelectorAll(".filter-btn")
+      .forEach((b) => b.classList.remove("active"));
+    activeBtn.classList.add("active");
+  }
 }
 
 // ==================== 🔹 Session Storage Management ====================
@@ -751,7 +788,8 @@ function initTickets() {
         window.updateAllTickets(tickets);
       }
 
-      renderTickets(tickets);
+      // ✅ GUNAKAN refreshFilterState DARIPADA renderTickets LANGSUNG
+      refreshFilterState();
 
       // Start auto-updating durations
       startDurationUpdates();
@@ -996,22 +1034,47 @@ function renderTickets(tickets) {
     return;
   }
 
-  // ✅ APPLY MULTIPLE FILTERS
+  // ✅ APPLY MULTIPLE FILTERS + QUICK FILTER
   let filtered = tickets;
 
-  // Filter by status
+  // ✅ TERAPKAN QUICK FILTER JIKA ADA
+  if (currentQuickFilter && currentQuickFilter !== "all") {
+    const currentAdmin = getAdminDisplayName(auth.currentUser);
+
+    switch (currentQuickFilter) {
+      case "available":
+        filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
+        break;
+      case "my_tickets":
+        filtered = filtered.filter((ticket) => isMyTicket(ticket));
+        break;
+      case "others":
+        filtered = filtered.filter(
+          (ticket) => ticket.action_by && ticket.action_by !== currentAdmin,
+        );
+        break;
+    }
+
+    console.log("🔍 Applied quick filter:", currentQuickFilter, {
+      before: tickets.length,
+      after: filtered.length,
+    });
+  }
+
+  // Filter by status (dropdown)
   if (filterSelect && filterSelect.value !== "all") {
     filtered = filtered.filter((t) => t.status_ticket === filterSelect.value);
   }
 
-  // Filter by Action By
+  // Filter by Action By (dropdown)
   if (actionByFilter && actionByFilter.value !== "all") {
     filtered = filtered.filter((t) => t.action_by === actionByFilter.value);
   }
 
-  console.log("🔍 Filtered tickets:", {
+  console.log("🔍 Final filtered tickets:", {
     original: tickets.length,
     filtered: filtered.length,
+    quickFilter: currentQuickFilter,
     statusFilter: filterSelect?.value,
     actionByFilter: actionByFilter?.value,
   });
@@ -1451,6 +1514,16 @@ function handleResponsiveView() {
     renderTickets(allTickets);
   }
 }
+
+// ✅ GANTI event listener dengan debounce untuk hindari re-render berlebihan
+let resizeTimeout;
+window.addEventListener("resize", function () {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    console.log("🔄 Responsive view adjusted");
+    handleResponsiveView();
+  }, 250); // Debounce 250ms
+});
 
 window.addEventListener("resize", handleResponsiveView);
 
@@ -2063,19 +2136,26 @@ async function exportToExcel(tickets, filterInfo) {
   try {
     // Simple fallback export
     const csvContent = convertToCSV(tickets);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    
+
     link.setAttribute("href", url);
-    link.setAttribute("download", `tickets_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
+    link.setAttribute(
+      "download",
+      `tickets_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    Swal.fire("Exported!", `${tickets.length} tickets exported successfully.`, "success");
+
+    Swal.fire(
+      "Exported!",
+      `${tickets.length} tickets exported successfully.`,
+      "success",
+    );
   } catch (error) {
     console.error("Export error:", error);
     Swal.fire("Export Failed", "Failed to export tickets.", "error");
@@ -2085,34 +2165,52 @@ async function exportToExcel(tickets, filterInfo) {
 // ✅ ADD MISSING FUNCTION: convertToCSV
 function convertToCSV(tickets) {
   const headers = [
-    'Date', 'Duration', 'Inventory', 'Device', 'Name', 'Email', 'Phone', 
-    'Department', 'Location', 'Priority', 'Subject', 'Message', 'Note', 
-    'Code', 'Action By', 'QA', 'Status'
+    "Date",
+    "Duration",
+    "Inventory",
+    "Device",
+    "Name",
+    "Email",
+    "Phone",
+    "Department",
+    "Location",
+    "Priority",
+    "Subject",
+    "Message",
+    "Note",
+    "Code",
+    "Action By",
+    "QA",
+    "Status",
   ];
-  
-  const rows = tickets.map(ticket => [
+
+  const rows = tickets.map((ticket) => [
     formatDate(ticket.createdAt),
     calculateDuration(ticket),
-    ticket.inventory || '',
-    ticket.device || '',
-    ticket.name || '',
-    ticket.user_email || '',
-    ticket.user_phone || '',
-    ticket.department || '',
-    ticket.location || '',
-    ticket.priority || '',
-    ticket.subject || '',
-    ticket.message || '',
-    ticket.note || '',
-    ticket.code || '',
-    ticket.action_by || '',
-    ticket.qa || '',
-    ticket.status_ticket || ''
+    ticket.inventory || "",
+    ticket.device || "",
+    ticket.name || "",
+    ticket.user_email || "",
+    ticket.user_phone || "",
+    ticket.department || "",
+    ticket.location || "",
+    ticket.priority || "",
+    ticket.subject || "",
+    ticket.message || "",
+    ticket.note || "",
+    ticket.code || "",
+    ticket.action_by || "",
+    ticket.qa || "",
+    ticket.status_ticket || "",
   ]);
-  
-  return [headers, ...rows].map(row => 
-    row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')
-  ).join('\n');
+
+  return [headers, ...rows]
+    .map((row) =>
+      row
+        .map((field) => `"${String(field || "").replace(/"/g, '""')}"`)
+        .join(","),
+    )
+    .join("\n");
 }
 
 // ==================== 🔹 Export Helper Functions ====================
