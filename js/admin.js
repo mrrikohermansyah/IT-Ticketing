@@ -1320,13 +1320,6 @@ function renderTable(data) {
         ${displayQA}
         </span>
         </td>
-        
-        <!-- ? Duration -->
-        <td>
-          <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
-            ${calculateDuration(ticket)}
-          </span>
-        </td>
         <!-- ? Status -->
         <td>
         <span class="status-badge status-${
@@ -1334,6 +1327,12 @@ function renderTable(data) {
         }">
         ${ticket.status_ticket || "Open"}
         </span>
+        </td>
+        <!-- ? Duration -->
+        <td>
+          <span class="duration-badge ${getDurationClass(ticket)}" title="${getDurationTooltip(ticket)}">
+            ${calculateDuration(ticket)}
+          </span>
         </td>
         
       <!-- ? ACTIONS -->
@@ -2613,3 +2612,4 @@ window.getCurrentFilterInfo = getCurrentFilterInfo;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("? Admin JS with Ticket Grab System loaded successfully");
+
