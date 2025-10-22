@@ -128,11 +128,11 @@ function populateActionByFilter() {
 
 // ==================== 🔹 TICKET GRAB SYSTEM ====================
 
-// ✅ Cek apakah ticket available untuk diambil
+// ✅ Cek apakah ticket available untuk diambil - FIXED!
 function isTicketAvailable(ticket) {
   return (
     (!ticket.action_by || ticket.action_by === "") &&
-    ticket.status_ticket !== "Open"
+    ticket.status_ticket === "Open"  // ✅ DIPERBAIKI: harus === "Open"
   );
 }
 
@@ -226,7 +226,7 @@ function addQuickFilterButtons() {
   });
 }
 
-// ✅ Apply Quick Filter
+// ✅ Apply Quick Filter - FIXED!
 function applyQuickFilter(filterType) {
   let filtered = allTickets;
   const currentAdmin = getAdminDisplayName(auth.currentUser);
@@ -234,6 +234,11 @@ function applyQuickFilter(filterType) {
   switch (filterType) {
     case "available":
       filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
+      console.log("🔍 Available tickets:", filtered.map(t => ({ 
+        id: t.id, 
+        status: t.status_ticket, 
+        action_by: t.action_by 
+      })));
       break;
 
     case "my_tickets":
@@ -772,7 +777,7 @@ function initTickets() {
   );
 }
 
-// ==================== 🔹 Duration Calculation (NEW LOGIC) ====================
+// ==================== 🔹 Duration Calculation ====================
 function calculateDuration(ticket) {
   console.log("🔍 Debug calculateDuration - RAW TICKET:", ticket);
 
@@ -797,22 +802,31 @@ function calculateDuration(ticket) {
     return "-";
   }
 
-  // ✅ LOGIC BARU: Duration dihitung dari onProgressAt sampai closedAt (atau sekarang untuk On Progress)
+  // ✅ LOGIC BARU: Handle berbagai skenario
   let startDate;
   let endDate;
   let durationType = "";
 
-  if (ticketStatus === "Closed" && hasClosedAt && hasOnProgressAt) {
-    // ✅ Untuk Closed: hitung dari onProgressAt sampai closedAt
-    startDate = ticket.onProgressAt.toDate
-      ? ticket.onProgressAt.toDate()
-      : new Date(ticket.onProgressAt);
+  if (ticketStatus === "Closed" && hasClosedAt) {
+    // ✅ SKENARIO 1: Ticket di-close (dengan atau tanpa onProgressAt)
+    if (hasOnProgressAt) {
+      // Case A: Normal flow - dari On Progress ke Closed
+      startDate = ticket.onProgressAt.toDate
+        ? ticket.onProgressAt.toDate()
+        : new Date(ticket.onProgressAt);
+      durationType = "closed-from-progress";
+    } else {
+      // Case B: Langsung di-close tanpa On Progress - gunakan createdAt
+      startDate = ticket.createdAt.toDate
+        ? ticket.createdAt.toDate()
+        : new Date(ticket.createdAt);
+      durationType = "closed-directly";
+    }
     endDate = ticket.closedAt.toDate
       ? ticket.closedAt.toDate()
       : new Date(ticket.closedAt);
-    durationType = "closed";
   } else if (ticketStatus === "On Progress" && hasOnProgressAt) {
-    // ✅ Untuk On Progress: hitung dari onProgressAt sampai sekarang (real-time)
+    // ✅ SKENARIO 2: Masih On Progress (real-time)
     startDate = ticket.onProgressAt.toDate
       ? ticket.onProgressAt.toDate()
       : new Date(ticket.onProgressAt);
@@ -824,7 +838,7 @@ function calculateDuration(ticket) {
     return "-";
   }
 
-  console.log("✅ Dates:", {
+  console.log("✅ Dates calculated:", {
     startDate,
     endDate,
     durationType,
@@ -832,11 +846,12 @@ function calculateDuration(ticket) {
   });
 
   const duration = formatDuration(startDate, endDate);
-  console.log("✅ Calculated duration:", duration);
+  console.log("✅ Final duration:", duration);
 
   return duration;
 }
 
+// ✅ ADD MISSING FUNCTION: formatDuration
 function formatDuration(startDate, endDate) {
   const diffMs = endDate - startDate;
   const diffMinutes = Math.floor(diffMs / (1000 * 60)); // Konversi langsung ke menit
@@ -845,6 +860,72 @@ function formatDuration(startDate, endDate) {
     return `${diffMinutes} Minute${diffMinutes > 1 ? "s" : ""}`;
   } else {
     return "Less than 1 Minute";
+  }
+}
+
+// Helper function untuk duration badge color
+function getDurationClass(ticket) {
+  if (!ticket.onProgressAt && !ticket.closedAt) return "duration-neutral";
+
+  const ticketStatus = ticket.status_ticket || "Open";
+
+  // Untuk ticket yang belum On Progress atau Closed, gunakan class neutral
+  if (ticketStatus !== "On Progress" && ticketStatus !== "Closed") {
+    return "duration-neutral";
+  }
+
+  let startDate;
+  let endDate;
+
+  if (ticketStatus === "Closed" && ticket.closedAt) {
+    if (ticket.onProgressAt) {
+      // Normal flow: dari On Progress ke Closed
+      startDate = ticket.onProgressAt.toDate
+        ? ticket.onProgressAt.toDate()
+        : new Date(ticket.onProgressAt);
+      endDate = ticket.closedAt.toDate
+        ? ticket.closedAt.toDate()
+        : new Date(ticket.closedAt);
+    } else {
+      // Direct close: dari Created ke Closed
+      startDate = ticket.createdAt.toDate
+        ? ticket.createdAt.toDate()
+        : new Date(ticket.createdAt);
+      endDate = ticket.closedAt.toDate
+        ? ticket.closedAt.toDate()
+        : new Date(ticket.closedAt);
+    }
+  } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
+    startDate = ticket.onProgressAt.toDate
+      ? ticket.onProgressAt.toDate()
+      : new Date(ticket.onProgressAt);
+    endDate = new Date(); // Real-time untuk On Progress
+  } else {
+    return "duration-neutral";
+  }
+
+  const diffHours = (endDate - startDate) / (1000 * 60 * 60);
+
+  if (diffHours > 24) return "duration-long";
+  if (diffHours > 4) return "duration-medium";
+  return "duration-short";
+}
+
+// Helper function untuk duration tooltip
+function getDurationTooltip(ticket) {
+  const status = ticket.status_ticket || "Open";
+  const hasOnProgressAt = !!ticket.onProgressAt;
+
+  if (status === "On Progress") {
+    return "Duration real-time sejak tiket di-take sampai sekarang";
+  } else if (status === "Closed") {
+    if (hasOnProgressAt) {
+      return "Duration sejak tiket di-take sampai ditutup";
+    } else {
+      return "Duration sejak tiket dibuat sampai ditutup (langsung di-close tanpa di-take)";
+    }
+  } else {
+    return "Duration akan muncul ketika status On Progress atau Closed";
   }
 }
 
@@ -906,60 +987,6 @@ function updateDurations() {
       }
     }
   });
-}
-
-// Helper function untuk duration badge color (UPDATED)
-function getDurationClass(ticket) {
-  if (!ticket.onProgressAt) return "duration-neutral";
-
-  const ticketStatus = ticket.status_ticket || "Open";
-
-  // Untuk ticket yang belum On Progress atau Closed, gunakan class neutral
-  if (
-    (ticketStatus !== "On Progress" && ticketStatus !== "Closed") ||
-    (ticketStatus === "On Progress" && !ticket.onProgressAt) ||
-    (ticketStatus === "Closed" && !ticket.closedAt)
-  ) {
-    return "duration-neutral";
-  }
-
-  let startDate;
-  let endDate;
-
-  if (ticketStatus === "Closed" && ticket.closedAt && ticket.onProgressAt) {
-    startDate = ticket.onProgressAt.toDate
-      ? ticket.onProgressAt.toDate()
-      : new Date(ticket.onProgressAt);
-    endDate = ticket.closedAt.toDate
-      ? ticket.closedAt.toDate()
-      : new Date(ticket.closedAt);
-  } else if (ticketStatus === "On Progress" && ticket.onProgressAt) {
-    startDate = ticket.onProgressAt.toDate
-      ? ticket.onProgressAt.toDate()
-      : new Date(ticket.onProgressAt);
-    endDate = new Date(); // Real-time untuk On Progress
-  } else {
-    return "duration-neutral";
-  }
-
-  const diffHours = (endDate - startDate) / (1000 * 60 * 60);
-
-  if (diffHours > 24) return "duration-long";
-  if (diffHours > 4) return "duration-medium";
-  return "duration-short";
-}
-
-// Helper function untuk duration tooltip (UPDATED)
-function getDurationTooltip(ticket) {
-  const status = ticket.status_ticket || "Open";
-
-  if (status === "On Progress") {
-    return "Duration real-time sejak tiket di-take sampai sekarang";
-  } else if (status === "Closed") {
-    return "Duration sejak tiket di-take sampai ditutup";
-  } else {
-    return "Duration akan muncul ketika status On Progress atau Closed";
-  }
 }
 
 // ==================== 🔹 Render Functions ====================
@@ -1534,7 +1561,7 @@ async function handleDelete(e) {
   }
 }
 
-// ==================== 🔹 Handle Edit (UPDATED VERSION) ====================
+// ==================== 🔹 Handle Edit ====================
 async function handleEdit(e) {
   const id = e.currentTarget.dataset.id;
 
@@ -2031,6 +2058,63 @@ async function handleBuiltInExport() {
   await exportToExcel(filteredTickets, filterInfo);
 }
 
+// ✅ ADD MISSING FUNCTION: exportToExcel (Fallback)
+async function exportToExcel(tickets, filterInfo) {
+  try {
+    // Simple fallback export
+    const csvContent = convertToCSV(tickets);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `tickets_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    Swal.fire("Exported!", `${tickets.length} tickets exported successfully.`, "success");
+  } catch (error) {
+    console.error("Export error:", error);
+    Swal.fire("Export Failed", "Failed to export tickets.", "error");
+  }
+}
+
+// ✅ ADD MISSING FUNCTION: convertToCSV
+function convertToCSV(tickets) {
+  const headers = [
+    'Date', 'Duration', 'Inventory', 'Device', 'Name', 'Email', 'Phone', 
+    'Department', 'Location', 'Priority', 'Subject', 'Message', 'Note', 
+    'Code', 'Action By', 'QA', 'Status'
+  ];
+  
+  const rows = tickets.map(ticket => [
+    formatDate(ticket.createdAt),
+    calculateDuration(ticket),
+    ticket.inventory || '',
+    ticket.device || '',
+    ticket.name || '',
+    ticket.user_email || '',
+    ticket.user_phone || '',
+    ticket.department || '',
+    ticket.location || '',
+    ticket.priority || '',
+    ticket.subject || '',
+    ticket.message || '',
+    ticket.note || '',
+    ticket.code || '',
+    ticket.action_by || '',
+    ticket.qa || '',
+    ticket.status_ticket || ''
+  ]);
+  
+  return [headers, ...rows].map(row => 
+    row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')
+  ).join('\n');
+}
+
 // ==================== 🔹 Export Helper Functions ====================
 function getDisplayedTickets() {
   try {
@@ -2283,4 +2367,3 @@ window.getCurrentFilterInfo = getCurrentFilterInfo;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS with Ticket Grab System loaded successfully");
-
