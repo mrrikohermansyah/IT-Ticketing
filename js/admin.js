@@ -132,7 +132,7 @@ function populateActionByFilter() {
 function isTicketAvailable(ticket) {
   return (
     (!ticket.action_by || ticket.action_by === "") &&
-    ticket.status_ticket !== "Closed"
+    ticket.status_ticket !== "Open"
   );
 }
 
@@ -2283,3 +2283,4 @@ window.getCurrentFilterInfo = getCurrentFilterInfo;
 window.addEventListener("beforeunload", cleanup);
 
 console.log("✅ Admin JS with Ticket Grab System loaded successfully");
+
