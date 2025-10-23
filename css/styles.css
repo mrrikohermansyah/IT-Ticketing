@@ -47,25 +47,28 @@ body {
   min-height: 100vh;
 }
 
-/* Header */
+/* Header - REVISI untuk vertical center */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  /* display: flex; */
+  align-items: center; /* Ini yang bikin vertical center */
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid var(--primary);
 }
 
 .logo-container {
-  display: flex;
+  /* display: flex; */
   align-items: center;
-  gap: 0.75rem;
 }
 
 .logo {
   height: 35px;
   width: auto;
+}
+
+.header-text {
+  flex: 1; /* Ambil sisa space */
+  text-align: center; /* Teks di tengah horizontal */
 }
 
 .header-text h1 {
@@ -347,19 +350,14 @@ footer small {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .container {
-    padding: 1rem 0.75rem;
-  }
-
   .header {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     text-align: center;
   }
 
   .logo-container {
-    flex-direction: column;
-    gap: 0.5rem;
+    justify-content: center;
   }
 
   .header-text h1 {
