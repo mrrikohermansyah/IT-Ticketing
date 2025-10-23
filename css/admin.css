@@ -712,3 +712,45 @@ button:hover {
   background: #dc2626 !important;
   transform: translateY(-1px);
 }
+
+/* Button User Ticket */
+.user-ticket-btn {
+  background: linear-gradient(135deg, #ef070a 0%, #c50609 100%);
+  color: white;
+  border: 1px solid #ef070a;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.user-ticket-btn:hover {
+  background: linear-gradient(135deg, #c50609 0%, #a00507 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 7, 10, 0.3);
+}
+
+.user-ticket-btn i {
+  font-size: 16px;
+}
+
+/* Responsive untuk button */
+@media (max-width: 768px) {
+  .user-ticket-btn span {
+    display: none;
+  }
+  
+  .user-ticket-btn {
+    padding: 10px 12px;
+  }
+  
+  .user-ticket-btn i {
+    margin: 0;
+  }
+}

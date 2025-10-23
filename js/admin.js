@@ -54,6 +54,7 @@ const loginBtn = document.getElementById("loginBtn");
 const goLoginBtn = document.getElementById("goLoginBtn");
 const userInfo = document.getElementById("userInfo");
 const userName = document.getElementById("userName");
+const userTicketBtn = document.getElementById("userTicketBtn");
 
 // ==================== ?? State ====================
 let isCardView = false;
@@ -457,6 +458,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function initAdminApp() {
   console.log("?? Initializing admin application...");
+  // Debug DOM elements
+  console.log("?? DOM Elements Check:", {
+    userTicketBtn: !!userTicketBtn,
+    loginBtn: !!loginBtn,
+    logoutBtn: !!logoutBtn,
+    exportBtn: !!exportBtn
+  });
 
   // ? CHECK CONFIG FIRST
   if (!window.CONFIG) {
@@ -493,6 +501,7 @@ function initAdminApp() {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", handleLogout);
   }
+  
 
   // ==================== ?? Export Handler ====================
   if (exportBtn) {
@@ -540,6 +549,13 @@ function initAdminApp() {
     populateActionByFilter();
   }
 
+  if (userTicketBtn) {
+    userTicketBtn.addEventListener("click", redirectToUserTicket);
+    console.log("✅ User ticket button event listener added");
+  } else {
+    console.error("❌ userTicketBtn element not found");
+  }
+
   // Pisahkan event listener untuk kedua tombol login
   if (loginBtn) {
     loginBtn.addEventListener("click", handleGoogleLogin);
@@ -559,7 +575,7 @@ function initAdminApp() {
 // ==================== ?? Redirect to Login Page ====================
 function redirectToLoginPage() {
   console.log("?? Redirecting to login page...");
-  window.location.href = "../login/index.html";
+  window.open("../login/index.html", "_blank", "noopener,noreferrer");
 }
 
 // ==================== ?? Check Admin Access ====================
@@ -684,6 +700,10 @@ function initAuth() {
 }
 
 function showAuthButtons(isLoggedIn, user = null) {
+   if (userTicketBtn) {
+    userTicketBtn.style.display = isLoggedIn ? "flex" : "none";
+    console.log("?? User ticket button display:", userTicketBtn.style.display);
+  }
   if (loginBtn) {
     loginBtn.style.display = isLoggedIn ? "none" : "flex";
     loginBtn.disabled = false;
@@ -713,6 +733,12 @@ function showAuthButtons(isLoggedIn, user = null) {
   }
 }
 
+// ==================== ?? Redirect Functions ====================
+function redirectToUserTicket() {
+  console.log("?? Redirecting to user ticket page...");
+  window.open("../index.html", "_blank", "noopener,noreferrer");
+}
+
 // ==================== ?? Show Login Screen ====================
 function showLoginScreen() {
   // Cleanup data
@@ -736,6 +762,7 @@ function showLoginScreen() {
       </tr>
     `;
   }
+  
 
   // Untuk card container, kita HIDE saja, tidak perlu tampilkan login prompt
   if (cardContainer) {
@@ -2604,6 +2631,7 @@ document.head.appendChild(style);
 // Export functions for global access
 window.handleResponsiveView = handleResponsiveView;
 window.addDataLabels = addDataLabels;
+window.redirectToUserTicket = redirectToUserTicket;
 window.redirectToLoginPage = redirectToLoginPage;
 window.initTickets = initTickets;
 window.getDisplayedTickets = getDisplayedTickets;
