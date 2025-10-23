@@ -262,6 +262,52 @@
       <span class="bubble-text">Admin Panel</span>
     </a>
 
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const adminBubble = document.querySelector(".admin-bubble");
+        let isExpanded = false;
+
+        adminBubble.addEventListener("click", function (e) {
+          if (!isExpanded) {
+            // First click - expand untuk show text
+            e.preventDefault();
+            this.classList.add("expanded");
+            isExpanded = true;
+
+            // Auto collapse setelah 3 detik
+            setTimeout(() => {
+              if (isExpanded) {
+                this.classList.remove("expanded");
+                isExpanded = false;
+              }
+            }, 3000);
+          }
+          // Second click - akan navigate ke admin page (default behavior)
+        });
+
+        // Auto collapse kalau klik di luar bubble
+        document.addEventListener("click", function (e) {
+          if (isExpanded && !adminBubble.contains(e.target)) {
+            adminBubble.classList.remove("expanded");
+            isExpanded = false;
+          }
+        });
+
+        // Hover behavior
+        adminBubble.addEventListener("mouseenter", function () {
+          if (!isExpanded) {
+            this.classList.add("expanded");
+          }
+        });
+
+        adminBubble.addEventListener("mouseleave", function () {
+          if (!isExpanded) {
+            this.classList.remove("expanded");
+          }
+        });
+      });
+    </script>
+
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <!-- SweetAlert2 JS -->
