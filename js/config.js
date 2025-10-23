@@ -95,20 +95,24 @@ const IT_STAFF = [
 
 // ==================== 🔹 Admin Emails Whitelist ====================
 const ADMIN_EMAILS = [
+  "mr.rikohermansyah@gmail.com",
   "riko.hermansyah@meitech-ekabintan.com",
   "devi.armanda@meitech-ekabintan.com",
   "wahyu.nugroho@meitech-ekabintan.com",
   "abdurahman.hakim@meitech-ekabintan.com",
+  "ade.reinalwi@meitech-ekabintan.com",
   "admin@meitech-ekabintan.com",
   "nimda@meitech-ekabintan.com",
 ];
 
 // ==================== 🔹 Admin Name Mapping ====================
 const ADMIN_NAME_MAPPING = {
+  "mr.rikohermansyah@gmail.com": "Riko Hermansyah",
   "riko.hermansyah@meitech-ekabintan.com": "Riko Hermansyah",
   "devi.armanda@meitech-ekabintan.com": "Devi Armanda",
   "wahyu.nugroho@meitech-ekabintan.com": "Wahyu Nugroho",
   "abdurahman.hakim@meitech-ekabintan.com": "Abdurahman Hakim",
+  "ade.reinalwi@meitech-ekabintan.com": "Ade Reinalwi",
   "admin@meitech-ekabintan.com": "System Admin",
   "nimda@meitech-ekabintan.com": "System Admin",
 };
