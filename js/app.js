@@ -24,11 +24,7 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 // ==================== 🔹 DOM Elements ====================
-const loginForm = document.getElementById("loginForm");
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
-const loginEmailBtn = document.getElementById("loginEmailBtn");
-const loginGoogleBtn = document.getElementById("loginGoogle");
+let loginForm, loginEmail, loginPassword, loginEmailBtn, loginGoogleBtn;
 
 // ==================== 🔹 Utility Functions ====================
 function showAlert(icon, title, text, timer = 3000) {
@@ -58,91 +54,123 @@ function setLoading(button, isLoading) {
   }
 }
 
-// ==================== 🔹 Email/Password Login ====================
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// ==================== 🔹 Initialize App ====================
+function initApp() {
+  // Get DOM elements setelah DOM siap
+  loginForm = document.getElementById("loginForm");
+  loginEmail = document.getElementById("loginEmail");
+  loginPassword = document.getElementById("loginPassword");
+  loginEmailBtn = document.getElementById("loginEmailBtn");
+  loginGoogleBtn = document.getElementById("loginGoogle");
 
-  const email = loginEmail.value.trim();
-  const password = loginPassword.value;
-
-  if (!email || !password) {
-    showAlert("warning", "Missing Information", "Please fill in all fields");
+  // Check if elements exist sebelum add event listeners
+  if (!loginForm || !loginEmailBtn || !loginGoogleBtn) {
+    console.error("Some DOM elements not found:", {
+      loginForm: !!loginForm,
+      loginEmailBtn: !!loginEmailBtn,
+      loginGoogleBtn: !!loginGoogleBtn
+    });
     return;
   }
 
-  setLoading(loginEmailBtn, true);
+  // ==================== 🔹 Email/Password Login ====================
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password,
-    );
-    const user = userCredential.user;
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
 
-    await showAlert(
-      "success",
-      "Login Successful!",
-      "Redirecting to admin panel...",
-    );
-
-    // Redirect to admin index page
-    window.location.href = "../admin/index.html";
-  } catch (error) {
-    console.error("Login error:", error);
-
-    let errorMessage = "Login failed. Please try again.";
-
-    switch (error.code) {
-      case "auth/invalid-email":
-        errorMessage = "Invalid email address.";
-        break;
-      case "auth/user-disabled":
-        errorMessage = "This account has been disabled.";
-        break;
-      case "auth/user-not-found":
-        errorMessage = "No account found with this email.";
-        break;
-      case "auth/wrong-password":
-        errorMessage = "Incorrect password.";
-        break;
-      case "auth/too-many-requests":
-        errorMessage = "Too many failed attempts. Please try again later.";
-        break;
+    if (!email || !password) {
+      showAlert("warning", "Missing Information", "Please fill in all fields");
+      return;
     }
 
-    await showAlert("error", "Login Failed", errorMessage);
-  } finally {
-    setLoading(loginEmailBtn, false);
-  }
-});
+    setLoading(loginEmailBtn, true);
 
-// ==================== 🔹 Google Login ====================
-loginGoogleBtn.addEventListener("click", async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
 
-    await showAlert(
-      "success",
-      "Login Successful!",
-      "Redirecting to admin panel...",
-    );
+      await showAlert(
+        "success",
+        "Login Successful!",
+        "Redirecting to admin panel...",
+      );
 
-    // Redirect to admin index page
-    window.location.href = "../admin/index.html";
-  } catch (error) {
-    console.error("Google login error:", error);
+      // Redirect to admin index page
+      window.location.href = "../admin/index.html";
+    } catch (error) {
+      console.error("Login error:", error);
 
-    let errorMessage = "Google login failed. Please try again.";
+      let errorMessage = "Login failed. Please try again.";
 
-    if (error.code === "auth/popup-closed-by-user") {
-      errorMessage = "Login popup was closed. Please try again.";
-    } else if (error.code === "auth/popup-blocked") {
-      errorMessage =
-        "Login popup was blocked. Please allow popups for this site.";
+      switch (error.code) {
+        case "auth/invalid-email":
+          errorMessage = "Invalid email address.";
+          break;
+        case "auth/user-disabled":
+          errorMessage = "This account has been disabled.";
+          break;
+        case "auth/user-not-found":
+          errorMessage = "No account found with this email.";
+          break;
+        case "auth/wrong-password":
+          errorMessage = "Incorrect password.";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Too many failed attempts. Please try again later.";
+          break;
+      }
+
+      await showAlert("error", "Login Failed", errorMessage);
+    } finally {
+      setLoading(loginEmailBtn, false);
     }
+  });
 
-    await showAlert("error", "Google Login Failed", errorMessage);
-  }
-});
+  // ==================== 🔹 Google Login ====================
+  loginGoogleBtn.addEventListener("click", async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      await showAlert(
+        "success",
+        "Login Successful!",
+        "Redirecting to admin panel...",
+      );
+
+      // Redirect to admin index page
+      window.location.href = "../admin/index.html";
+    } catch (error) {
+      console.error("Google login error:", error);
+
+      let errorMessage = "Google login failed. Please try again.";
+
+      if (error.code === "auth/popup-closed-by-user") {
+        errorMessage = "Login popup was closed. Please try again.";
+      } else if (error.code === "auth/popup-blocked") {
+        errorMessage =
+          "Login popup was blocked. Please allow popups for this site.";
+      }
+
+      await showAlert("error", "Google Login Failed", errorMessage);
+    }
+  });
+
+  console.log("✅ Login app initialized successfully");
+}
+
+// ==================== 🔹 Wait for DOM to be ready ====================
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Fallback untuk older browsers
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
