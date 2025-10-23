@@ -1,24 +1,24 @@
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1e40af;
-  --primary-light: #dbeafe;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --primary: #ef070a;
+  --primary-dark: #d10609;
+  --primary-light: #fde8e8;
+  --black: #000000;
   --white: #ffffff;
-  --success: #10b981;
-  --error: #dc2626;
-  --warning: #f59e0b;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #737373;
+  --gray-600: #525252;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --radius: 8px;
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius: 6px;
 }
 
 * {
@@ -33,127 +33,161 @@ body {
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  min-height: 100vh;
-  color: var(--gray-800);
+  background: var(--white);
+  color: var(--black);
   line-height: 1.5;
   font-weight: 400;
+  min-height: 100vh;
 }
 
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   min-height: 100vh;
 }
 
 /* Header */
-header {
-  text-align: center;
-  margin-bottom: 3rem;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary);
 }
 
-header .logo {
-  height: 40px;
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  height: 35px;
   width: auto;
-  margin-bottom: 1rem;
-  opacity: 0.9;
 }
 
-header h1 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.025em;
+.header-text h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 0.2rem;
 }
 
-header p {
+.header-text p {
   color: var(--gray-600);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+
+/* Floating Admin Bubble */
+.admin-bubble {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--primary);
+  color: var(--white);
+  text-decoration: none;
+  border-radius: 50px;
+  box-shadow: var(--shadow-lg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  border: 2px solid var(--white);
+}
+
+.admin-bubble:hover {
+  background: var(--primary-dark);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(239, 7, 10, 0.3);
+}
+
+.admin-bubble:active {
+  transform: translateY(-1px);
+}
+
+.admin-bubble i {
+  font-size: 1rem;
+}
+
+.bubble-text {
+  white-space: nowrap;
 }
 
 /* Card */
 .card {
   background: var(--white);
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--gray-200);
+  margin-bottom: 1.5rem;
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.form-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--primary);
 }
 
 /* Form Layout */
 form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 /* Labels */
 form label {
   display: block;
   position: relative;
+  margin-bottom: 0.75rem;
 }
 
 form label span {
   font-weight: 500;
-  color: var(--gray-700);
-  margin-bottom: 0.5rem;
+  color: var(--gray-800);
+  margin-bottom: 0.35rem;
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
 }
 
 .required::after {
   content: " *";
-  color: var(--error);
+  color: var(--primary);
 }
 
 .helper-text {
   color: var(--gray-500);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  font-style: italic;
-}
-
-/* Floating Tooltip */
-.floating-tooltip {
-  position: fixed;
-  background: var(--gray-900);
-  color: var(--white);
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 400;
-  line-height: 1.4;
-  pointer-events: none;
-  z-index: 10000;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  box-shadow: var(--shadow);
-  max-width: 280px;
-  white-space: normal;
-  word-wrap: break-word;
-  text-align: left;
-  visibility: hidden;
-}
-
-.floating-tooltip::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 6px solid var(--gray-900);
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
 }
 
 /* Inputs */
@@ -163,13 +197,13 @@ input[type="tel"],
 select,
 textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius);
-  font-size: 0.95rem;
-  transition: all 0.2s;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
   background: var(--white);
-  color: var(--gray-900);
+  color: var(--black);
   font-family: inherit;
 }
 
@@ -180,89 +214,82 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 /* Select */
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.75rem center;
+  background-position: right 0.5rem center;
   background-repeat: no-repeat;
-  background-size: 1rem;
-  padding-right: 2.5rem;
-}
-
-select:invalid {
-  color: var(--gray-400);
-}
-
-select option[value=""][disabled] {
-  display: none;
-}
-
-select option {
-  color: var(--gray-900);
+  background-size: 0.75rem;
+  padding-right: 2rem;
 }
 
 /* Priority options color coding */
 select#priority option[value="Low"] {
-  color: var(--success);
+  color: var(--gray-600);
 }
 select#priority option[value="Medium"] {
-  color: var(--warning);
+  color: var(--gray-800);
 }
 select#priority option[value="High"] {
-  color: var(--error);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* Textarea */
 textarea {
   resize: vertical;
-  min-height: 120px;
-  line-height: 1.5;
+  min-height: 90px;
+  line-height: 1.4;
 }
 
 /* Buttons */
 .actions {
   display: flex;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gray-200);
 }
 
-button {
-  padding: 0.875rem 1.5rem;
+.btn-primary,
+.btn-secondary {
+  padding: 0.7rem 1.25rem;
   border: none;
   border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-button[type="submit"] {
+.btn-primary {
   background: var(--primary);
   color: var(--white);
 }
 
-button[type="submit"]:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled) {
   background: var(--primary-dark);
   transform: translateY(-1px);
 }
 
-button[type="reset"] {
-  background: var(--gray-100);
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
+.btn-secondary {
+  background: var(--white);
+  color: var(--black);
+  border: 1.5px solid var(--gray-300);
 }
 
-button[type="reset"]:hover {
-  background: var(--gray-200);
+.btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
 }
 
 /* Button States */
@@ -275,27 +302,31 @@ button:disabled {
 .btn-loading {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-text {
-  display: block;
+  gap: 0.4rem;
+  font-size: 0.8rem;
 }
 
 /* Footer */
 footer {
   text-align: center;
-  margin-top: 3rem;
-  color: var(--gray-500);
-  font-size: 0.875rem;
+  color: var(--gray-600);
+  font-size: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+footer small {
+  display: block;
+  margin-bottom: 0.15rem;
 }
 
 /* Error States */
 .error-message {
-  color: var(--error);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+  color: var(--primary);
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
   display: none;
+  font-weight: 500;
 }
 
 .input-error .error-message {
@@ -305,54 +336,66 @@ footer {
 .input-error input,
 .input-error select,
 .input-error textarea {
-  border-color: var(--error);
-}
-
-/* Utility */
-#status {
-  display: none;
+  border-color: var(--primary);
 }
 
 /* Make full-width elements */
-label[for="subject"],
-label[for="message"],
-.actions {
-  grid-column: 1 / -1;
+.form-section:last-of-type label[for="subject"],
+.form-section:last-of-type label[for="message"] {
+  margin-bottom: 0.75rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: 1rem 0.75rem;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .logo-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .header-text h1 {
+    font-size: 1.25rem;
   }
 
   .card {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .form-row {
     grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  header h1 {
-    font-size: 1.5rem;
+    gap: 0;
   }
 
   .actions {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .floating-tooltip {
-    max-width: 250px;
-    font-size: 0.75rem;
-    padding: 8px 12px;
+  /* Floating bubble responsive */
+  .admin-bubble {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-bubble i {
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .card {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
   input[type="text"],
@@ -360,70 +403,48 @@ label[for="message"],
   input[type="tel"],
   select,
   textarea {
-    padding: 0.675rem;
+    padding: 0.5rem 0.6rem;
   }
 
-  button {
-    padding: 0.75rem 1.25rem;
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.6rem 1rem;
+  }
+
+  /* Floating bubble lebih kecil di mobile */
+  .admin-bubble {
+    bottom: 0.75rem;
+    right: 0.75rem;
+    padding: 0.5rem 0.7rem;
+  }
+
+  .bubble-text {
+    display: none; /* Sembunyikan teks di mobile sangat kecil */
+  }
+
+  .admin-bubble:hover .bubble-text {
+    display: inline; /* Tampilkan teks saat hover di mobile */
   }
 }
 
-/* Animations */
-.card {
-  animation: fadeIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Focus styles for accessibility */
+/* Focus styles */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.admin-bubble:focus-visible {
+  outline: 2px solid var(--white);
   outline-offset: 2px;
-}
-
-/* Scrollbar for textarea */
-textarea::-webkit-scrollbar {
-  width: 6px;
-}
-
-textarea::-webkit-scrollbar-track {
-  background: var(--gray-100);
-  border-radius: 3px;
-}
-
-textarea::-webkit-scrollbar-thumb {
-  background: var(--gray-400);
-  border-radius: 3px;
-}
-
-textarea::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
 }
 
 /* Placeholder styling */
 ::placeholder {
   color: var(--gray-400);
-  opacity: 1;
-}
-
-:-ms-input-placeholder {
-  color: var(--gray-400);
-}
-
-::-ms-input-placeholder {
-  color: var(--gray-400);
+  font-size: 0.8rem;
 }
 
 /* Hover effects */
@@ -431,4 +452,23 @@ input:hover,
 select:hover,
 textarea:hover {
   border-color: var(--gray-400);
+}
+
+/* Animation untuk floating bubble */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.admin-bubble {
+  animation: float 3s ease-in-out infinite;
+}
+
+.admin-bubble:hover {
+  animation: none; /* Hentikan animasi saat hover */
 }
