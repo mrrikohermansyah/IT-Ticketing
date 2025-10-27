@@ -47,18 +47,19 @@ body {
   min-height: 100vh;
 }
 
-/* Header - REVISI untuk vertical center */
+/* Header */
 .header {
-  /* display: flex; */
-  align-items: center; /* Ini yang bikin vertical center */
+  display: flex;
+  align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid var(--primary);
 }
 
 .logo-container {
-  /* display: flex; */
+  display: flex;
   align-items: center;
+  gap: 1rem;
 }
 
 .logo {
@@ -67,8 +68,8 @@ body {
 }
 
 .header-text {
-  flex: 1; /* Ambil sisa space */
-  text-align: center; /* Teks di tengah horizontal */
+  flex: 1;
+  text-align: center;
 }
 
 .header-text h1 {
@@ -83,14 +84,15 @@ body {
   font-size: 0.85rem;
 }
 
-/* Floating Admin Bubble - REVISI dengan animasi */
+/* ==================== 🔹 FLOATING ADMIN BUBBLE - PERFECTLY CENTERED ==================== */
+
 .admin-bubble {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
   padding: 0.75rem;
   background: var(--primary);
   color: var(--white);
@@ -103,14 +105,16 @@ body {
   z-index: 1000;
   border: 2px solid var(--white);
   overflow: hidden;
-  max-width: 43px; /* Default kecil (hanya icon) */
-  min-height: 43px; /* Default kecil (hanya icon) */
-  animation: float 3s ease-in-out infinite;
+  width: 50px;
+  height: 50px;
+  animation: floatBubble 3s ease-in-out infinite;
 }
 
 .admin-bubble.expanded {
-  max-width: 200px; /* Lebar saat expanded */
-  padding: 0.75rem 1rem;
+  width: auto;
+  max-width: 180px;
+  padding-right: 1.25rem;
+  justify-content: flex-start;
 }
 
 .admin-bubble:hover {
@@ -124,25 +128,65 @@ body {
   transform: translateY(-1px);
 }
 
-.admin-bubble i {
-  font-size: 1rem;
-  /* Pastikan icon punya space tetap */
+/* Icon Container - Perfectly Centered */
+.bubble-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
-.bubble-text {
-  white-space: nowrap;
+/* Icon - Perfectly Centered */
+.admin-bubble i {
+  font-size: 1.2rem;
+  animation: pulseIcon 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Bubble Content - Centered when expanded */
+.bubble-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
   transform: translateX(10px);
   transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 0;
 }
 
-.admin-bubble.expanded .bubble-text {
+.bubble-text {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.bubble-subtext {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Expanded State - All content centered */
+.admin-bubble.expanded .bubble-content {
   opacity: 1;
   transform: translateX(0);
+  width: auto;
 }
 
-/* Animation untuk floating bubble */
-@keyframes float {
+/* Animations */
+@keyframes floatBubble {
   0%,
   100% {
     transform: translateY(0);
@@ -152,21 +196,14 @@ body {
   }
 }
 
-/* Pulse animation untuk icon */
-@keyframes pulse {
-  0% {
+@keyframes pulseIcon {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
     transform: scale(1.1);
   }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.admin-bubble i {
-  animation: pulse 2s ease-in-out infinite;
 }
 
 /* Card */
@@ -395,7 +432,8 @@ footer small {
   margin-bottom: 0.75rem;
 }
 
-/* Responsive */
+/* ==================== 🔹 RESPONSIVE DESIGN ==================== */
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -425,60 +463,61 @@ footer small {
     gap: 0.5rem;
   }
 
-  /* Floating bubble responsive */
+  /* Admin Bubble Mobile */
   .admin-bubble {
-    bottom: 1rem;
-    right: 1rem;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.8rem;
-  }
-
-  .admin-bubble i {
-    font-size: 0.9rem;
-  }
-}
-/* Hilangkan teks di mobile sangat kecil, hanya icon saja */
-@media (max-width: 360px) {
-  .bubble-text {
-    display: none;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 46px;
+    height: 46px;
   }
 
   .admin-bubble.expanded {
-    max-width: 45px;
+    max-width: 160px;
+    padding: 0.75rem 1rem;
+  }
+
+  .bubble-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .admin-bubble i {
+    font-size: 1.1rem;
+  }
+
+  .bubble-text {
+    font-size: 0.85rem;
+  }
+
+  .bubble-subtext {
+    font-size: 0.65rem;
   }
 }
 
 @media (max-width: 480px) {
-  .card {
-    padding: 1rem;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  select,
-  textarea {
-    padding: 0.5rem 0.6rem;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    padding: 0.6rem 1rem;
-  }
-
-  /* Floating bubble lebih kecil di mobile */
   .admin-bubble {
-    bottom: 0.75rem;
-    right: 0.75rem;
-    padding: 0.5rem 0.7rem;
+    bottom: 1rem;
+    right: 1rem;
+    width: 44px;
+    height: 44px;
   }
 
-  .bubble-text {
-    display: none; /* Sembunyikan teks di mobile sangat kecil */
+  .admin-bubble.expanded {
+    max-width: 140px;
   }
 
-  .admin-bubble:hover .bubble-text {
-    display: inline; /* Tampilkan teks saat hover di mobile */
+  .bubble-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .admin-bubble i {
+    font-size: 1rem;
+  }
+
+  /* Hide subtext on very small screens */
+  .bubble-subtext {
+    display: none;
   }
 }
 
@@ -507,23 +546,4 @@ input:hover,
 select:hover,
 textarea:hover {
   border-color: var(--gray-400);
-}
-
-/* Animation untuk floating bubble */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.admin-bubble {
-  animation: float 3s ease-in-out infinite;
-}
-
-.admin-bubble:hover {
-  animation: none; /* Hentikan animasi saat hover */
 }
