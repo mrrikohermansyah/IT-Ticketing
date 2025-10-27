@@ -257,52 +257,67 @@
     </main>
 
     <!-- Floating Admin Bubble -->
-    <a href="admin/index.html" class="admin-bubble">
+    <!-- <a href="admin/index.html" class="admin-bubble">
       <i class="fas fa-cog"></i>
       <span class="bubble-text">Admin Panel</span>
-    </a>
+    </a> -->
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        const adminBubble = document.querySelector(".admin-bubble");
+        const adminBubble = document.getElementById("adminBubble");
         let isExpanded = false;
+        let autoCollapseTimer;
+
+        function expandBubble() {
+          if (!isExpanded) {
+            adminBubble.classList.add("expanded");
+            isExpanded = true;
+            autoCollapseTimer = setTimeout(() => {
+              collapseBubble();
+            }, 4000);
+          }
+        }
+
+        function collapseBubble() {
+          if (isExpanded) {
+            adminBubble.classList.remove("expanded");
+            isExpanded = false;
+            clearTimeout(autoCollapseTimer);
+          }
+        }
 
         adminBubble.addEventListener("click", function (e) {
           if (!isExpanded) {
-            // First click - expand untuk show text
             e.preventDefault();
-            this.classList.add("expanded");
-            isExpanded = true;
-
-            // Auto collapse setelah 3 detik
-            setTimeout(() => {
-              if (isExpanded) {
-                this.classList.remove("expanded");
-                isExpanded = false;
-              }
-            }, 3000);
+            expandBubble();
           }
-          // Second click - akan navigate ke admin page (default behavior)
         });
 
-        // Auto collapse kalau klik di luar bubble
+        adminBubble.addEventListener("mouseenter", function () {
+          expandBubble();
+        });
+
         document.addEventListener("click", function (e) {
           if (isExpanded && !adminBubble.contains(e.target)) {
-            adminBubble.classList.remove("expanded");
-            isExpanded = false;
+            collapseBubble();
           }
         });
 
-        // Hover behavior
-        adminBubble.addEventListener("mouseenter", function () {
+        adminBubble.addEventListener("touchstart", function (e) {
           if (!isExpanded) {
-            this.classList.add("expanded");
+            e.preventDefault();
+            expandBubble();
           }
         });
 
-        adminBubble.addEventListener("mouseleave", function () {
-          if (!isExpanded) {
-            this.classList.remove("expanded");
+        adminBubble.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (!isExpanded) {
+              expandBubble();
+            } else {
+              window.location.href = adminBubble.href;
+            }
           }
         });
       });
@@ -314,5 +329,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script type="module" src="js/app.js"></script>
+    <!-- Floating Admin Bubble - Perfectly Centered -->
+    <a href="admin/index.html" class="admin-bubble" id="adminBubble">
+      <div class="bubble-icon">
+        <i class="fas fa-cog"></i>
+      </div>
+      <div class="bubble-content">
+        <span class="bubble-text">Admin Panel</span>
+        <span class="bubble-subtext">IT Support</span>
+      </div>
+    </a>
   </body>
 </html>
