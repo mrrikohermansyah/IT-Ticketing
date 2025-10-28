@@ -1297,7 +1297,7 @@ function getActionButtonsHTML(ticket, isAvailable, isMine, canDelete) {
   if (isAvailable) {
     return `
       <button class="grab-btn" data-id="${ticket.id}" title="Take this ticket">
-        <i class="fa-solid fa-hand"></i> Take
+        <i class="fa-solid fa-hand"></i>
       </button>
       <button class="delete-btn" data-id="${ticket.id}" title="Delete ticket">
         <i class="fa-solid fa-trash"></i>
@@ -1947,24 +1947,56 @@ function showLoadingState() {
 // ==================== 🎛️ Event Handlers ====================
 
 /**
- * Attach row events
+ * Handle grab ticket button click
  */
-function attachRowEvents() {
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", handleEdit);
+async function handleGrabTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+  await grabTicket(ticketId);
+}
+
+/**
+ * Handle release ticket button click
+ */
+async function handleReleaseTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+
+  const confirmed = await Swal.fire({
+    title: "Release Ticket?",
+    text: "This ticket will become available for other admins",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Release",
+    cancelButtonText: "Keep It",
   });
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", handleDelete);
-  });
-  document.querySelectorAll(".grab-btn").forEach((btn) => {
-    btn.addEventListener("click", handleGrabTicket);
-  });
-  document.querySelectorAll(".release-btn").forEach((btn) => {
-    btn.addEventListener("click", handleReleaseTicket);
-  });
-  document.querySelectorAll(".view-btn").forEach((btn) => {
-    btn.addEventListener("click", handleViewTicket);
-  });
+
+  if (confirmed.isConfirmed) {
+    await releaseTicket(ticketId);
+  }
+}
+
+/**
+ * Handle view ticket button click
+ */
+async function handleViewTicket(e) {
+  const ticketId = e.currentTarget.dataset.id;
+  const ticket = AppState.allTickets.find((t) => t.id === ticketId);
+
+  if (ticket) {
+    Swal.fire({
+      title: "View Only 👀",
+      html: `
+        <div style="text-align: left;">
+          <p><strong>This ticket is being handled by:</strong> ${ticket.action_by}</p>
+          <p>You can only view this ticket until it's released or completed.</p>
+          <hr>
+          <p><strong>Subject:</strong> ${ticket.subject}</p>
+          <p><strong>Message:</strong> ${ticket.message}</p>
+          ${ticket.note ? `<p><strong>Current Notes:</strong> ${ticket.note}</p>` : ""}
+        </div>
+      `,
+      icon: "info",
+    });
+  }
 }
 
 /**
@@ -1989,8 +2021,28 @@ async function handleDelete(e) {
     return;
   }
 
-  const confirmed = await showDeleteConfirmation(1);
-  if (!confirmed) return;
+  const confirmed = await Swal.fire({
+    title: "Delete this ticket?",
+    html: `
+      <div style="text-align: left;">
+        <p>Are you sure you want to delete this ticket?</p>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <p><strong>Ticket Details:</strong></p>
+          <p><strong>Subject:</strong> ${ticket.subject || "No subject"}</p>
+          <p><strong>Status:</strong> ${ticket.status_ticket || "Open"}</p>
+          <p><strong>Action By:</strong> ${ticket.action_by || "Available"}</p>
+          ${ticket.createdAt ? `<p><strong>Created:</strong> ${formatDate(ticket.createdAt)}</p>` : ""}
+        </div>
+      </div>
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete it",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#d33",
+  });
+
+  if (!confirmed.isConfirmed) return;
 
   try {
     await deleteDoc(doc(db, "tickets", id));
@@ -2068,6 +2120,264 @@ async function showEditForm(data, id, docRef) {
   if (!formValues) return;
 
   await updateTicketData(docRef, formValues, currentStatus, data);
+}
+
+/**
+ * Create edit form HTML
+ */
+function createEditFormHTML(data, id, currentAdminName, currentStatus) {
+  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
+  const currentQA = getAutoQA(currentStatus);
+
+  return `
+    <div class="form-grid">
+      <!-- Ticket ID (Readonly) -->
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label><i class="fa-solid fa-ticket"></i> Ticket ID</label>
+        <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly style="background: #f3f4f6; font-family: monospace; font-weight: bold;">
+        <small style="color: #666; font-size: 0.8rem;">
+          <i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM
+        </small>
+      </div>
+      
+      <!-- Field Inventory -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
+        <input type="text" id="inventory" class="swal2-input" value="${data.inventory || ""}" placeholder="Inventory Number">
+      </div>
+      
+      <!-- Field Name -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-user"></i> Name</label>
+        <input type="text" id="name" class="swal2-input" value="${data.name || ""}" placeholder="User Name">
+      </div>
+
+      <!-- Field Email -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-envelope"></i> User Email</label>
+        <input type="email" id="user_email" class="swal2-input" value="${data.user_email || ""}" placeholder="user@company.com">
+      </div>
+      
+      <!-- Field Action By -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-user-gear"></i> Action By</label>
+        <select id="action_by" class="swal2-select">
+          <option value="">-- Select IT Staff --</option>
+          ${getActionByOptions(data.action_by || currentAdminName)}
+        </select>
+      </div>
+      
+      <!-- Field Phone -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+        <input type="tel" id="user_phone" class="swal2-input" value="${data.user_phone || ""}" placeholder="+62 XXX-XXXX-XXXX">
+      </div>
+        
+      <!-- Field Device Type -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-computer"></i> Device Type</label>
+        <select id="device" class="swal2-select" required>
+          <option value="" disabled>Select Device Type</option>
+          <option value="PC Hardware" ${data.device === "PC Hardware" ? "selected" : ""}>PC Hardware</option>
+          <option value="PC Software" ${data.device === "PC Software" ? "selected" : ""}>PC Software</option>
+          <option value="Laptop" ${data.device === "Laptop" ? "selected" : ""}>Laptop</option>
+          <option value="Printer" ${data.device === "Printer" ? "selected" : ""}>Printer</option>
+          <option value="Network" ${data.device === "Network" ? "selected" : ""}>Network</option>
+          <option value="Projector" ${data.device === "Projector" ? "selected" : ""}>Projector</option>
+          <option value="Backup Data" ${data.device === "Backup Data" ? "selected" : ""}>Backup Data</option>
+          <option value="Others" ${data.device === "Others" ? "selected" : ""}>Others</option>
+        </select>
+      </div>
+      
+      <!-- Field Location -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-location-dot"></i> Location</label>
+        <select id="location" class="swal2-select">
+          ${getLocationOptions(data.location)}
+        </select>
+      </div>
+      
+      <!-- Field Department -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-building"></i> Department</label>
+        <select id="department" class="swal2-select">
+          ${getDepartmentOptions(data.department)}
+        </select>
+      </div>
+      
+      <!-- Field Priority -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-flag"></i> Priority</label>
+        <select id="priority" class="swal2-select">
+          ${getPriorityOptions(data.priority)}
+        </select>
+      </div>
+      
+      <!-- Field Status -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-circle-check"></i> Status</label>
+        <select id="status_ticket" class="swal2-select">
+          ${getStatusOptions(currentStatus)}
+        </select>
+      </div>
+      
+      <!-- Field Note -->
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
+        <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${data.note || ""}</textarea>
+        <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
+          <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
+        </small>
+      </div>
+    </div>
+    
+    <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+      <i class="fa-solid fa-info-circle"></i> 
+      ${
+        currentStatus === "Closed" || currentStatus === "On Progress"
+          ? `Duration ${currentStatus === "Closed" ? "sudah terkalkulasi" : "sedang berjalan real-time"}. Ubah status ke "Open" untuk reset duration.`
+          : 'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"'
+      }
+    </div>
+    <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+      <i class="fa-solid fa-info-circle"></i> 
+      QA akan otomatis di-set ke "Finish" ketika status Closed, "Continue" untuk status lainnya.
+    </div>
+    
+    <!-- Hidden Field untuk Auto Code -->
+    <input type="hidden" id="code" value="${data.code || ""}">
+  `;
+}
+
+/**
+ * Get form data from edit form
+ */
+function getFormData() {
+  return {
+    user_email: document.getElementById("user_email").value,
+    inventory: document.getElementById("inventory").value,
+    name: document.getElementById("name").value,
+    note: document.getElementById("note").value,
+    action_by: document.getElementById("action_by").value,
+    user_phone: document.getElementById("user_phone").value,
+    device: document.getElementById("device").value,
+    location: document.getElementById("location").value,
+    department: document.getElementById("department").value,
+    priority: document.getElementById("priority").value,
+    status_ticket: document.getElementById("status_ticket").value,
+  };
+}
+
+/**
+ * Add form styles
+ */
+function addFormStyles() {
+  const styles = `
+    <style>
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        max-width: 600px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #374151;
+        font-size: 14px;
+      }
+      .form-group:first-child {
+        grid-column: 1 / -1;
+      }
+      .swal2-select, .swal2-input, .swal2-textarea {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+      .swal2-textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+    </style>
+  `;
+  document.head.insertAdjacentHTML("beforeend", styles);
+}
+
+/**
+ * Update ticket data in Firestore
+ */
+async function updateTicketData(docRef, formValues, currentStatus, data) {
+  // Determine QA based on new status
+  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
+  const newQA = getAutoQA(formValues.status_ticket);
+
+  // Get updated code
+  const codeField = document.getElementById("code");
+  const updatedCode = codeField
+    ? codeField.value
+    : window.CONFIG?.DEVICE_TYPE_MAPPING?.[formValues.device] || "OT";
+
+  // Logic for handling timestamps
+  const updateData = {
+    ...formValues,
+    code: updatedCode,
+    qa: newQA,
+    updatedAt: serverTimestamp(),
+  };
+
+  // Handle timestamp based on status changes
+  if (
+    formValues.status_ticket === "On Progress" &&
+    currentStatus !== "On Progress"
+  ) {
+    // Status changed to On Progress for the first time
+    updateData.onProgressAt = serverTimestamp();
+  } else if (
+    formValues.status_ticket === "Closed" &&
+    currentStatus !== "Closed"
+  ) {
+    // Status changed to Closed for the first time
+    updateData.closedAt = serverTimestamp();
+
+    // If previously On Progress, keep onProgressAt for history
+    if (currentStatus === "On Progress" && data.onProgressAt) {
+      updateData.onProgressAt = data.onProgressAt;
+    }
+  } else if (formValues.status_ticket === "Open") {
+    // Status back to Open - reset all timestamps
+    updateData.onProgressAt = null;
+    updateData.closedAt = null;
+  }
+
+  await updateDoc(docRef, updateData);
+  showNotification("Updated!", "Ticket updated successfully.", "success");
+
+  // Refresh durations after status change
+  updateDurations();
+}
+
+/**
+ * Attach row events
+ */
+function attachRowEvents() {
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", handleEdit);
+  });
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", handleDelete);
+  });
+  document.querySelectorAll(".grab-btn").forEach((btn) => {
+    btn.addEventListener("click", handleGrabTicket);
+  });
+  document.querySelectorAll(".release-btn").forEach((btn) => {
+    btn.addEventListener("click", handleReleaseTicket);
+  });
+  document.querySelectorAll(".view-btn").forEach((btn) => {
+    btn.addEventListener("click", handleViewTicket);
+  });
 }
 
 // ==================== 🧹 Cleanup & Utilities ====================
@@ -2418,6 +2728,205 @@ function populateActionByFilter() {
   console.log("🎨 Action By filter populated with:", itStaff.length, "staff");
 }
 
+// ==================== 📝 Dropdown Option Generators ====================
+
+/**
+ * Get action by options for dropdown
+ */
+function getActionByOptions(selected) {
+  if (!window.CONFIG || !window.CONFIG.IT_STAFF) {
+    console.error("IT_STAFF config not found");
+    return '<option value="">No IT Staff</option>';
+  }
+
+  const options = window.CONFIG.IT_STAFF.map(
+    (staff) =>
+      `<option value="${staff}" ${staff === selected ? "selected" : ""}>${staff}</option>`
+  );
+
+  return options.join("");
+}
+
+/**
+ * Get location options for dropdown
+ */
+function getLocationOptions(selected) {
+  const list = [
+    "Blue Office",
+    "Clinic",
+    "Control Room",
+    "Dark Room",
+    "Green Office",
+    "HRD",
+    "IT Store",
+    "HSE Yard",
+    "Maintenance",
+    "Multi Purposes Building",
+    "Red Office",
+    "Security",
+    "Warehouse",
+    "White Office",
+    "White Office 2nd Fl",
+    "White Office 3rd Fl",
+    "Welding School",
+    "Workshop9",
+    "Workshop10",
+    "Workshop11",
+    "Workshop12",
+    "Lainlain",
+  ];
+
+  return list
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${opt === selected ? "selected" : ""}>${opt}</option>`
+    )
+    .join("");
+}
+
+/**
+ * Get department options for dropdown
+ */
+function getDepartmentOptions(selected) {
+  const list = [
+    "Clinic",
+    "Completion",
+    "Document Control",
+    "Engineer",
+    "Finance",
+    "HR",
+    "HSE",
+    "IT",
+    "Maintenance",
+    "Management",
+    "Procurement",
+    "QC",
+    "Vendor",
+    "Warehouse",
+    "Lainlain",
+  ];
+
+  return list
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${opt === selected ? "selected" : ""}>${opt}</option>`
+    )
+    .join("");
+}
+
+/**
+ * Get priority options for dropdown
+ */
+function getPriorityOptions(selected) {
+  const list = ["Low", "Medium", "High"];
+  return list
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${opt === selected ? "selected" : ""}>${opt}</option>`
+    )
+    .join("");
+}
+
+/**
+ * Get status options for dropdown
+ */
+function getStatusOptions(selected) {
+  const list = ["Open", "On Progress", "Closed"];
+  return list
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${opt === selected ? "selected" : ""}>${opt}</option>`
+    )
+    .join("");
+}
+
+// ==================== 📤 Export Functions ====================
+
+/**
+ * Export to Excel (fallback)
+ */
+async function exportToExcel(tickets, filterInfo) {
+  try {
+    const csvContent = convertToCSV(tickets);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `tickets_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification(
+      "Exported!",
+      `${tickets.length} tickets exported successfully.`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Export error:", error);
+    showNotification("Export Failed", "Failed to export tickets.", "error");
+  }
+}
+
+/**
+ * Convert tickets to CSV format
+ */
+function convertToCSV(tickets) {
+  const headers = [
+    "Date",
+    "Duration",
+    "Inventory",
+    "Device",
+    "Name",
+    "Email",
+    "Phone",
+    "Department",
+    "Location",
+    "Priority",
+    "Subject",
+    "Message",
+    "Note",
+    "Code",
+    "Action By",
+    "QA",
+    "Status",
+  ];
+
+  const rows = tickets.map((ticket) => [
+    formatDate(ticket.createdAt),
+    calculateDuration(ticket),
+    ticket.inventory || "",
+    ticket.device || "",
+    ticket.name || "",
+    ticket.user_email || "",
+    ticket.user_phone || "",
+    ticket.department || "",
+    ticket.location || "",
+    ticket.priority || "",
+    ticket.subject || "",
+    ticket.message || "",
+    ticket.note || "",
+    ticket.code || "",
+    ticket.action_by || "",
+    ticket.qa || "",
+    ticket.status_ticket || "",
+  ]);
+
+  return [headers, ...rows]
+    .map((row) =>
+      row
+        .map((field) => `"${String(field || "").replace(/"/g, '""')}"`)
+        .join(",")
+    )
+    .join("\n");
+}
+
 // ==================== 📝 Initialize Application ====================
 
 // Initialize when DOM is loaded
@@ -2450,7 +2959,3 @@ window.getCurrentFilterInfo = getCurrentFilterInfo;
 console.log(
   "🚀 Admin JS with Ticket Grab System & Multiple Selection loaded successfully"
 );
-
-// Note: The following functions are placeholders and need to be implemented:
-// - createEditFormHTML, getFormData, addFormStyles, updateTicketData, exportToExcel
-// These would typically contain the form creation and export logic from the original code

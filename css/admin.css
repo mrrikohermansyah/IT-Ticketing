@@ -1,4 +1,4 @@
-/* ===== admin.css — With Status Badges ===== */
+/* ===== admin.css — Optimized Admin Panel Styles ===== */
 
 :root {
   --bg: #f5f7fb;
@@ -7,6 +7,10 @@
   --accent-hover: #1e40af;
   --danger: #e53935;
   --danger-hover: #c62828;
+  --success: #22c55e;
+  --success-hover: #16a34a;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
   --muted: #6b7280;
   --border: #e6e9ee;
   --radius: 12px;
@@ -14,27 +18,30 @@
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
 }
 
+/* ================== RESET & BASE STYLES ================== */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
   height: 100%;
-  margin: 0;
   background: var(--bg);
   font-family: var(--font);
   color: #0f172a;
+  line-height: 1.5;
 }
 
-/* ================== Container ================== */
+/* ================== LAYOUT COMPONENTS ================== */
 .container {
-  max-width: 1600px;
+  max-width: 1780px;
   margin: 0 auto;
   padding: 16px;
 }
 
-/* ================== Header ================== */
+/* ================== HEADER STYLES ================== */
 .main-header {
   display: flex;
   justify-content: space-between;
@@ -64,6 +71,7 @@ body {
   margin: 0;
   font-size: 1.5rem;
   color: #0f172a;
+  font-weight: 600;
 }
 
 .auth-buttons {
@@ -72,7 +80,7 @@ body {
   flex-wrap: wrap;
 }
 
-/* ================== Controls Bar ================== */
+/* ================== CONTROLS BAR ================== */
 .controls-bar {
   display: flex;
   justify-content: space-between;
@@ -100,7 +108,7 @@ body {
   flex-wrap: wrap;
 }
 
-/* ================== Button Base ================== */
+/* ================== BUTTON STYLES ================== */
 button {
   font-family: inherit;
   border: none;
@@ -119,7 +127,7 @@ button:hover {
   transform: translateY(-1px);
 }
 
-/* ================== Auth & Control Buttons ================== */
+/* Auth & Control Buttons */
 .auth-btn {
   color: #fff;
   box-shadow: 0 6px 14px rgba(2, 6, 23, 0.06);
@@ -159,7 +167,7 @@ button:hover {
   opacity: 0.9;
 }
 
-/* ================== Filter Select ================== */
+/* ================== FORM CONTROLS ================== */
 .filter-select {
   padding: 10px 12px;
   border-radius: 8px;
@@ -170,7 +178,7 @@ button:hover {
   min-width: 150px;
 }
 
-/* ================== Main Card ================== */
+/* ================== CARD COMPONENTS ================== */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -184,9 +192,10 @@ button:hover {
   margin: 0 0 16px 0;
   font-size: 1.3rem;
   color: #0f172a;
+  font-weight: 600;
 }
 
-/* ================== Table View ================== */
+/* ================== TABLE VIEW ================== */
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -214,7 +223,7 @@ button:hover {
   line-height: 1.3;
 }
 
-/* ================== Table Header - No Wrap ================== */
+/* Table Header */
 #ticketsTable th {
   background: #f8fafc;
   font-weight: 600;
@@ -238,7 +247,7 @@ button:hover {
   display: none;
 }
 
-/* ================== Status Badges ================== */
+/* ================== BADGE STYLES ================== */
 .status-badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -274,7 +283,7 @@ button:hover {
   border: 1px solid #93c5fd;
 }
 
-/* ================== QA Badges ================== */
+/* QA Badges */
 .qa-badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -304,7 +313,7 @@ button:hover {
   border: 1px solid #fde68a;
 }
 
-/* ================== Duration Badges ================== */
+/* Duration Badges */
 .duration-badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -339,7 +348,7 @@ button:hover {
   border: 1px solid #e5e7eb;
 }
 
-/* Priority Colors - Text Only */
+/* Priority Colors */
 .priority-high {
   color: #991b1b;
   font-weight: 600;
@@ -355,10 +364,11 @@ button:hover {
   font-weight: 600;
 }
 
-/* ================== Action Buttons ================== */
+/* ================== ACTION BUTTONS ================== */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
   justify-content: flex-start;
 }
 
@@ -373,26 +383,258 @@ button:hover {
   color: #fff;
   font-weight: 600;
   min-width: auto;
-  transition: 0.2s ease-in-out;
+  transition: all 0.2s ease;
+  border: none;
 }
 
-.action-buttons .edit-btn {
-  background: var(--accent);
+/* Icon styling untuk semua action buttons */
+.action-buttons button i,
+.card-actions button i {
+  color: white;
+  font-size: 12px;
+  width: 14px;
+  text-align: center;
 }
 
-.action-buttons .edit-btn:hover {
-  background: var(--accent-hover);
+/* Grab Button - Hijau */
+.grab-btn {
+  background: linear-gradient(
+    135deg,
+    var(--success) 0%,
+    var(--success-hover) 100%
+  );
 }
 
-.action-buttons .delete-btn {
-  background: var(--danger);
+.grab-btn:hover {
+  background: linear-gradient(135deg, var(--success-hover) 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
 }
 
-.action-buttons .delete-btn:hover {
-  background: var(--danger-hover);
+/* Release Button - Orange */
+.release-btn {
+  background: linear-gradient(
+    135deg,
+    var(--warning) 0%,
+    var(--warning-hover) 100%
+  );
 }
 
-/* ================== Card View - Fixed Alignment ================== */
+.release-btn:hover {
+  background: linear-gradient(135deg, var(--warning-hover) 0%, #b45309 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* View Button - Abu-abu */
+.view-btn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Edit Button - Ungu */
+.edit-btn {
+  background: linear-gradient(135deg, #004faa 0%, #00295f 100%);
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #001f58 0%, #000e5c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Delete Button - Merah */
+.delete-btn {
+  background: linear-gradient(
+    135deg,
+    var(--danger) 0%,
+    var(--danger-hover) 100%
+  );
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, var(--danger-hover) 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Disabled Delete Button */
+.delete-btn:disabled,
+.disabled-delete-btn {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.delete-btn:disabled:hover,
+.disabled-delete-btn:hover {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  transform: none;
+  box-shadow: none;
+}
+
+/* ================== CARD ACTIONS SPECIFIC STYLES ================== */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  padding-top: 12px; /* ================== ACTION BUTTONS ================== */
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .action-buttons button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    min-width: auto;
+    transition: all 0.2s ease;
+    border: none;
+  }
+
+  /* Icon styling untuk semua action buttons */
+  .action-buttons button i,
+  .card-actions button i {
+    color: white;
+    font-size: 12px;
+    width: 14px;
+    text-align: center;
+  }
+
+  /* Grab Button - Hijau */
+  .grab-btn {
+    background: linear-gradient(
+      135deg,
+      var(--success) 0%,
+      var(--success-hover) 100%
+    );
+  }
+
+  .grab-btn:hover {
+    background: linear-gradient(135deg, var(--success-hover) 0%, #15803d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+  }
+
+  /* Release Button - Orange */
+  .release-btn {
+    background: linear-gradient(
+      135deg,
+      var(--warning) 0%,
+      var(--warning-hover) 100%
+    );
+  }
+
+  .release-btn:hover {
+    background: linear-gradient(135deg, var(--warning-hover) 0%, #b45309 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+  }
+
+  /* View Button - Abu-abu */
+  .view-btn {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* Edit Button - Ungu */
+  .edit-btn {
+    background: linear-gradient(135deg, #004faa 0%, #00295f 100%);
+  }
+
+  .edit-btn:hover {
+    background: linear-gradient(135deg, #001f58 0%, #000e5c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Delete Button - Merah */
+  .delete-btn {
+    background: linear-gradient(
+      135deg,
+      var(--danger) 0%,
+      var(--danger-hover) 100%
+    );
+  }
+
+  .delete-btn:hover {
+    background: linear-gradient(135deg, var(--danger-hover) 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+  }
+
+  /* Disabled Delete Button */
+  .delete-btn:disabled,
+  .disabled-delete-btn {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+  }
+
+  .delete-btn:disabled:hover,
+  .disabled-delete-btn:hover {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ================== CARD ACTIONS SPECIFIC STYLES ================== */
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .card-actions button {
+    flex: 1;
+    min-width: 80px;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: white;
+  }
+
+  /* Ensure icons in card actions are white */
+  .card-actions button i {
+    color: white;
+    font-size: 13px;
+  }
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.card-actions button {
+  flex: 1;
+  min-width: 80px;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: white;
+}
+
+/* Ensure icons in card actions are white */
+.card-actions button i {
+  color: white;
+  font-size: 13px;
+}
+
+/* ================== CARD VIEW ================== */
 .card-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -421,6 +663,7 @@ button:hover {
   margin: 0;
   font-size: 1.1rem;
   color: #0f172a;
+  font-weight: 600;
 }
 
 .card-content {
@@ -430,7 +673,6 @@ button:hover {
   margin-bottom: 16px;
 }
 
-/* FIX: Card field alignment */
 .card-field {
   display: flex;
   align-items: flex-start;
@@ -460,7 +702,7 @@ button:hover {
   padding: 4px 10px;
 }
 
-/* FIX Khusus untuk email yang panjang */
+/* Email cell styling */
 .card-field .email-cell {
   word-break: break-all;
   text-align: left;
@@ -473,14 +715,202 @@ button:hover {
   justify-content: flex-start;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .card-actions button {
-  padding: 8px 14px;
-  font-size: 0.9rem;
+  flex: 1;
+  min-width: 80px;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 13px;
 }
 
-/* ================== Empty & Loading States ================== */
+/* ================== TICKET STATUS COLORS ================== */
+.ticket-available {
+  background: #f0fdf4 !important;
+  border-left: 4px solid var(--success) !important;
+}
+
+.ticket-mine {
+  background: #f0f9ff !important;
+  border-left: 4px solid var(--accent) !important;
+}
+
+.ticket-others {
+  background: #f8fafc !important;
+  border-left: 4px solid #6b7280 !important;
+  opacity: 0.9;
+}
+
+/* Card specific styles */
+.ticket-card.ticket-available {
+  border-left: 4px solid var(--success) !important;
+  background: #f0fdf4 !important;
+}
+
+.ticket-card.ticket-mine {
+  border-left: 4px solid var(--accent) !important;
+  background: #f0f9ff !important;
+}
+
+.ticket-card.ticket-others {
+  border-left: 4px solid #6b7280 !important;
+  background: #f8fafc !important;
+  opacity: 0.9;
+}
+
+/* ================== ASSIGNEE BADGES ================== */
+.assignee.available {
+  color: var(--success-hover) !important;
+  font-weight: 600;
+  background: #dcfce7;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid #bbf7d0;
+}
+
+.assignee.assignee-me {
+  color: var(--accent-hover) !important;
+  font-weight: 600;
+  background: #dbeafe;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid #93c5fd;
+}
+
+/* ================== QUICK FILTER STYLES ================== */
+.quick-filter-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.quick-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+/* ================== MULTIPLE SELECTION STYLES ================== */
+.select-all-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.ticket-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.bulk-actions.hidden {
+  display: none;
+}
+
+.bulk-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bulk-count {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.bulk-delete-btn {
+  background: linear-gradient(
+    135deg,
+    var(--danger) 0%,
+    var(--danger-hover) 100%
+  );
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulk-delete-btn:hover {
+  background: linear-gradient(135deg, var(--danger-hover) 0%, #a71e2a 100%);
+}
+
+.bulk-delete-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.bulk-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulk-cancel-btn:hover {
+  background: #5a6268;
+}
+
+.selected-row {
+  background: #e3f2fd !important;
+  box-shadow: inset 0 0 0 2px #2196f3;
+}
+
+/* ================== STATE STYLES ================== */
 .empty-state,
 .loading,
 .login-prompt,
@@ -519,7 +949,87 @@ button:hover {
   color: var(--muted);
 }
 
-/* ================== Responsive Design ================== */
+/* ================== UTILITY CLASSES ================== */
+.google-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.user-info i {
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.user-info span {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.note-cell {
+  max-width: 200px;
+  word-break: break-word;
+}
+
+.email-cell {
+  word-break: break-all;
+  max-width: 150px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Hover effects */
+#ticketsTable tbody tr:hover {
+  background: #f8fafc;
+}
+
+#ticketsTable tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+/* User Ticket Button */
+.user-ticket-btn {
+  background: linear-gradient(135deg, #ef070a 0%, #c50609 100%);
+  color: white;
+  border: 1px solid #ef070a;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.user-ticket-btn:hover {
+  background: linear-gradient(135deg, #c50609 0%, #a00507 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 7, 10, 0.3);
+}
+
+.user-ticket-btn i {
+  font-size: 16px;
+}
+
+/* ================== RESPONSIVE DESIGN ================== */
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -577,7 +1087,24 @@ button:hover {
 
   .card-actions button {
     width: 100%;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .action-buttons button {
+    width: 100%;
     justify-content: center;
+  }
+
+  .quick-filters {
+    flex-direction: column;
+  }
+
+  .filter-btn {
+    text-align: center;
   }
 
   /* Auto switch to card view on mobile */
@@ -589,16 +1116,26 @@ button:hover {
     display: grid;
   }
 
-  /* Hide switch view button on mobile */
   .switch-view-btn {
     display: none !important;
   }
 
-  /* Status badge di mobile */
   .status-badge {
     min-width: 70px;
     font-size: 0.7rem;
     padding: 3px 8px;
+  }
+
+  .user-ticket-btn span {
+    display: none;
+  }
+
+  .user-ticket-btn {
+    padding: 10px 12px;
+  }
+
+  .user-ticket-btn i {
+    margin: 0;
   }
 }
 
@@ -631,182 +1168,9 @@ button:hover {
   }
 }
 
-/* ================== Desktop Only ================== */
+/* ================== DESKTOP ONLY ================== */
 @media (min-width: 769px) {
   .switch-view-btn {
     display: inline-flex !important;
   }
-}
-
-/* ================== Utility Classes ================== */
-.google-logo {
-  width: 18px;
-  height: 18px;
-}
-
-.hidden {
-  display: none !important;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 14px;
-  color: #475569;
-}
-
-.user-info i {
-  font-size: 16px;
-  color: #2563eb;
-}
-
-.user-info span {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-/* Note cell untuk konten panjang */
-.note-cell {
-  max-width: 200px;
-  word-break: break-word;
-}
-
-/* Hover effect untuk table rows */
-#ticketsTable tbody tr:hover {
-  background: #f8fafc;
-}
-
-/* Alternating row colors */
-#ticketsTable tbody tr:nth-child(even) {
-  background: #fafbfc;
-}
-
-/* Email cell styling */
-.email-cell {
-  word-break: break-all;
-  max-width: 150px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-/* Tombol Delete yang disabled */
-.disabled-delete-btn {
-  background: #6b7280 !important;
-  color: white !important;
-  cursor: not-allowed !important;
-  opacity: 0.5 !important;
-}
-
-.disabled-delete-btn:hover {
-  background: #6b7280 !important;
-  transform: none !important;
-}
-
-/* Hover effects untuk tombol aktif */
-.delete-btn:not(.disabled-delete-btn):hover {
-  background: #dc2626 !important;
-  transform: translateY(-1px);
-}
-
-/* Button User Ticket */
-.user-ticket-btn {
-  background: linear-gradient(135deg, #ef070a 0%, #c50609 100%);
-  color: white;
-  border: 1px solid #ef070a;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.user-ticket-btn:hover {
-  background: linear-gradient(135deg, #c50609 0%, #a00507 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 7, 10, 0.3);
-}
-
-.user-ticket-btn i {
-  font-size: 16px;
-}
-
-/* Responsive untuk button */
-@media (max-width: 768px) {
-  .user-ticket-btn span {
-    display: none;
-  }
-
-  .user-ticket-btn {
-    padding: 10px 12px;
-  }
-
-  .user-ticket-btn i {
-    margin: 0;
-  }
-}
-
-/* Tambahkan di admin.css atau dalam style tag */
-.select-all-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.ticket-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.bulk-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-.bulk-actions.hidden {
-  display: none;
-}
-
-.bulk-count {
-  font-weight: 600;
-  color: #495057;
-}
-
-.bulk-delete-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.bulk-delete-btn:hover {
-  background: #c82333;
-}
-
-.bulk-delete-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.selected-row {
-  background: #e3f2fd !important;
 }
