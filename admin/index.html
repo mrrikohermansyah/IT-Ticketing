@@ -27,40 +27,56 @@
   <body>
     <main class="container">
       <header class="main-header">
-  <div class="left">
-    <img class="logo" src="../imgs/meitech-logo.png" alt="MEITECH Logo" />
-    <h1>📋 Daftar Tiket Masuk</h1>
-  </div>
-  <div class="auth-buttons">
-    <!-- 🔥 TAMBAH BUTTON KE USER TICKET -->
-    <button id="userTicketBtn" class="auth-btn user-ticket-btn" style="display: none">
-      <i class="fa-solid fa-ticket"></i>
-      <span>User Input Ticket</span>
-    </button>
-    
-    <div id="userInfo" class="user-info" style="display: none">
-      <i class="fa-solid fa-user-circle"></i>
-      <span id="userName">Admin</span>
-    </div>
-    
-    <button id="loginBtn" class="auth-btn login-btn" style="display: none">
-      <img
-        src="https://www.svgrepo.com/show/355037/google.svg"
-        alt="Google Logo"
-        class="google-logo"
-      />
-      <span>Login dengan Google</span>
-    </button>
+        <div class="left">
+          <img class="logo" src="../imgs/meitech-logo.png" alt="MEITECH Logo" />
+          <h1>📋 Daftar Tiket Masuk</h1>
+        </div>
+        <div class="auth-buttons">
+          <!-- 🔥 TAMBAH BUTTON KE USER TICKET -->
+          <button
+            id="userTicketBtn"
+            class="auth-btn user-ticket-btn"
+            style="display: none"
+          >
+            <i class="fa-solid fa-ticket"></i>
+            <span>User Input Ticket</span>
+          </button>
 
-    <button id="goLoginBtn" class="auth-btn login-btn" style="display: none">
-      <i class="fa-solid fa-right-to-bracket"></i> Login
-    </button>
+          <div id="userInfo" class="user-info" style="display: none">
+            <i class="fa-solid fa-user-circle"></i>
+            <span id="userName">Admin</span>
+          </div>
 
-    <button id="logoutBtn" class="auth-btn logout-btn" style="display: none">
-      <i class="fa-solid fa-right-from-bracket"></i> Logout
-    </button>
-  </div>
-</header>
+          <button
+            id="loginBtn"
+            class="auth-btn login-btn"
+            style="display: none"
+          >
+            <img
+              src="https://www.svgrepo.com/show/355037/google.svg"
+              alt="Google Logo"
+              class="google-logo"
+            />
+            <span>Login dengan Google</span>
+          </button>
+
+          <button
+            id="goLoginBtn"
+            class="auth-btn login-btn"
+            style="display: none"
+          >
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+          </button>
+
+          <button
+            id="logoutBtn"
+            class="auth-btn logout-btn"
+            style="display: none"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+          </button>
+        </div>
+      </header>
 
       <!-- Controls Bar -->
       <div class="controls-bar">
@@ -123,6 +139,13 @@
             <thead>
               <tr>
                 <!-- ✅ Update kolom sesuai struktur Firebase -->
+                <th>
+                  <input
+                    type="checkbox"
+                    id="selectAllCheckbox"
+                    class="select-all-checkbox"
+                  />
+                </th>
                 <th>Date</th>
                 <th>Inventory</th>
                 <th>Device</th>
@@ -169,7 +192,7 @@
         if (!table) return;
 
         const headers = Array.from(table.querySelectorAll("thead th")).map(
-          (th) => th.innerText.trim(),
+          (th) => th.innerText.trim()
         );
 
         table.querySelectorAll("tbody tr").forEach((row) => {

@@ -745,12 +745,68 @@ button:hover {
   .user-ticket-btn span {
     display: none;
   }
-  
+
   .user-ticket-btn {
     padding: 10px 12px;
   }
-  
+
   .user-ticket-btn i {
     margin: 0;
   }
+}
+
+/* Tambahkan di admin.css atau dalam style tag */
+.select-all-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.ticket-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.bulk-actions.hidden {
+  display: none;
+}
+
+.bulk-count {
+  font-weight: 600;
+  color: #495057;
+}
+
+.bulk-delete-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.bulk-delete-btn:hover {
+  background: #c82333;
+}
+
+.bulk-delete-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.selected-row {
+  background: #e3f2fd !important;
 }
