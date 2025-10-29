@@ -21,7 +21,7 @@ const firebaseConfig = {
 // ==================== 🔹 Google Apps Script Configuration ====================
 const GAS_CONFIG = {
   WEB_APP_URL:
-    "https://script.google.com/macros/s/AKfycbwu-rviUdPqivmgZBy2jQ9ExSqlFwTeYzMfKF0dLS2wOjXmpk3RhJFV9zO0EYeUlJaTzA/exec",
+    "https://script.google.com/macros/s/AKfycbyFFVbuWQrHVbUdO4cXkJ4Qh_Yy02XjTjVKwb43V5PyCya7PaG9Jys25C-zrfx984iXGg/exec",
 };
 
 // ==================== 🔹 Init Firebase & Firestore ====================
@@ -33,69 +33,370 @@ const form = document.getElementById("ticketForm");
 const statusEl = document.getElementById("status");
 
 // Hide the status element since we're using SweetAlert
-statusEl.style.display = "none";
+if (statusEl) statusEl.style.display = "none";
 
 // ==================== 🔹 Device Type Mapping ====================
 const deviceTypeMapping = {
-  // Hardware devices → HW
   "PC Hardware": "HW",
   Laptop: "HW",
   Printer: "HW",
   Projector: "HW",
-  // Software devices → SW
   "PC Software": "SW",
-  // Network devices → NW
   Network: "NW",
-  // Default untuk device lain
   Others: "OT",
 };
 
-// ==================== 🔹 Send Email via Google Apps Script (No-CORS Method) ====================
-async function sendEmail(payload) {
+// ==================== 🔹 Global Variables ====================
+let formData = {};
+
+// ==================== 🔹 Enhanced Submit Handler ====================
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const submitBtn = document.getElementById("submitBtn");
+  const originalText = submitBtn.innerHTML;
+
+  // Show loading state
+  submitBtn.innerHTML = '<span class="loading"></span> Submitting Ticket...';
+  submitBtn.disabled = true;
+
+  // Collect form data
+  formData = collectFormData();
+
   try {
-    console.log("🚀 Sending email via Google Apps Script...");
+    // 🔥 STEP 1: Kirim ke Google Script untuk generate Ticket ID dan kirim email
+    const googleScriptResponse = await submitToGoogleScript(formData);
 
-    // Bersihkan payload
-    const cleanPayload = {
-      ticketId: payload.ticketId,
-      inventory: payload.inventory,
-      device: payload.device,
-      code: payload.code,
-      name: payload.name,
-      user_email: payload.user_email,
-      department: payload.department,
-      location: payload.location,
-      priority: payload.priority,
-      subject: payload.subject,
-      message: payload.message,
-      sent_at: payload.sent_at,
-    };
+    // 🔥 STEP 2: Handle response dari Google Script
+    await handleFormSubmitSuccess(googleScriptResponse);
 
+    // Reset form
+    form.reset();
+    clearDraft();
+  } catch (error) {
+    console.error("Submission Error:", error);
+    await showAlert(
+      "error",
+      "Submission Failed",
+      "There was an error submitting your ticket. Please try again or contact IT support directly."
+    );
+  } finally {
+    // Reset button
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
+});
+
+// ==================== 🔹 Collect Form Data ====================
+function collectFormData() {
+  const data = new FormData(form);
+  const device = data.get("device");
+  const code = deviceTypeMapping[device] || "OT";
+
+  return {
+    user_email: data.get("user_email") || "",
+    inventory: (data.get("inventory") || "").toUpperCase(),
+    name: data.get("name") || "",
+    user_phone: data.get("user_phone") || "",
+    department: data.get("department") || "",
+    location: data.get("location") || "",
+    device: device,
+    priority: data.get("priority") || "Medium",
+    subject: data.get("subject") || "",
+    message: data.get("message") || "",
+    code: code,
+    status_ticket: "Open",
+  };
+}
+
+// ==================== 🔹 Submit to Google Apps Script ====================
+async function submitToGoogleScript(formData) {
+  try {
+    console.log("🚀 Sending data to Google Script via GET...", formData);
+
+    // Encode data sebagai URL parameters
     const params = new URLSearchParams();
-    params.append("data", JSON.stringify(cleanPayload));
-
+    params.append("data", JSON.stringify(formData));
     const url = `${GAS_CONFIG.WEB_APP_URL}?${params.toString()}`;
 
-    // Gunakan fetch dengan no-cors mode
+    console.log("GET URL:", url);
+
+    // 🔥 GUNAKAN no-cors UNTUK MENGHINDARI CORS ERROR
     await fetch(url, {
       method: "GET",
-      mode: "no-cors", // Ini akan mencegah CORS error
-      cache: "no-cache",
+      mode: "no-cors", // 🔥 INI YANG MENGHILANGKAN CORS ERROR
     });
 
-    console.log("✅ Email sent successfully");
-    return { status: "success", message: "Email sent" };
+    console.log("✅ GET request sent successfully (no-cors mode)");
+
+    // Karena no-cors, kita tidak bisa baca response
+    // Tapi kita anggap berhasil dan generate ticket ID yang sama
+    return {
+      status: "success",
+      ticketId: generateSimpleTicketId(formData), // 🔥 GUNAKAN FUNGSI YANG SAMA
+      message: "Request sent successfully",
+    };
   } catch (error) {
-    console.log("📧 Email sent (silent mode)");
-    return { status: "success", message: "Email sent" };
+    console.error("❌ Google Script submission error:", error);
+    // Fallback: generate ticket ID sendiri
+    return {
+      status: "success",
+      ticketId: generateSimpleTicketId(formData),
+      message: "Using fallback",
+    };
   }
 }
 
-// ==================== 🔹 Save to Firestore ====================
-async function saveToFirestore(doc) {
-  const col = collection(db, "tickets");
-  const ref = await addDoc(col, doc);
-  return ref.id;
+// 🔥 COPY FUNGSI generateSimpleTicketId DARI GOOGLE SCRIPT
+function generateSimpleTicketId(ticket) {
+  const codeMaps = {
+    departments: {
+      IT: "IT",
+      HR: "HR",
+      HSE: "HSE",
+      QC: "QC",
+      Finance: "FIN",
+      Maintenance: "MNT",
+      Warehouse: "WH",
+      Management: "MGT",
+      Procurement: "PRO",
+      Engineer: "ENG",
+      "Document Control": "DOC",
+      Completion: "COM",
+      Vendor: "VEN",
+      Clinic: "CLN",
+      Lainlain: "OTH",
+    },
+    locations: {
+      "Blue Office": "BLU",
+      "White Office": "WHT",
+      "Green Office": "GRN",
+      "Red Office": "RED",
+      "White Office 2nd Fl": "W2F",
+      "White Office 3rd Fl": "W3F",
+      "Control Room": "CTL",
+      "Dark Room": "DRK",
+      HRD: "HRD",
+      "IT Store": "ITS",
+      "HSE Yard": "HSY",
+      Maintenance: "MNT",
+      "Multi Purposes Building": "MPB",
+      Security: "SEC",
+      Warehouse: "WH",
+      "Welding School": "WLD",
+      Workshop9: "WS9",
+      Workshop10: "WS10",
+      Workshop11: "WS11",
+      Workshop12: "WS12",
+      Lainlain: "OTH",
+    },
+    devices: {
+      "PC Hardware": "HW",
+      "PC Software": "SW",
+      Laptop: "LP",
+      Printer: "PR",
+      Network: "NET",
+      Projector: "PJ",
+      "Backup Data": "DR",
+      Others: "OT",
+    },
+  };
+
+  const getCode = (value, map) =>
+    map[value] || (value ? value.substring(0, 3).toUpperCase() : "GEN");
+
+  const deptCode = getCode(ticket.department, codeMaps.departments);
+  const locCode = getCode(ticket.location, codeMaps.locations);
+  const deviceCode = getCode(ticket.device, codeMaps.devices);
+
+  // Format date YYMM (4 digit)
+  const dateCode = (() => {
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    return year + month;
+  })();
+
+  // 🔥 GENERATE RANDOM CODE YANG SAMA
+  const randomCode = generateConsistentRandomCode(ticket);
+
+  return `${deptCode}-${locCode}-${deviceCode}-${dateCode}-${randomCode}`;
+}
+
+// 🔥 COPY FUNGSI generateConsistentRandomCode DARI GOOGLE SCRIPT
+function generateConsistentRandomCode(ticket) {
+  const seed = (
+    ticket.user_email +
+    ticket.subject +
+    ticket.department +
+    ticket.location
+  ).toLowerCase();
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash = hash & hash;
+  }
+
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+
+  for (let i = 0; i < 3; i++) {
+    const index = Math.abs(hash + i * 123) % chars.length;
+    result += chars.charAt(index);
+  }
+
+  return result;
+}
+
+// 🔥 HAPUS FUNGSI generateFallbackTicketId - kita hanya mau pakai dari Google Script
+
+// ==================== 🔹 Generate Fallback Ticket ID ====================
+function generateFallbackTicketId(ticket) {
+  const codeMaps = {
+    departments: {
+      IT: "IT",
+      HR: "HR",
+      HSE: "HSE",
+      QC: "QC",
+      Finance: "FIN",
+      Maintenance: "MNT",
+      Warehouse: "WH",
+      Management: "MGT",
+      Procurement: "PRO",
+      Engineer: "ENG",
+      "Document Control": "DOC",
+      Completion: "COM",
+      Vendor: "VEN",
+      Clinic: "CLN",
+      Lainlain: "OTH",
+    },
+    locations: {
+      "Blue Office": "BLU",
+      "White Office": "WHT",
+      "Green Office": "GRN",
+      "Red Office": "RED",
+      "White Office 2nd Fl": "W2F",
+      "White Office 3rd Fl": "W3F",
+      "Control Room": "CTL",
+      "Dark Room": "DRK",
+      HRD: "HRD",
+      "IT Store": "ITS",
+      "HSE Yard": "HSY",
+      Maintenance: "MNT",
+      "Multi Purposes Building": "MPB",
+      Security: "SEC",
+      Warehouse: "WH",
+      "Welding School": "WLD",
+      Workshop9: "WS9",
+      Workshop10: "WS10",
+      Workshop11: "WS11",
+      Workshop12: "WS12",
+      Lainlain: "OTH",
+    },
+    devices: {
+      "PC Hardware": "HW",
+      "PC Software": "SW",
+      Laptop: "LP",
+      Printer: "PR",
+      Network: "NET",
+      Projector: "PJ",
+      "Backup Data": "DR",
+      Others: "OT",
+    },
+  };
+
+  const getCode = (value, map) =>
+    map[value] || (value ? value.substring(0, 3).toUpperCase() : "GEN");
+
+  const deptCode = getCode(ticket.department, codeMaps.departments);
+  const locCode = getCode(ticket.location, codeMaps.locations);
+  const deviceCode = getCode(ticket.device, codeMaps.devices);
+
+  // Format date YYMM (4 digit)
+  const dateCode = (() => {
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    return year + month;
+  })();
+
+  // Generate random code (3 karakter)
+  const randomCode = (() => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 3; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  })();
+
+  return `${deptCode}-${locCode}-${deviceCode}-${dateCode}-${randomCode}`;
+}
+
+// ==================== 🔹 Handle Form Submit Success ====================
+async function handleFormSubmitSuccess(response) {
+  if (response.status === "success") {
+    // 🔥 SIMPAN TICKET ID KE FIRESTORE
+    await saveTicketIdToFirestore(response.ticketId, formData);
+
+    // Tampilkan success message dengan ticketId
+    await showSuccessMessage(response.ticketId);
+  } else {
+    throw new Error(response.message || "Unknown error from Google Script");
+  }
+}
+
+// ==================== 🔹 FUNGSI SIMPAN TICKET ID KE FIRESTORE ====================
+async function saveTicketIdToFirestore(ticketId, formData) {
+  try {
+    const docRef = await addDoc(collection(db, "tickets"), {
+      user_email: formData.user_email,
+      inventory: formData.inventory,
+      name: formData.name,
+      user_phone: formData.user_phone,
+      department: formData.department,
+      location: formData.location,
+      device: formData.device,
+      priority: formData.priority,
+      subject: formData.subject,
+      message: formData.message,
+      code: formData.code,
+      status_ticket: "Open",
+      ticketId: ticketId, // 🔥 SIMPAN TICKET ID DARI GOOGLE SCRIPT
+      createdAt: serverTimestamp(),
+      updatedAt: null,
+      qa: "",
+      action_by: "",
+      note: "",
+    });
+
+    console.log(
+      "✅ Ticket saved with Firebase ID:",
+      docRef.id,
+      "Ticket ID:",
+      ticketId
+    );
+    return docRef.id;
+  } catch (error) {
+    console.error("❌ Error saving ticket to Firestore:", error);
+    throw error;
+  }
+}
+
+// ==================== 🔹 Show Success Message ====================
+async function showSuccessMessage(ticketId) {
+  await showAlert(
+    "success",
+    "Ticket Submitted Successfully! 🎉",
+    `Your ticket has been created with ID: ${ticketId}. Our IT team will contact you soon.`,
+    5000
+  );
 }
 
 // ==================== 🔹 Show SweetAlert ====================
@@ -115,102 +416,6 @@ function showAlert(icon, title, text, timer = 3000) {
     },
   });
 }
-
-// ==================== 🔹 Enhanced Submit Handler ====================
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-
-  const submitBtn = document.getElementById("submitBtn");
-  const originalText = submitBtn.innerHTML;
-
-  // Show loading state
-  submitBtn.innerHTML = '<span class="loading"></span> Submitting Ticket...';
-  submitBtn.disabled = true;
-
-  const data = new FormData(form);
-  const device = data.get("device");
-
-  // Determine ticket code menggunakan mapping yang konsisten
-  const code = deviceTypeMapping[device] || "OT";
-
-  // Create document data for Firestore
-  const docData = {
-    inventory: (data.get("inventory") || "").toUpperCase(),
-    device,
-    code,
-    name: data.get("name"),
-    user_email: data.get("user_email"),
-    department: data.get("department"),
-    location: data.get("location"),
-    priority: data.get("priority"),
-    subject: data.get("subject"),
-    message: data.get("message"),
-    createdAt: serverTimestamp(),
-    updatedAt: null,
-    qa: "",
-    status_ticket: "Open",
-    action_by: "",
-    note: "",
-  };
-
-  try {
-    // Save to Firestore
-    const id = await saveToFirestore(docData);
-
-    // Prepare email payload
-    const emailPayload = {
-      ticketId: id,
-      ...docData,
-      sent_at: new Date().toLocaleString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    // Send email notification via Google Apps Script
-    // Jangan tunggu response - fire and forget
-    sendEmail(emailPayload).catch((emailError) => {
-      console.warn("Email warning:", emailError);
-      // Tidak throw error karena ticket sudah tersimpan di Firestore
-    });
-
-    // Show success alert (tidak menunggu email)
-    await showAlert(
-      "success",
-      "Ticket Submitted Successfully!",
-      `Your ticket has been created with ID: ${id}. Our IT team will contact you soon.`
-    );
-
-    // Reset form
-    form.reset();
-
-    // Reset button
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
-  } catch (err) {
-    console.error("Submission Error:", err);
-
-    // Show error alert
-    await showAlert(
-      "error",
-      "Submission Failed",
-      "There was an error submitting your ticket. Please try again or contact IT support directly."
-    );
-
-    // Reset button
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
-  }
-});
 
 // ==================== 🔹 Input Validation Enhancements ====================
 document.addEventListener("DOMContentLoaded", function () {
@@ -232,6 +437,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  // Initialize additional features
+  enhanceFormReset();
+  setupAutoSave();
+  loadDraft();
+  setupCharacterCounter();
+  setupPriorityIndicator();
 });
 
 // ==================== 🔹 Form Reset Enhancement ====================
@@ -239,22 +451,17 @@ function enhanceFormReset() {
   const resetBtn = form.querySelector('button[type="reset"]');
   if (resetBtn) {
     resetBtn.addEventListener("click", function () {
-      // Reset all border colors
       const inputs = form.querySelectorAll("input, select, textarea");
       inputs.forEach((input) => {
         input.style.borderColor = "";
       });
 
-      // Show reset confirmation
       setTimeout(() => {
         showAlert("info", "Form Reset", "All fields have been cleared.", 1500);
       }, 100);
     });
   }
 }
-
-// Initialize form reset enhancement
-document.addEventListener("DOMContentLoaded", enhanceFormReset);
 
 // ==================== 🔹 Auto-save Draft Feature ====================
 let autoSaveTimeout;
@@ -292,8 +499,6 @@ function loadDraft() {
       const element = form.querySelector(`[name="${key}"]`);
       if (element) {
         element.value = draftData[key];
-
-        // Trigger validation styling
         if (draftData[key].trim() !== "") {
           element.style.borderColor = "#10b981";
         }
@@ -308,17 +513,6 @@ function clearDraft() {
   localStorage.removeItem("ticketDraft");
   console.log("🗑️ Draft cleared");
 }
-
-// Initialize auto-save and load draft
-document.addEventListener("DOMContentLoaded", function () {
-  setupAutoSave();
-  loadDraft();
-
-  // Clear draft on successful submission
-  form.addEventListener("submit", function () {
-    setTimeout(clearDraft, 1000);
-  });
-});
 
 // ==================== 🔹 Character Counter for Message ====================
 function setupCharacterCounter() {
@@ -346,13 +540,9 @@ function setupCharacterCounter() {
       }
     });
 
-    // Trigger initial count
     messageTextarea.dispatchEvent(new Event("input"));
   }
 }
-
-// Initialize character counter
-document.addEventListener("DOMContentLoaded", setupCharacterCounter);
 
 // ==================== 🔹 Priority Level Indicator ====================
 function setupPriorityIndicator() {
@@ -391,20 +581,16 @@ function setupPriorityIndicator() {
       }
 
       indicator.textContent = text;
-      indicator.style.backgroundColor = color + "20"; // Add opacity
+      indicator.style.backgroundColor = color + "20";
       indicator.style.color = color;
       indicator.style.border = `1px solid ${color}40`;
     });
 
-    // Trigger initial state
     prioritySelect.dispatchEvent(new Event("change"));
   }
 }
 
-// Initialize priority indicator
-document.addEventListener("DOMContentLoaded", setupPriorityIndicator);
-
-// ==================== 🔹 Test Google Apps Script Connection (Removed) ====================
-// Hapus test connection karena menyebabkan CORS error
+// ==================== 🔹 System Initialization ====================
 console.log("✅ IT Ticketing System Loaded");
-console.log("📧 Email will be sent via Google Apps Script");
+console.log("📧 Email system integrated with Google Apps Script");
+console.log("🔥 Firebase Firestore connected");

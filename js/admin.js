@@ -1,5 +1,5 @@
 // ======================================================
-// 🚀 js/admin.js — Optimized Admin Panel with Ticket Grab System + Multiple Selection Delete
+// 🚀 js/admin.js — Optimized Admin Panel with FAST Multiple Selection Delete
 // ======================================================
 
 // ==================== 🔥 Firebase Imports ====================
@@ -15,6 +15,7 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth,
@@ -100,7 +101,8 @@ function getAdminDisplayName(user) {
  * Format ticket ID for display
  */
 function formatTicketId(ticket) {
-  if (ticket.ticketId?.includes("-")) {
+  // Use existing ticketId if available
+  if (ticket.ticketId && ticket.ticketId.includes("-")) {
     return ticket.ticketId;
   }
 
@@ -120,7 +122,7 @@ function formatTicketId(ticket) {
       Completion: "COM",
       Vendor: "VEN",
       Clinic: "CLN",
-      Lainlain: "GEN",
+      Lainlain: "OTH",
     },
     locations: {
       "Blue Office": "BLU",
@@ -143,7 +145,7 @@ function formatTicketId(ticket) {
       Workshop10: "WS10",
       Workshop11: "WS11",
       Workshop12: "WS12",
-      Lainlain: "GEN",
+      Lainlain: "OTH",
     },
     devices: {
       "PC Hardware": "HW",
@@ -152,7 +154,7 @@ function formatTicketId(ticket) {
       Printer: "PR",
       Network: "NET",
       Projector: "PJ",
-      "Backup Data": "BU",
+      "Backup Data": "DR",
       Others: "OT",
     },
   };
@@ -168,15 +170,49 @@ function formatTicketId(ticket) {
     try {
       const timestamp = ticket.createdAt;
       const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-      return date.toISOString().slice(2, 8).replace(/-/g, "");
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      return year + month;
     } catch {
-      return new Date().toISOString().slice(2, 8).replace(/-/g, "");
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2);
+      const month = (now.getMonth() + 1).toString().padStart(2, "0");
+      return year + month;
     }
   })();
 
-  const randomCode = ticket.id.substring(ticket.id.length - 3).toUpperCase();
+  // Generate consistent random code
+  const randomCode = generateConsistentRandomCode(ticket);
 
   return `${deptCode}-${locCode}-${deviceCode}-${dateCode}-${randomCode}`;
+}
+
+/**
+ * Generate consistent random code based on ticket data
+ */
+function generateConsistentRandomCode(ticket) {
+  const seed = (
+    ticket.user_email +
+    ticket.subject +
+    ticket.department +
+    ticket.location
+  ).toLowerCase();
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash = hash & hash;
+  }
+
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+
+  for (let i = 0; i < 3; i++) {
+    const index = Math.abs(hash + i * 123) % chars.length;
+    result += chars.charAt(index);
+  }
+
+  return result;
 }
 
 /**
@@ -559,12 +595,18 @@ function applyQuickFilter(filterType) {
 function refreshFilterState() {
   console.log("🎯 Refreshing filter state:", AppState.currentQuickFilter);
 
+  if (AppState.allTickets.length === 0) {
+    showEmptyState();
+    return;
+  }
+
   if (AppState.currentQuickFilter && AppState.currentQuickFilter !== "all") {
     applyQuickFilter(AppState.currentQuickFilter);
   } else {
     renderTickets(AppState.allTickets);
   }
 
+  // Update active filter button
   const activeBtn = document.querySelector(
     `.filter-btn[data-filter="${AppState.currentQuickFilter}"]`
   );
@@ -756,6 +798,76 @@ function clearSelection() {
 }
 
 /**
+ * Handle bulk delete operation
+ */
+async function handleBulkDelete() {
+  const ticketsToDelete = Array.from(AppState.selectedTickets);
+  console.log("🗑️ Bulk delete requested for tickets:", ticketsToDelete);
+
+  if (ticketsToDelete.length === 0) {
+    showNotification("Error!", "No tickets selected for deletion.", "error");
+    return;
+  }
+
+  // Validation
+  const validTickets = [];
+  const invalidTickets = [];
+
+  ticketsToDelete.forEach((ticketId) => {
+    const ticket = AppState.allTickets.find((t) => t.id === ticketId);
+    if (ticket && canDeleteTicket(ticket)) {
+      validTickets.push(ticketId);
+    } else {
+      invalidTickets.push({
+        id: ticketId,
+        reason: ticket ? `Handled by ${ticket.action_by}` : "Not found",
+      });
+    }
+  });
+
+  console.log("✅ Valid tickets for deletion:", validTickets.length);
+  console.log("❌ Invalid tickets:", invalidTickets.length);
+
+  if (validTickets.length === 0) {
+    showNotification(
+      "No tickets can be deleted",
+      "Selected tickets are either not found or being handled by other admins.",
+      "warning"
+    );
+    return;
+  }
+
+  // Show confirmation
+  const confirmed = await Swal.fire({
+    title: `Delete ${validTickets.length} Tickets?`,
+    html: `
+      <div style="text-align: center;">
+        <i class="fa-solid fa-trash" style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;"></i>
+        <p>You are about to delete <strong>${validTickets.length}</strong> tickets</p>
+        ${
+          invalidTickets.length > 0
+            ? `<p style="color: #ffc107;"><small>${invalidTickets.length} tickets cannot be deleted (handled by others)</small></p>`
+            : ""
+        }
+        <p style="color: #dc3545; font-weight: bold;">
+          <i class="fa-solid fa-exclamation-triangle"></i> This action cannot be undone!
+        </p>
+      </div>
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: `Delete ${validTickets.length} Tickets`,
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#d33",
+  });
+
+  if (!confirmed.isConfirmed) return;
+
+  // Execute deletion - USING FAST VERSION
+  await executeFastBulkDelete(validTickets);
+}
+
+/**
  * Attach checkbox events
  */
 function attachCheckboxEvents() {
@@ -774,246 +886,78 @@ function attachCheckboxEvents() {
   });
 }
 
-// ==================== 🗑️ Bulk Delete Operations ====================
+// ==================== 🗑️ BULK DELETE OPERATIONS - SIMPLE & WORKING ====================
 
 /**
- * Handle bulk delete operation
+ * SIMPLE & RELIABLE BULK DELETE
  */
-async function handleBulkDelete() {
-  const ticketsToDelete = Array.from(AppState.selectedTickets);
+async function executeFastBulkDelete(validTickets) {
+  console.log("🚀 SIMPLE bulk delete for", validTickets.length, "tickets");
 
-  if (ticketsToDelete.length === 0) {
-    showNotification("Error!", "No tickets selected for deletion.", "error");
-    return;
-  }
-
-  console.log("🗑️ Starting bulk delete for tickets:", ticketsToDelete);
-
-  // Validate permissions
-  const { validTickets, invalidTickets } =
-    validateTicketsForDeletion(ticketsToDelete);
-
-  if (invalidTickets.length > 0) {
-    const shouldProceed = await showInvalidTicketsWarning(
-      invalidTickets,
-      validTickets.length
-    );
-    if (!shouldProceed) return;
-  }
-
-  if (validTickets.length === 0) {
-    showNotification(
-      "Error!",
-      "No tickets with delete permission found.",
-      "error"
-    );
-    return;
-  }
-
-  const finalConfirm = await showDeleteConfirmation(validTickets.length);
-  if (!finalConfirm) return;
-
-  await executeBulkDelete(validTickets);
-}
-
-/**
- * Validate tickets for deletion
- */
-function validateTicketsForDeletion(ticketsToDelete) {
-  const invalidTickets = [];
-  const validTickets = [];
-
-  ticketsToDelete.forEach((ticketId) => {
-    const ticket = AppState.allTickets.find((t) => t.id === ticketId);
-    if (!ticket) {
-      invalidTickets.push({ id: ticketId, reason: "Ticket not found" });
-    } else if (!canDeleteTicket(ticket)) {
-      invalidTickets.push({
-        id: ticketId,
-        reason: `No permission - handled by ${ticket.action_by || "unknown"}`,
-      });
-    } else {
-      validTickets.push(ticketId);
-    }
-  });
-
-  return { validTickets, invalidTickets };
-}
-
-/**
- * Show warning for invalid tickets
- */
-async function showInvalidTicketsWarning(invalidTickets, validCount) {
-  const invalidConfirm = await Swal.fire({
-    title: "Permission Issue",
-    html: `
-      <div style="text-align: left;">
-        <p><strong>${invalidTickets.length} tickets cannot be deleted:</strong></p>
-        <div style="max-height: 200px; overflow-y: auto; background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;">
-          ${invalidTickets
-            .slice(0, 5)
-            .map(
-              (ticket) => `
-            <div style="margin: 5px 0; padding: 5px; border-bottom: 1px solid #ffeaa7;">
-              <strong>Ticket ID:</strong> ${ticket.id.substring(0, 8)}...<br>
-              <small><strong>Reason:</strong> ${ticket.reason}</small>
-            </div>
-          `
-            )
-            .join("")}
-          ${invalidTickets.length > 5 ? `<div style="color: #666;">... and ${invalidTickets.length - 5} more</div>` : ""}
-        </div>
-        <p>Do you want to delete the remaining <strong>${validCount}</strong> tickets?</p>
-      </div>
-    `,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: `Delete ${validCount} Tickets`,
-    cancelButtonText: "Cancel All",
-  });
-
-  return invalidConfirm.isConfirmed;
-}
-
-/**
- * Show final delete confirmation
- */
-async function showDeleteConfirmation(ticketCount) {
-  const finalConfirm = await Swal.fire({
-    title: `Delete ${ticketCount} Tickets?`,
+  const loadingSwal = Swal.fire({
+    title: `Deleting ${validTickets.length} Tickets`,
     html: `
       <div style="text-align: center;">
-        <i class="fa-solid fa-trash" style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;"></i>
-        <p>You are about to permanently delete <strong>${ticketCount}</strong> tickets</p>
-        <p style="color: #dc3545; font-size: 0.9rem; font-weight: bold;">
-          <i class="fa-solid fa-exclamation-triangle"></i> This action cannot be undone!
-        </p>
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #2563eb;"></i>
+        <p>Please wait...</p>
       </div>
     `,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: `Yes, Delete ${ticketCount} Tickets`,
-    cancelButtonText: "Cancel",
-    confirmButtonColor: "#d33",
+    showConfirmButton: false,
+    allowOutsideClick: false,
   });
 
-  return finalConfirm.isConfirmed;
-}
-
-/**
- * Execute bulk delete operation
- */
-async function executeBulkDelete(validTickets) {
-  console.log(
-    "🗑️ Starting deletion process for:",
-    validTickets.length,
-    "tickets"
-  );
-
-  let isCompleted = false;
-  const loadingTimeout = setTimeout(() => {
-    if (!isCompleted) {
-      console.warn("🗑️ Delete process taking too long, forcing completion");
-      Swal.close();
-      showNotification(
-        "Processing...",
-        "Delete operation is taking longer than expected.",
-        "info",
-        3000
-      );
-    }
-  }, 10000);
-
   try {
-    await showLoadingDialog(validTickets.length);
+    let successCount = 0;
+    let errorCount = 0;
+    const errorDetails = [];
+    const successfullyDeleted = [];
 
-    const { successCount, errorCount, errorDetails } =
-      await deleteTicketsSequentially(validTickets);
+    // Delete tickets satu per satu dengan error handling
+    for (const ticketId of validTickets) {
+      try {
+        await deleteDoc(doc(db, "tickets", ticketId));
+        successCount++;
+        successfullyDeleted.push(ticketId);
+        console.log(`✅ Deleted ticket: ${ticketId.substring(0, 8)}...`);
+      } catch (error) {
+        errorCount++;
+        errorDetails.push({
+          ticketId: ticketId.substring(0, 8) + "...",
+          error: error.message,
+        });
+        console.error(
+          `❌ Failed to delete ticket: ${ticketId.substring(0, 8)}...`,
+          error
+        );
+      }
+    }
 
-    clearTimeout(loadingTimeout);
-    isCompleted = true;
-
+    await loadingSwal.close();
     clearSelection();
-    Swal.close();
 
+    // Show results
     await showDeleteResults(
       successCount,
       errorCount,
       errorDetails,
       validTickets.length
     );
+
+    // Refresh UI dengan yang berhasil dihapus
+    refreshUIAfterDelete(successfullyDeleted);
+
+    console.log(
+      `🎉 Bulk delete completed: ${successCount} success, ${errorCount} failed`
+    );
   } catch (error) {
-    console.error("🗑️ Bulk delete process error:", error);
-    Swal.close();
+    await loadingSwal.close();
+    console.error("Bulk delete error:", error);
     showNotification(
-      "Unexpected Error",
-      "An unexpected error occurred during deletion.",
+      "Error",
+      "Failed to delete tickets: " + error.message,
       "error"
     );
   }
-}
-
-/**
- * Show loading dialog for delete operation
- */
-async function showLoadingDialog(totalTickets) {
-  await Swal.fire({
-    title: "Deleting Tickets...",
-    html: `
-      <div style="text-align: center;">
-        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #2563eb; margin-bottom: 1rem;"></i>
-        <p>Deleting ${totalTickets} tickets...</p>
-        <p style="font-size: 0.8rem; color: #666;">Please don't close this window</p>
-      </div>
-    `,
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-}
-
-/**
- * Delete tickets sequentially with error handling
- */
-async function deleteTicketsSequentially(ticketIds) {
-  let successCount = 0;
-  let errorCount = 0;
-  const errorDetails = [];
-
-  for (let i = 0; i < ticketIds.length; i++) {
-    const ticketId = ticketIds[i];
-
-    try {
-      console.log(`🗑️ Deleting ticket ${i + 1}/${ticketIds.length}:`, ticketId);
-      await deleteDoc(doc(db, "tickets", ticketId));
-      successCount++;
-
-      // Update loading message periodically
-      if ((i + 1) % 5 === 0 || i === ticketIds.length - 1) {
-        Swal.update({
-          html: `
-            <div style="text-align: center;">
-              <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #2563eb; margin-bottom: 1rem;"></i>
-              <p>Deleted ${successCount}/${ticketIds.length} tickets...</p>
-              <p style="font-size: 0.8rem; color: #666;">Processing ticket ${i + 1} of ${ticketIds.length}</p>
-            </div>
-          `,
-        });
-      }
-    } catch (error) {
-      console.error(`🗑️ Failed to delete ${ticketId}:`, error);
-      errorCount++;
-      errorDetails.push({
-        ticketId: ticketId,
-        error: error.message || "Unknown error",
-      });
-      continue;
-    }
-  }
-
-  return { successCount, errorCount, errorDetails };
 }
 
 /**
@@ -1057,7 +1001,7 @@ async function showDeleteResults(
             .map(
               (err) => `
             <div style="background: #f8d7da; padding: 5px; margin: 2px 0; border-radius: 3px; font-size: 0.8rem;">
-              <strong>${err.ticketId.substring(0, 10)}...</strong>: ${err.error}
+              <strong>${err.ticketId}</strong>: ${err.error}
             </div>
           `
             )
@@ -1078,24 +1022,55 @@ async function showDeleteResults(
   }
 }
 
+/**
+ * Refresh UI tanpa reload semua data - FIXED VERSION
+ */
+function refreshUIAfterDelete(deletedTicketIds) {
+  console.log("🔄 Selective UI refresh after deletion", deletedTicketIds);
+
+  // Update local state - HAPUS ticket yang berhasil didelete
+  AppState.allTickets = AppState.allTickets.filter(
+    (ticket) => !deletedTicketIds.includes(ticket.id)
+  );
+
+  // Clear selection
+  AppState.selectedTickets.clear();
+
+  // Re-render current view
+  refreshFilterState();
+
+  console.log("✅ UI refreshed after deletion");
+}
+
 // ==================== 🎨 Rendering Functions ====================
 
 /**
  * Render tickets based on current view
  */
 function renderTickets(tickets) {
+  console.log("🎨 Rendering tickets:", tickets?.length);
+
   if (!tickets || tickets.length === 0) {
     showEmptyState();
     return;
   }
 
-  let filtered = applyFilters(tickets);
+  const filtered = applyFilters(tickets);
+  console.log("🎨 Filtered tickets:", filtered.length);
+
+  if (filtered.length === 0) {
+    showEmptyState();
+    return;
+  }
 
   if (AppState.isCardView) {
     renderCards(filtered);
   } else {
     renderTable(filtered);
   }
+
+  // Always update bulk actions after rendering
+  updateBulkActions();
 }
 
 /**
@@ -1868,6 +1843,11 @@ function initTickets() {
 
   const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
 
+  // Unsubscribe previous listener if exists
+  if (AppState.ticketsUnsubscribe) {
+    AppState.ticketsUnsubscribe();
+  }
+
   AppState.ticketsUnsubscribe = onSnapshot(
     q,
     (snapshot) => {
@@ -1885,17 +1865,24 @@ function initTickets() {
       console.log("📊 Tickets loaded:", tickets.length);
       AppState.allTickets = tickets;
 
+      // Hide loading state and render tickets
+      renderTickets(tickets);
+      startDurationUpdates();
+
       // Update global variable for export.js
       if (typeof window.updateAllTickets === "function") {
         window.updateAllTickets(tickets);
       }
 
-      refreshFilterState();
-      startDurationUpdates();
-      setTimeout(addDataLabels, 100);
+      console.log("✅ Tickets rendering completed");
     },
     (error) => {
       console.error("📊 Error loading tickets:", error);
+
+      // Always hide loading state on error
+      if (DOM.ticketTableBody) {
+        DOM.ticketTableBody.innerHTML = "";
+      }
 
       if (
         error.code === "permission-denied" ||
@@ -2045,7 +2032,27 @@ async function handleDelete(e) {
   if (!confirmed.isConfirmed) return;
 
   try {
+    // Show loading
+    Swal.fire({
+      title: "Deleting...",
+      text: "Please wait while we delete the ticket",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     await deleteDoc(doc(db, "tickets", id));
+
+    Swal.close();
+
+    // Remove from local state immediately
+    AppState.allTickets = AppState.allTickets.filter((t) => t.id !== id);
+    AppState.selectedTickets.delete(id);
+
+    // Refresh the view
+    refreshFilterState();
+
     showNotification(
       "Deleted!",
       "Ticket has been permanently removed.",
@@ -2053,10 +2060,17 @@ async function handleDelete(e) {
       2000
     );
   } catch (error) {
+    Swal.close();
     console.error("Delete error:", error);
-    showNotification("Error!", "Failed to delete ticket.", "error");
+    showNotification(
+      "Error!",
+      "Failed to delete ticket: " + error.message,
+      "error"
+    );
   }
 }
+
+// ==================== ✏️ Edit Ticket Functions ====================
 
 /**
  * Handle ticket edit
@@ -2957,5 +2971,5 @@ window.getDisplayedTickets = getDisplayedTickets;
 window.getCurrentFilterInfo = getCurrentFilterInfo;
 
 console.log(
-  "🚀 Admin JS with Ticket Grab System & Multiple Selection loaded successfully"
+  "🚀 Admin JS with FAST Multiple Selection Delete loaded successfully"
 );
