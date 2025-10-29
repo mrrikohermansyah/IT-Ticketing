@@ -76,7 +76,10 @@ const AppState = {
  * Get admin display name with fallback logic
  */
 function getAdminDisplayName(user) {
-  if (!user?.email) return "IT Support";
+  if (!user?.email) {
+    console.log("❌ getAdminDisplayName: No user email");
+    return "IT Support";
+  }
 
   const userEmail = user.email.toLowerCase();
 
@@ -260,17 +263,64 @@ function isTicketAvailable(ticket) {
 /**
  * Check if ticket belongs to current admin
  */
+/**
+ * Check if ticket belongs to current admin - IMPROVED VERSION
+ */
 function isMyTicket(ticket) {
+  if (!ticket || !ticket.action_by) return false;
+
   const currentAdmin = getAdminDisplayName(auth.currentUser);
-  return ticket.action_by === currentAdmin;
+  const currentEmail = auth.currentUser?.email?.toLowerCase();
+
+  console.log("🔍 isMyTicket Check:", {
+    ticketActionBy: ticket.action_by,
+    currentAdmin,
+    currentEmail,
+    directMatch: ticket.action_by === currentAdmin,
+    emailInActionBy: ticket.action_by.toLowerCase().includes(currentEmail),
+  });
+
+  // Cek direct match dulu
+  if (ticket.action_by === currentAdmin) {
+    return true;
+  }
+
+  // Cek jika email ada di action_by (fallback)
+  if (currentEmail && ticket.action_by.toLowerCase().includes(currentEmail)) {
+    return true;
+  }
+
+  // Cek mapping dari CONFIG
+  if (window.CONFIG?.ADMIN_NAME_MAPPING) {
+    const mappedName = window.CONFIG.ADMIN_NAME_MAPPING[currentEmail];
+    if (mappedName && ticket.action_by === mappedName) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
  * Check delete permission for ticket
  */
+/**
+ * Check delete permission for ticket - IMPROVED VERSION
+ */
 function canDeleteTicket(ticket) {
   if (!ticket) return false;
-  return isTicketAvailable(ticket) || isMyTicket(ticket);
+
+  const canDelete = isTicketAvailable(ticket) || isMyTicket(ticket);
+
+  console.log("🔍 canDeleteTicket Check:", {
+    ticketId: ticket.id.substring(0, 8),
+    actionBy: ticket.action_by,
+    isAvailable: isTicketAvailable(ticket),
+    isMine: isMyTicket(ticket),
+    canDelete: canDelete,
+  });
+
+  return canDelete;
 }
 
 /**
@@ -630,7 +680,7 @@ function initMultipleSelection() {
 }
 
 /**
- * Add bulk actions container
+ * Add floating bulk actions container
  */
 function addBulkActionsContainer() {
   const existingBulkActions = document.querySelector(".bulk-actions");
@@ -641,21 +691,25 @@ function addBulkActionsContainer() {
   const bulkActions = document.createElement("div");
   bulkActions.className = "bulk-actions hidden";
   bulkActions.innerHTML = `
-    <div class="bulk-info">
-      <span class="bulk-count">0 tickets selected</span>
+    <div class="bulk-overlay"></div>
+    <div class="bulk-actions-content">
+      <div class="bulk-info">
+        <i class="fa-solid fa-check-circle"></i>
+        <span class="bulk-count">0 tickets selected</span>
+      </div>
+      <div class="bulk-buttons">
+        <button class="bulk-delete-btn" disabled>
+          <i class="fa-solid fa-trash"></i> Delete Selected (0)
+        </button>
+        <button class="bulk-cancel-btn">
+          <i class="fa-solid fa-times"></i> Cancel
+        </button>
+      </div>
     </div>
-    <button class="bulk-delete-btn" disabled>
-      <i class="fa-solid fa-trash"></i> Delete Selected (0)
-    </button>
-    <button class="bulk-cancel-btn">
-      <i class="fa-solid fa-times"></i> Cancel
-    </button>
   `;
 
-  const tableWrapper = document.querySelector(".table-wrapper");
-  if (tableWrapper) {
-    tableWrapper.parentNode.insertBefore(bulkActions, tableWrapper);
-  }
+  // 🔥 PERUBAHAN: Append ke body, bukan ke table wrapper
+  document.body.appendChild(bulkActions);
 
   document
     .querySelector(".bulk-delete-btn")
@@ -663,10 +717,13 @@ function addBulkActionsContainer() {
   document
     .querySelector(".bulk-cancel-btn")
     ?.addEventListener("click", clearSelection);
+  document
+    .querySelector(".bulk-overlay")
+    ?.addEventListener("click", clearSelection);
 }
 
 /**
- * Update bulk actions UI
+ * Update bulk actions UI dengan animasi floating
  */
 function updateBulkActions() {
   const bulkActions = document.querySelector(".bulk-actions");
@@ -678,12 +735,26 @@ function updateBulkActions() {
   const count = AppState.selectedTickets.size;
 
   if (count > 0) {
+    // Show with animation
     bulkActions.classList.remove("hidden");
+    setTimeout(() => {
+      bulkActions.classList.add("visible");
+    }, 10);
+
     bulkCount.textContent = `${count} ticket${count > 1 ? "s" : ""} selected`;
     bulkDeleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Delete Selected (${count})`;
     bulkDeleteBtn.disabled = false;
+
+    // Add body class to prevent scrolling
+    document.body.classList.add("bulk-actions-active");
   } else {
-    bulkActions.classList.add("hidden");
+    // Hide with animation
+    bulkActions.classList.remove("visible");
+    setTimeout(() => {
+      bulkActions.classList.add("hidden");
+      document.body.classList.remove("bulk-actions-active");
+    }, 300);
+
     bulkDeleteBtn.disabled = true;
   }
 }
@@ -699,17 +770,24 @@ function toggleSelectAll(checked) {
   checkboxes.forEach((checkbox) => {
     const ticketId = checkbox.dataset.id;
     const ticket = AppState.allTickets.find((t) => t.id === ticketId);
+    const row = document.querySelector(`tr[data-ticket-id="${ticketId}"]`);
+    const card = document.querySelector(
+      `.ticket-card[data-ticket-id="${ticketId}"]`
+    );
 
     if (checked) {
       if (ticket && canDeleteTicket(ticket)) {
         checkbox.checked = true;
         AppState.selectedTickets.add(ticketId);
         checkbox.closest("tr").classList.add("selected-row");
+        if (row) row.classList.add("selected-row");
+        if (card) card.classList.add("selected-card");
       }
     } else {
       checkbox.checked = false;
       AppState.selectedTickets.delete(ticketId);
-      checkbox.closest("tr").classList.remove("selected-row");
+      if (row) row.classList.remove("selected-row");
+      if (card) card.classList.remove("selected-card");
     }
   });
 
@@ -722,16 +800,48 @@ function toggleSelectAll(checked) {
 function handleTicketSelect(ticketId, checked) {
   const ticket = AppState.allTickets.find((t) => t.id === ticketId);
   const row = document.querySelector(`tr[data-ticket-id="${ticketId}"]`);
+  const card = document.querySelector(
+    `.ticket-card[data-ticket-id="${ticketId}"]`
+  );
+
+  // 🔥 DEBUG: Cek data user dan ticket
+  const currentUser = auth.currentUser;
+  const currentAdminName = getAdminDisplayName(currentUser);
+  const currentEmail = currentUser?.email;
+
+  console.log("🔍 DEBUG Ticket Selection:", {
+    ticketId: ticketId.substring(0, 8),
+    ticketActionBy: ticket?.action_by,
+    currentAdminName,
+    currentEmail,
+    isMyTicket: isMyTicket(ticket),
+    canDelete: canDeleteTicket(ticket),
+    ticketData: ticket,
+  });
 
   if (checked) {
     if (ticket && canDeleteTicket(ticket)) {
       AppState.selectedTickets.add(ticketId);
       if (row) row.classList.add("selected-row");
+      if (card) card.classList.add("selected-card");
     } else {
-      const checkbox = document.querySelector(
+      const checkboxes = document.querySelectorAll(
         `.ticket-checkbox[data-id="${ticketId}"]`
       );
-      if (checkbox) checkbox.checked = false;
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+
+      if (card) card.classList.remove("selected-card");
+
+      // 🔥 DEBUG: Tampilkan info lebih detail
+      console.log("🚫 Selection blocked for ticket:", {
+        actionBy: ticket?.action_by,
+        currentUser: currentAdminName,
+        email: currentEmail,
+        isAvailable: isTicketAvailable(ticket),
+        isMine: isMyTicket(ticket),
+      });
 
       showNotification(
         "Cannot Select Ticket",
@@ -744,6 +854,7 @@ function handleTicketSelect(ticketId, checked) {
   } else {
     AppState.selectedTickets.delete(ticketId);
     if (row) row.classList.remove("selected-row");
+    if (card) card.classList.remove("selected-card");
   }
 
   updateSelectAllCheckbox();
@@ -780,7 +891,7 @@ function updateSelectAllCheckbox() {
 }
 
 /**
- * Clear all selections
+ * Clear all selections dengan animasi
  */
 function clearSelection() {
   AppState.selectedTickets.clear();
@@ -793,8 +904,21 @@ function clearSelection() {
     row.classList.remove("selected-row");
   });
 
+  // Clear card selection
+  document.querySelectorAll(".selected-card").forEach((card) => {
+    card.classList.remove("selected-card");
+  });
+
   updateSelectAllCheckbox();
   updateBulkActions();
+
+  // Show feedback
+  showNotification(
+    "Selection Cleared",
+    "All tickets have been unselected",
+    "info",
+    1500
+  );
 }
 
 /**
@@ -1131,6 +1255,7 @@ function renderTable(data) {
     const isAvailable = isTicketAvailable(ticket);
     const isMine = isMyTicket(ticket);
     const canDelete = canDeleteTicket(ticket);
+    const isSelected = AppState.selectedTickets.has(ticket.id); // 🔥 NEW
 
     const rowClass = isAvailable
       ? "ticket-available"
@@ -1142,12 +1267,18 @@ function renderTable(data) {
     tr.className = rowClass;
     tr.setAttribute("data-ticket-id", ticket.id);
 
+    // Add selected class jika ticket dipilih
+    if (isSelected) {
+      tr.classList.add("selected-row");
+    }
+
     tr.innerHTML = createTableRowHTML(
       ticket,
       displayQA,
       isAvailable,
       isMine,
-      canDelete
+      canDelete,
+      isSelected
     );
     DOM.ticketTableBody.appendChild(tr);
   });
@@ -1320,29 +1451,82 @@ function renderCards(data) {
     const displayQA = ticket.status_ticket === "Closed" ? "Finish" : "Continue";
     const isAvailable = isTicketAvailable(ticket);
     const isMine = isMyTicket(ticket);
+    const canDelete = canDeleteTicket(ticket);
 
     const cardClass = isAvailable
       ? "ticket-card ticket-available"
       : isMine
         ? "ticket-card ticket-mine"
         : "ticket-card ticket-others";
-
     const card = document.createElement("div");
     card.className = cardClass;
-    card.innerHTML = createCardHTML(ticket, displayQA, isAvailable, isMine);
+    card.setAttribute("data-ticket-id", ticket.id);
+
+    // Add selected class jika ticket dipilih
+    if (AppState.selectedTickets.has(ticket.id)) {
+      card.classList.add("selected-card");
+    }
+
+    // 🔥 FIX: Pass canDelete parameter
+    card.innerHTML = createCardHTML(
+      ticket,
+      displayQA,
+      isAvailable,
+      isMine,
+      canDelete
+    );
     DOM.cardContainer.appendChild(card);
   });
 
   attachRowEvents();
+  attachCardCheckboxEvents();
 }
 
 /**
- * Create card HTML
+ * Attach checkbox events untuk card view
  */
-function createCardHTML(ticket, displayQA, isAvailable, isMine) {
-  const actionButtons = getCardActionButtonsHTML(ticket, isAvailable, isMine);
+function attachCardCheckboxEvents() {
+  document.querySelectorAll(".card-checkbox").forEach((checkbox) => {
+    checkbox.addEventListener("change", (e) => {
+      const ticketId = e.target.dataset.id;
+      const card = e.target.closest(".ticket-card");
+
+      if (e.target.checked) {
+        handleTicketSelect(ticketId, true);
+        if (card) card.classList.add("selected-card");
+      } else {
+        handleTicketSelect(ticketId, false);
+        if (card) card.classList.remove("selected-card");
+      }
+    });
+  });
+}
+
+/**
+ * Create card HTML - FIXED VERSION
+ */
+function createCardHTML(ticket, displayQA, isAvailable, isMine, canDelete) {
+  // 🔥 FIX: Pass canDelete ke getCardActionButtonsHTML
+  const actionButtons = getCardActionButtonsHTML(
+    ticket,
+    isAvailable,
+    isMine,
+    canDelete
+  );
+  const isSelected = AppState.selectedTickets.has(ticket.id);
 
   return `
+    <!-- Checkbox untuk card -->
+    <div class="card-checkbox-container">
+      <input 
+        type="checkbox" 
+        class="ticket-checkbox card-checkbox" 
+        data-id="${ticket.id}"
+        ${isSelected ? "checked" : ""}
+        ${!canDelete ? `disabled title="Cannot delete - handled by ${ticket.action_by}"` : ""}
+      >
+    </div>
+    
     <div class="card-header">
       <h3 title="Original ID: ${ticket.id}">${formatTicketId(ticket)}</h3>
       <span class="status-badge status-${ticket.status_ticket?.replace(" ", "").toLowerCase() || "open"}">
@@ -1460,9 +1644,9 @@ function createQAField(qaValue) {
 }
 
 /**
- * Get card action buttons HTML
+ * Get card action buttons HTML - FIXED VERSION
  */
-function getCardActionButtonsHTML(ticket, isAvailable, isMine) {
+function getCardActionButtonsHTML(ticket, isAvailable, isMine, canDelete) {
   if (isAvailable) {
     return `
       <button class="grab-btn" data-id="${ticket.id}">
@@ -1485,14 +1669,26 @@ function getCardActionButtonsHTML(ticket, isAvailable, isMine) {
       </button>
     `;
   } else {
-    return `
-      <button class="view-btn" data-id="${ticket.id}">
-        <i class="fa-solid fa-eye"></i> View Only
-      </button>
-      <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" disabled>
-        <i class="fa-solid fa-trash"></i> Delete
-      </button>
-    `;
+    // 🔥 FIX: Gunakan canDelete untuk menentukan tombol delete
+    if (canDelete) {
+      return `
+        <button class="view-btn" data-id="${ticket.id}">
+          <i class="fa-solid fa-eye"></i> View Only
+        </button>
+        <button class="delete-btn" data-id="${ticket.id}">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      `;
+    } else {
+      return `
+        <button class="view-btn" data-id="${ticket.id}">
+          <i class="fa-solid fa-eye"></i> View Only
+        </button>
+        <button class="delete-btn disabled-delete-btn" data-id="${ticket.id}" disabled>
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      `;
+    }
   }
 }
 

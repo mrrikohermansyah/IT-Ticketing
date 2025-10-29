@@ -391,12 +391,22 @@ async function saveTicketIdToFirestore(ticketId, formData) {
 
 // ==================== 🔹 Show Success Message ====================
 async function showSuccessMessage(ticketId) {
-  await showAlert(
-    "success",
-    "Ticket Submitted Successfully! 🎉",
-    `Your ticket has been created with ID: ${ticketId}. Our IT team will contact you soon.`,
-    5000
-  );
+  await Swal.fire({
+    icon: "success",
+    title: "Ticket Submitted Successfully! 🎉",
+    html: `Your ticket has been created with ID:<br> <strong>${ticketId}</strong>. <br>Our IT team will contact you soon.`,
+    showConfirmButton: true, // 🔥 TAMPILKAN TOMBOL OK
+    confirmButtonText: "OK",
+    confirmButtonColor: "#10b981",
+    timer: 5000, // 🔥 TETAP ADA AUTO CLOSE 5 DETIK
+    timerProgressBar: true,
+    showClass: {
+      popup: "animate__animated animate__fadeInDown",
+    },
+    hideClass: {
+      popup: "animate__animated animate__fadeOutUp",
+    },
+  });
 }
 
 // ==================== 🔹 Show SweetAlert ====================
