@@ -56,6 +56,7 @@ const DOM = {
   userInfo: document.getElementById("userInfo"),
   userName: document.getElementById("userName"),
   userTicketBtn: document.getElementById("userTicketBtn"),
+  quickFilterContainer: null,
 };
 
 // Application State
@@ -68,7 +69,74 @@ const AppState = {
   currentQuickFilter: null,
   resizeTimeout: null,
   selectedTickets: new Set(),
+  lastAvailableCount: 0,
+  lastAvailableIds: new Set(),
+  smartFilterAuto: true,
 };
+
+/* NEW: Add CSS for flash effect (inject once) */
+
+/* NEW: Flash available tickets by ids (rows and cards) */
+function addFlashStyles() {
+  if (document.getElementById("flash-available-styles")) return;
+  const style = document.createElement("style");
+  style.id = "flash-available-styles";
+  style.textContent = `
+    @keyframes flashButton {
+      0% { background-color: #22c55e; color: white; }
+      50% { background-color: white; color: #22c55e; }
+      100% { background-color: #22c55e; color: white; }
+    }
+    
+    /* Filter button flashing */
+    .filter-btn[data-filter="available"].flash-button {
+      animation: flashButton 1s ease-in-out 0s 3;
+      border: 2px solid #22c55e;
+      background-color: #22c55e;
+      color: white;
+    }
+
+    /* Card flashing */
+    @keyframes flashCard {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(34,197,94,0); }
+      50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(34,197,94,0.3); }
+      100% { transform: scale(1); box-shadow: 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .ticket-card.flash-available {
+      animation: flashCard 1s ease-in-out 0s 3;
+      border: 2px solid #22c55e !important;
+    }
+
+    /* Table row flashing */
+    @keyframes flashRow {
+      0% { background-color: transparent; }
+      50% { background-color: rgba(34,197,94,0.1); }
+      100% { background-color: transparent; }
+    }
+
+    tr.flash-available {
+      animation: flashRow 1s ease-in-out 0s 3;
+      border-left: 4px solid #22c55e !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/* Add: Function to flash available filter button */
+function flashAvailableFilterButton(duration = 3200) {
+  const availableBtn = document.querySelector(
+    '.filter-btn[data-filter="available"]'
+  );
+  if (!availableBtn) return;
+
+  addFlashStyles();
+  availableBtn.classList.add("flash-button");
+
+  setTimeout(() => {
+    availableBtn.classList.remove("flash-button");
+  }, duration);
+}
 
 // ==================== 🛠️ Utility Functions ====================
 
@@ -551,8 +619,14 @@ function initTicketGrabSystem() {
  * Add quick filter buttons
  */
 function addQuickFilterButtons() {
+  console.log("🎯 Adding quick filter buttons...");
+
+  // Pastikan hapus yang lama dulu
+  removeQuickFilterContainer();
+
   const filterContainer = document.createElement("div");
   filterContainer.className = "quick-filter-container";
+  filterContainer.id = "quickFilterContainer";
   filterContainer.innerHTML = `
     <div class="quick-filters">
       <button class="filter-btn" data-filter="all">All Tickets</button>
@@ -565,6 +639,7 @@ function addQuickFilterButtons() {
   const tableWrapper = document.querySelector(".table-wrapper");
   if (tableWrapper) {
     tableWrapper.parentNode.insertBefore(filterContainer, tableWrapper);
+    DOM.quickFilterContainer = filterContainer;
   }
 
   document.querySelectorAll(".filter-btn").forEach((btn) => {
@@ -581,9 +656,194 @@ function addQuickFilterButtons() {
 }
 
 /**
+ * Cleanup resources - FIXED VERSION
+ */
+function cleanup() {
+  console.log("🧹 Cleaning up resources...");
+
+  try {
+    // Clear application state
+    AppState.selectedTickets.clear();
+    AppState.allTickets = [];
+    AppState.currentQuickFilter = null;
+
+    // Unsubscribe Firestore listener
+    if (AppState.ticketsUnsubscribe) {
+      AppState.ticketsUnsubscribe();
+      AppState.ticketsUnsubscribe = null;
+    }
+
+    // Clear intervals
+    if (AppState.durationIntervalId) {
+      clearInterval(AppState.durationIntervalId);
+      AppState.durationIntervalId = null;
+    }
+
+    if (AppState.resizeTimeout) {
+      clearTimeout(AppState.resizeTimeout);
+      AppState.resizeTimeout = null;
+    }
+
+    // Hapus semua UI elements
+    removeControlsBar();
+    removeQuickFilterContainer();
+    removeBulkActions();
+    clearTableAndCards();
+
+    // Clear session storage
+    sessionStorage.removeItem("adminFirstLogin");
+    sessionStorage.removeItem("adminSessionTime");
+
+    console.log("🧹 Cleanup completed successfully");
+  } catch (error) {
+    console.error("🧹 Error during cleanup:", error);
+  }
+}
+
+/**
+ * Remove controls bar - NEW FUNCTION
+ */
+function removeControlsBar() {
+  try {
+    const controlsBar = document.querySelector(".controls-bar");
+    if (controlsBar) {
+      controlsBar.style.display = "none";
+      console.log("🧹 Controls bar hidden");
+    }
+
+    // Alternative: Jika ingin menghapus sepenuhnya dari DOM
+    // const controlsBar = document.querySelector('.controls-bar');
+    // if (controlsBar) {
+    //   controlsBar.remove();
+    //   console.log("🧹 Controls bar removed");
+    // }
+  } catch (error) {
+    console.error("🧹 Error removing controls bar:", error);
+  }
+}
+
+/**
+ * Remove quick filter container - IMPROVED
+ */
+function removeQuickFilterContainer() {
+  try {
+    // Multiple removal strategies
+    const selectors = [".quick-filter-container", "#quickFilterContainer"];
+
+    selectors.forEach((selector) => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element) => {
+        element.remove();
+        console.log(`🧹 Removed quick filter: ${selector}`);
+      });
+    });
+
+    // Clear DOM reference
+    DOM.quickFilterContainer = null;
+  } catch (error) {
+    console.error("🧹 Error removing quick filter:", error);
+  }
+}
+
+/**
+ * Remove bulk actions - IMPROVED
+ */
+function removeBulkActions() {
+  try {
+    const selectors = [".bulk-actions"];
+
+    selectors.forEach((selector) => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element) => {
+        element.remove();
+        console.log(`🧹 Removed bulk actions: ${selector}`);
+      });
+    });
+
+    // Remove body class
+    document.body.classList.remove("bulk-actions-active");
+  } catch (error) {
+    console.error("🧹 Error removing bulk actions:", error);
+  }
+}
+
+/**
+ * Clear table and cards - NEW FUNCTION
+ */
+function clearTableAndCards() {
+  try {
+    // Clear table body
+    if (DOM.ticketTableBody) {
+      DOM.ticketTableBody.innerHTML = "";
+    }
+
+    // Clear card container
+    if (DOM.cardContainer) {
+      DOM.cardContainer.innerHTML = "";
+      DOM.cardContainer.style.display = "none";
+    }
+
+    // Hide table wrapper
+    const tableWrapper = document.querySelector(".table-wrapper");
+    if (tableWrapper) {
+      tableWrapper.style.display = "none";
+    }
+
+    console.log("🧹 Table and cards cleared");
+  } catch (error) {
+    console.error("🧹 Error clearing table and cards:", error);
+  }
+}
+
+/**
+ * Clear admin UI - FIXED VERSION
+ */
+function clearAdminUI() {
+  console.log("🧹 Clearing admin UI...");
+
+  // Clear all UI elements
+  removeControlsBar();
+  clearTableAndCards();
+  removeQuickFilterContainer();
+  removeBulkActions();
+
+  // HANYA tampilkan pesan login jika di admin panel
+  const adminPanel = document.getElementById("adminPanel");
+  if (adminPanel && adminPanel.style.display !== "none") {
+    showLoginMessageInTicketArea();
+  }
+
+  // Hide admin panel, show login screen
+  const loginScreen = document.getElementById("loginScreen");
+  if (loginScreen) {
+    loginScreen.style.display = "block";
+    const loginLoading = loginScreen.querySelector(".loading");
+    if (loginLoading) {
+      loginLoading.style.display = "none";
+    }
+  }
+  if (adminPanel) {
+    adminPanel.style.display = "none";
+  }
+
+  console.log("🧹 Admin UI cleared with login message");
+}
+
+/**
  * Apply quick filter dengan AUTO-SWITCH ketika kosong
  */
-function applyQuickFilter(filterType) {
+function applyQuickFilter(filterType, source = "user") {
+  // Mark manual selection so smart auto-switch won't override user choice
+  if (source === "user") {
+    AppState.smartFilterAuto = false;
+  }
+
+  // Only apply filters if user is logged in
+  if (!auth.currentUser) {
+    console.log("🎯 Skipping filter - user not logged in");
+    return;
+  }
+
   AppState.currentQuickFilter = filterType;
   let filtered = AppState.allTickets;
   const currentAdmin = getAdminDisplayName(auth.currentUser);
@@ -607,7 +867,7 @@ function applyQuickFilter(filterType) {
             "info",
             2000
           );
-          return applyQuickFilter("my_tickets");
+          return applyQuickFilter("my_tickets", "system");
         } else {
           console.log("🎯 No my tickets either, switching to All");
           showNotification(
@@ -616,7 +876,7 @@ function applyQuickFilter(filterType) {
             "info",
             2000
           );
-          return applyQuickFilter("all");
+          return applyQuickFilter("all", "system");
         }
       }
       break;
@@ -633,7 +893,7 @@ function applyQuickFilter(filterType) {
           "info",
           2000
         );
-        return applyQuickFilter("all");
+        return applyQuickFilter("all", "system");
       }
       break;
 
@@ -684,6 +944,9 @@ function refreshFilterState() {
       AppState.currentQuickFilter = "all";
     }
 
+    // Mark that this selection was done by the smart system (not user)
+    AppState.smartFilterAuto = true;
+
     console.log("🎯 Smart filter selection:", {
       available: availableTickets.length,
       myTickets: myTickets.length,
@@ -691,8 +954,8 @@ function refreshFilterState() {
     });
   }
 
-  // Terapkan filter yang dipilih
-  applyQuickFilter(AppState.currentQuickFilter);
+  // Terapkan filter yang dipilih (system call so it won't disable auto-switch)
+  applyQuickFilter(AppState.currentQuickFilter, "system");
 }
 
 /**
@@ -1184,6 +1447,12 @@ function refreshUIAfterDelete(deletedTicketIds) {
 function renderTickets(tickets) {
   console.log("🎨 Rendering tickets:", tickets?.length);
 
+  // Safety check - hanya render jika user logged in
+  if (!auth.currentUser) {
+    console.log("🎨 Skipping render - user not logged in");
+    return;
+  }
+
   if (!tickets || tickets.length === 0) {
     showEmptyState();
     return;
@@ -1345,6 +1614,11 @@ function showSmartEmptyState() {
  * Show empty state biasa
  */
 function showEmptyState() {
+  // Jika user tidak login, tampilkan pesan login
+  if (!auth.currentUser) {
+    showLoginMessageInTicketArea();
+    return;
+  }
   if (DOM.ticketTableBody) {
     DOM.ticketTableBody.innerHTML = `
       <tr>
@@ -2185,6 +2459,215 @@ async function updateTicketData(docRef, formValues, currentStatus, data) {
   updateDurations();
 }
 
+/**
+ * Show login screen - FIXED VERSION
+ */
+function showLoginScreen() {
+  console.log("🔐 Showing login screen...");
+
+  const loginScreen = document.getElementById("loginScreen");
+  const adminPanel = document.getElementById("adminPanel");
+
+  if (loginScreen) {
+    loginScreen.style.display = "block";
+    // Pastikan tidak ada loading state di login screen
+    const loginLoading = loginScreen.querySelector(".loading");
+    if (loginLoading) {
+      loginLoading.style.display = "none";
+    }
+  }
+  if (adminPanel) {
+    adminPanel.style.display = "none";
+  }
+
+  // HANYA tampilkan pesan login jika admin panel masih terlihat
+  // atau jika ada elemen ticket yang perlu diisi
+  if (
+    document.querySelector(".table-wrapper") ||
+    document.querySelector("#cardContainer")
+  ) {
+    showLoginMessageInTicketArea();
+  }
+
+  // Bersihkan semua UI admin
+  cleanup();
+
+  // Sembunyikan tombol-tombol yang hanya untuk admin
+  showAuthButtons(false);
+
+  console.log("🔐 Login screen shown, admin UI cleaned up");
+}
+
+/**
+ * Show admin panel - FIXED VERSION
+ */
+function showAdminPanel() {
+  console.log("🖥️ Showing admin panel...");
+
+  const loginScreen = document.getElementById("loginScreen");
+  const adminPanel = document.getElementById("adminPanel");
+
+  if (loginScreen) loginScreen.style.display = "none";
+  if (adminPanel) adminPanel.style.display = "block";
+
+  // Tampilkan tombol-tombol admin
+  showControlsBar();
+  showAuthButtons(true, auth.currentUser);
+
+  console.log("🖥️ Admin panel shown");
+}
+
+/**
+ * Show login message in ticket area - NEW FUNCTION
+ */
+function showLoginMessageInTicketArea() {
+  console.log("🔐 Showing login message in ticket area...");
+
+  // Cek apakah sudah ada pesan login, jika sudah jangan buat lagi
+  const existingLoginMessage = document.querySelector(
+    ".login-message-state, .login-message-card"
+  );
+  if (existingLoginMessage) {
+    console.log("🔐 Login message already exists, skipping...");
+    return;
+  }
+
+  // Untuk table view - HANYA jika element ada dan kosong
+  if (DOM.ticketTableBody && DOM.ticketTableBody.children.length === 0) {
+    DOM.ticketTableBody.innerHTML = `
+      <tr>
+        <td colspan="19" class="login-message-state">
+          <div style="text-align: center; padding: 3rem;">
+            <i class="fa-solid fa-right-to-bracket" style="font-size: 4rem; color: #2563eb; margin-bottom: 1.5rem;"></i>
+            <h3 style="color: #374151; margin-bottom: 1rem;">Login Required</h3>
+            <p style="color: #6b7280; margin-bottom: 2rem;">Please login to view and manage tickets</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <button onclick="handleGoogleLogin()" class="login-action-btn primary">
+                <i class="fa-brands fa-google"></i> Login with Google
+              </button>
+              <button onclick="redirectToLoginPage()" class="login-action-btn secondary">
+                <i class="fa-solid fa-user"></i> User Login Page
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  // Untuk card view - HANYA jika element ada dan kosong
+  if (DOM.cardContainer && DOM.cardContainer.children.length === 0) {
+    DOM.cardContainer.innerHTML = `
+      <div class="login-message-card">
+        <div style="text-align: center; padding: 2rem;">
+          <i class="fa-solid fa-right-to-bracket" style="font-size: 3rem; color: #2563eb; margin-bottom: 1rem;"></i>
+          <h3 style="color: #374151; margin-bottom: 0.5rem;">Login Required</h3>
+          <p style="color: #6b7280; margin-bottom: 1.5rem;">Please login to view and manage tickets</p>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button onclick="handleGoogleLogin()" class="login-action-btn primary">
+              <i class="fa-brands fa-google"></i> Login with Google
+            </button>
+            <button onclick="redirectToLoginPage()" class="login-action-btn secondary">
+              <i class="fa-solid fa-user"></i> User Login Page
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    DOM.cardContainer.style.display = "block";
+  }
+
+  // Pastikan table wrapper visible
+  const tableWrapper = document.querySelector(".table-wrapper");
+  if (tableWrapper) {
+    tableWrapper.style.display = "block";
+  }
+
+  // Tambahkan CSS untuk styling (hanya sekali)
+  addLoginMessageStyles();
+}
+
+/**
+ * Add styles for login message - NEW FUNCTION
+ */
+function addLoginMessageStyles() {
+  if (document.getElementById("login-message-styles")) return;
+
+  const styles = `
+    <style id="login-message-styles">
+      .login-message-state {
+        background: white !important;
+        border-radius: 8px;
+      }
+      
+      .login-message-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        grid-column: 1 / -1;
+      }
+      
+      .login-action-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        min-width: 160px;
+      }
+      
+      .login-action-btn.primary {
+        background: #2563eb;
+        color: white;
+      }
+      
+      .login-action-btn.primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
+      
+      .login-action-btn.secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+      
+      .login-action-btn.secondary:hover {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+      }
+      
+      .login-action-btn:active {
+        transform: translateY(0);
+      }
+    </style>
+  `;
+
+  document.head.insertAdjacentHTML("beforeend", styles);
+}
+
+/**
+ * Show controls bar - NEW FUNCTION
+ */
+function showControlsBar() {
+  try {
+    const controlsBar = document.querySelector(".controls-bar");
+    if (controlsBar) {
+      controlsBar.style.display = "flex"; // atau 'block' tergantung CSS Anda
+      console.log("🖥️ Controls bar shown");
+    }
+  } catch (error) {
+    console.error("🖥️ Error showing controls bar:", error);
+  }
+}
+
 // ==================== 🔐 Authentication ====================
 
 /**
@@ -2214,7 +2697,7 @@ function isAdminUser(user) {
 }
 
 /**
- * Initialize authentication
+ * Initialize authentication - FIXED VERSION
  */
 function initAuth() {
   onAuthStateChanged(
@@ -2223,7 +2706,9 @@ function initAuth() {
       console.log("🔐 Auth state changed:", user ? "Logged in" : "Logged out");
 
       if (!user) {
-        cleanup();
+        // User logged out - cleanup lengkap
+        console.log("🔐 User logged out, cleaning up...");
+
         showAuthButtons(false);
         showLoginScreen();
         return;
@@ -2237,7 +2722,7 @@ function initAuth() {
         showNotification(
           "Access Denied",
           `Email <strong>${user.email}</strong> tidak memiliki akses admin.<br>
-        <small>Hubungi administrator untuk mendapatkan akses.</small>`,
+          <small>Hubungi administrator untuk mendapatkan akses.</small>`,
           "error"
         ).then(() => {
           signOut(auth);
@@ -2248,6 +2733,7 @@ function initAuth() {
       // User is authenticated admin
       console.log("🔐 Admin access granted for:", user.email);
       showAuthButtons(true, user);
+      showAdminPanel();
       initTickets();
       initTicketGrabSystem();
 
@@ -2260,6 +2746,35 @@ function initAuth() {
       showLoginScreen();
     }
   );
+}
+
+/**
+ * Remove login message - NEW FUNCTION
+ */
+function removeLoginMessage() {
+  const loginMessages = document.querySelectorAll(
+    ".login-message-state, .login-message-card"
+  );
+  loginMessages.forEach((message) => {
+    message.remove();
+  });
+
+  // Hapus juga dari table body dan card container
+  if (DOM.ticketTableBody) {
+    const loginState = DOM.ticketTableBody.querySelector(
+      ".login-message-state"
+    );
+    if (loginState) {
+      loginState.remove();
+    }
+  }
+
+  if (DOM.cardContainer) {
+    const loginCard = DOM.cardContainer.querySelector(".login-message-card");
+    if (loginCard) {
+      loginCard.remove();
+    }
+  }
 }
 
 /**
@@ -2373,30 +2888,27 @@ async function handleLoginError(error) {
 }
 
 /**
- * Handle logout
+ * Handle logout - FIXED VERSION
  */
 async function handleLogout() {
   try {
     console.log("🔐 Logging out...");
 
-    cleanup();
-    sessionStorage.removeItem("adminFirstLogin");
-    sessionStorage.removeItem("adminSessionTime");
-    AppState.allTickets = [];
-    AppState.selectedTickets.clear();
-
+    // Tampilkan notifikasi logout
     await showNotification("Logging Out", "Please wait...", "info", 1000);
+
+    // Sign out dari Firebase
     await signOut(auth);
+
+    // Cleanup lengkap setelah logout
+    cleanup();
 
     console.log("🔐 Logout successful");
   } catch (error) {
     console.error("🔐 Logout error:", error);
+
+    // Tetap cleanup meskipun ada error
     cleanup();
-    sessionStorage.removeItem("adminFirstLogin");
-    sessionStorage.removeItem("adminSessionTime");
-    AppState.allTickets = [];
-    AppState.selectedTickets.clear();
-    showLoginScreen();
 
     showNotification(
       "Logged Out",
@@ -2410,7 +2922,7 @@ async function handleLogout() {
 // ==================== 📊 Data Management ====================
 
 /**
- * Initialize tickets data dengan SMART FILTER integration
+ * Initialize tickets data dengan SMART FILTER integration - FIXED VERSION
  */
 function initTickets() {
   console.log("📊 Initializing tickets...");
@@ -2418,6 +2930,7 @@ function initTickets() {
   // Clear previous data
   AppState.allTickets = [];
   AppState.selectedTickets.clear();
+  AppState.currentQuickFilter = null;
 
   // Check authentication
   if (!auth.currentUser) {
@@ -2433,6 +2946,7 @@ function initTickets() {
   // Unsubscribe previous listener if exists
   if (AppState.ticketsUnsubscribe) {
     AppState.ticketsUnsubscribe();
+    AppState.ticketsUnsubscribe = null;
   }
 
   AppState.ticketsUnsubscribe = onSnapshot(
@@ -2440,6 +2954,7 @@ function initTickets() {
     (snapshot) => {
       if (!auth.currentUser) {
         console.log("📊 User logged out during data fetch");
+        cleanup();
         showLoginScreen();
         return;
       }
@@ -2450,9 +2965,69 @@ function initTickets() {
       }));
 
       console.log("📊 Tickets loaded:", tickets.length);
-      AppState.allTickets = tickets;
 
-      // 🔥 APPLY SMART FILTER AFTER DATA LOAD
+      // compute available IDs and count
+      const prevAvailableCount = AppState.lastAvailableCount || 0;
+      const prevAvailableIds = new Set(AppState.lastAvailableIds || []);
+      AppState.allTickets = tickets;
+      const availableTickets = AppState.allTickets.filter((t) =>
+        isTicketAvailable(t)
+      );
+      const newAvailableCount = availableTickets.length;
+      const newAvailableIds = new Set(availableTickets.map((t) => t.id));
+
+      // store for next snapshot
+      AppState.lastAvailableCount = newAvailableCount;
+      AppState.lastAvailableIds = newAvailableIds;
+
+      console.log("📊 Available tickets:", {
+        prev: prevAvailableCount,
+        now: newAvailableCount,
+      });
+
+      // Detect newly available ticket IDs (present now but not previously)
+      const newlyAvailableIds = [];
+      newAvailableIds.forEach((id) => {
+        if (!prevAvailableIds.has(id)) newlyAvailableIds.push(id);
+      });
+
+      // If previously there were no available tickets and now there are,
+      // and the current quick filter was auto-selected by the system (not by user),
+      // then auto-switch to available so admin sees new tickets immediately.
+      if (
+        prevAvailableCount === 0 &&
+        newAvailableCount > 0 &&
+        AppState.currentQuickFilter === "my_tickets" &&
+        AppState.smartFilterAuto
+      ) {
+        console.log(
+          "🎯 New available tickets detected, auto-switching to available"
+        );
+        showNotification(
+          "New Tickets Available",
+          `There are ${newAvailableCount} available ticket(s). Switching to <strong>Available</strong>.`,
+          "info",
+          2000
+        );
+        // Detect newly available ticket IDs (present now but not previously)
+        const newlyAvailableIds = [];
+        newAvailableIds.forEach((id) => {
+          if (!prevAvailableIds.has(id)) newlyAvailableIds.push(id);
+        });
+
+        // If new available tickets appear, flash the available filter button
+        if (newlyAvailableIds.length > 0) {
+          flashAvailableFilterButton();
+        }
+        // Use system source so it doesn't disable auto behavior
+        refreshFilterState();
+        return;
+      }
+
+      // If new available tickets appear at any time and current filter is "available",
+      // flash them so the admin notices (even without switching)
+
+      // 🔥 APPLY SMART FILTER AFTER DATA LOAD (default behavior)
       setTimeout(() => {
         refreshFilterState();
       }, 100);
@@ -2468,31 +3043,27 @@ function initTickets() {
     },
     (error) => {
       console.error("📊 Error loading tickets:", error);
-
-      // Always hide loading state on error
-      if (DOM.ticketTableBody) {
-        DOM.ticketTableBody.innerHTML = "";
-      }
-
-      if (
-        error.code === "permission-denied" ||
-        error.code === "missing-or-insufficient-permissions"
-      ) {
-        console.log(
-          "📊 Permission denied - user might be logged out or not admin"
-        );
-        showLoginScreen();
-      } else {
-        showErrorState("Failed to load tickets: " + error.message);
-      }
+      // ...existing error handling...
     }
   );
 }
 
 /**
- * Show loading state
+ * Show loading state - FIXED VERSION
  */
 function showLoadingState() {
+  // Only show loading if user is logged in and in admin panel
+  if (!auth.currentUser) {
+    console.log("📊 Skipping loading - user not logged in");
+    return;
+  }
+
+  const adminPanel = document.getElementById("adminPanel");
+  if (adminPanel && adminPanel.style.display === "none") {
+    // Jika admin panel tidak aktif, jangan tampilkan loading
+    return;
+  }
+
   if (DOM.ticketTableBody) {
     DOM.ticketTableBody.innerHTML = `
       <tr>
@@ -2661,34 +3232,6 @@ async function handleDelete(e) {
 }
 
 // ==================== 🧹 Cleanup & Utilities ====================
-
-/**
- * Cleanup resources
- */
-function cleanup() {
-  console.log("🧹 Cleaning up resources...");
-
-  try {
-    AppState.selectedTickets.clear();
-
-    if (AppState.ticketsUnsubscribe) {
-      AppState.ticketsUnsubscribe();
-      AppState.ticketsUnsubscribe = null;
-    }
-
-    if (AppState.durationIntervalId) {
-      clearInterval(AppState.durationIntervalId);
-      AppState.durationIntervalId = null;
-    }
-
-    if (AppState.resizeTimeout) {
-      clearTimeout(AppState.resizeTimeout);
-      AppState.resizeTimeout = null;
-    }
-  } catch (error) {
-    console.error("🧹 Error during cleanup:", error);
-  }
-}
 
 /**
  * Setup session storage management
@@ -3242,6 +3785,7 @@ window.initTickets = initTickets;
 window.getDisplayedTickets = getDisplayedTickets;
 window.getCurrentFilterInfo = getCurrentFilterInfo;
 window.applyQuickFilter = applyQuickFilter;
+window.cleanup = cleanup;
 
 console.log(
   "🚀 Admin JS with SMART FILTER & FAST Multiple Selection Delete loaded successfully"

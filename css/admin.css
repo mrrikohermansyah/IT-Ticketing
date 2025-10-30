@@ -46,6 +46,7 @@ body {
   color: var(--gray-900);
   line-height: 1.5;
   font-size: 14px;
+  overflow: hidden;
 }
 
 /* ===== LAYOUT ===== */
@@ -53,6 +54,9 @@ body {
   max-width: 1780px;
   margin: 0 auto;
   padding: 16px;
+  height: 100vh;
+  /* HAPUS overflow-y: auto */
+  padding-bottom: 80px;
 }
 
 /* ===== HEADER ===== */
@@ -67,6 +71,9 @@ body {
   margin-bottom: 16px;
   flex-wrap: wrap;
   gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .main-header .left {
@@ -105,6 +112,9 @@ body {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  position: sticky;
+  top: 80px; /* Sesuaikan dengan tinggi header */
+  z-index: 99;
 }
 
 .export-buttons,
@@ -270,10 +280,14 @@ button:hover {
 /* ===== TABLE VIEW ===== */
 .table-wrapper {
   width: 100%;
+  height: 50vh;
   overflow-x: auto;
   border-radius: var(--radius);
   background: var(--white);
   box-shadow: var(--shadow);
+  max-height: calc(100vh - 250px); /* TAMBAHKAN max-height */
+  overflow-y: auto; /* TAMBAHKAN overflow-y */
+  margin-bottom: 16px;
 }
 
 #ticketsTable {
@@ -281,6 +295,7 @@ button:hover {
   border-collapse: collapse;
   background: var(--white);
   font-size: 0.8rem;
+  margin: 0;
 }
 
 #ticketsTable th,
@@ -406,6 +421,9 @@ button:hover {
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
   margin-top: 12px;
+  max-height: calc(100vh - 250px); /* TAMBAHKAN max-height */
+  overflow-y: auto; /* TAMBAHKAN overflow-y */
+  margin-bottom: 16px;
 }
 
 .ticket-card {
@@ -427,7 +445,7 @@ button:hover {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--gray-200);
   position: relative;
-  min-height: 32px; /* Pastikan tinggi minimum */
+  min-height: 32px;
   padding-left: 28px;
 }
 
@@ -441,6 +459,7 @@ button:hover {
   margin-right: 8px;
   padding-top: 2px;
 }
+
 /* Status badge di card header */
 .card-header .status-badge {
   min-width: 70px;
@@ -450,6 +469,7 @@ button:hover {
   flex-shrink: 0;
   align-self: flex-start;
 }
+
 .card-content {
   display: flex;
   flex-direction: column;
@@ -565,7 +585,7 @@ button:hover {
 /* ===== BULK ACTIONS ===== */
 .bulk-actions {
   position: fixed;
-  bottom: 0;
+  bottom: 0; /* Ubah ke 0 */
   left: 0;
   right: 0;
   z-index: 1000;
@@ -741,6 +761,7 @@ button:hover {
   text-align: center;
   padding: 32px 16px;
   color: var(--gray-500);
+  margin-bottom: 40px; /* Beri jarak dari bawah */
 }
 
 .empty-state i,
@@ -772,25 +793,41 @@ button:hover {
 @media (max-width: 768px) {
   .container {
     padding: 12px;
+    padding-bottom: 80px; /* Kurangi padding bottom */
+    height: 100vh; /* Tetap 100vh */
+  }
+
+  .login-action-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .login-message-card {
+    margin: 1rem;
   }
 
   .main-header {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
+    position: relative;
+    top: 0;
   }
 
   .main-header .left {
     justify-content: center;
     text-align: center;
   }
+
   .card-header {
-    padding-left: 24px; /* Sedikit lebih kecil di mobile */
+    padding-left: 24px;
     min-height: 28px;
   }
+
   .card-checkbox-container {
-    top: 2px; /* Adjust untuk mobile */
+    top: 2px;
   }
+
   .auth-buttons {
     justify-content: center;
   }
@@ -799,6 +836,8 @@ button:hover {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    position: relative;
+    top: 0;
   }
 
   .export-buttons,
@@ -809,6 +848,7 @@ button:hover {
   .card-container {
     grid-template-columns: 1fr;
     gap: 10px;
+    max-height: calc(100vh - 300px); /* Sesuaikan untuk mobile */
   }
 
   .ticket-card {
@@ -847,7 +887,7 @@ button:hover {
 
   /* Auto switch to card view on mobile */
   .table-wrapper {
-    display: none;
+    max-height: calc(100vh - 300px);
   }
 
   .card-container {
@@ -867,6 +907,10 @@ button:hover {
   }
 
   /* Bulk Actions Mobile */
+  .bulk-actions {
+    bottom: 60px; /* Lebih tinggi di mobile untuk hindari navigation bar */
+  }
+
   .bulk-actions-content {
     flex-direction: column;
     align-items: stretch;
@@ -892,7 +936,11 @@ button:hover {
   /* Add bottom padding to prevent content hiding */
   .table-wrapper,
   .card-container {
-    padding-bottom: 80px;
+    padding-bottom: 100px;
+  }
+
+  .table-wrapper {
+    max-height: calc(100vh - 350px);
   }
 }
 
@@ -916,6 +964,10 @@ button:hover {
 
   .card h2 {
     font-size: 1rem;
+  }
+
+  .container {
+    padding-bottom: 140px;
   }
 }
 
@@ -1054,5 +1106,22 @@ button:hover {
   .filter-btn {
     justify-content: center;
     text-align: center;
+  }
+}
+
+/* Safe Area untuk Browser Modern */
+@supports (padding: max(0px)) {
+  .container {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .bulk-actions {
+    bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  @media (max-width: 768px) {
+    .bulk-actions {
+      bottom: max(60px, env(safe-area-inset-bottom));
+    }
   }
 }
