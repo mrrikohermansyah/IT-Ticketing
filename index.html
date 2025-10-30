@@ -39,7 +39,6 @@
             <p>Report technical issues and get support from our IT team</p>
           </div>
         </div>
-        <!-- Hapus tombol admin dari header -->
       </header>
 
       <!-- Main Form -->
@@ -221,7 +220,7 @@
             <textarea
               name="message"
               id="message"
-              rows="4"
+              rows="3"
               required
               placeholder="Describe the issue in detail including error messages, steps to reproduce, and when it started"
             ></textarea>
@@ -257,10 +256,29 @@
     </main>
 
     <!-- Floating Admin Bubble -->
-    <!-- <a href="admin/index.html" class="admin-bubble">
-      <i class="fas fa-cog"></i>
-      <span class="bubble-text">Admin Panel</span>
-    </a> -->
+    <a
+      href="admin/index.html"
+      class="admin-bubble"
+      id="adminBubble"
+      target="_blank"
+    >
+      <div class="bubble-icon">
+        <i class="fas fa-cog"></i>
+      </div>
+      <div class="bubble-text-wrapper">
+        <div class="bubble-content">
+          <span class="bubble-text">Admin Panel</span>
+          <span class="bubble-subtext">IT Support</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://smtpjs.com/v3/smtp.js"></script>
+    <script type="module" src="js/app.js"></script>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -322,28 +340,5 @@
         });
       });
     </script>
-
-    <!-- EmailJS -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Tambahkan sebelum app.js -->
-    <script src="https://smtpjs.com/v3/smtp.js"></script>
-    <script type="module" src="js/app.js"></script>
-    <!-- Floating Admin Bubble - Perfectly Centered -->
-    <a
-      href="admin/index.html"
-      class="admin-bubble"
-      id="adminBubble"
-      target="_blank"
-    >
-      <div class="bubble-icon">
-        <i class="fas fa-cog"></i>
-      </div>
-      <div class="bubble-content">
-        <span class="bubble-text">Admin Panel</span>
-        <span class="bubble-subtext">IT Support</span>
-      </div>
-    </a>
   </body>
 </html>

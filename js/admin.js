@@ -2341,34 +2341,29 @@ function createEditFormHTML(data, id, currentAdminName, currentStatus) {
 
   return `
     <div class="form-grid">
-      <!-- Ticket ID (Readonly) -->
-      <div class="form-group" style="grid-column: 1 / -1;">
+      <!-- Ticket ID -->
+      <div class="form-group full-width">
         <label><i class="fa-solid fa-ticket"></i> Ticket ID</label>
-        <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly style="background: #f3f4f6; font-family: monospace; font-weight: bold;">
-        <small style="color: #666; font-size: 0.8rem;">
-          <i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM
-        </small>
+        <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly>
+        <small><i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM</small>
       </div>
       
-      <!-- Field Inventory -->
+      <!-- Basic Information -->
       <div class="form-group">
         <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
         <input type="text" id="inventory" class="swal2-input" value="${data.inventory || ""}" placeholder="Inventory Number">
       </div>
       
-      <!-- Field Name -->
       <div class="form-group">
         <label><i class="fa-solid fa-user"></i> Name</label>
         <input type="text" id="name" class="swal2-input" value="${data.name || ""}" placeholder="User Name">
       </div>
 
-      <!-- Field Email -->
       <div class="form-group">
         <label><i class="fa-solid fa-envelope"></i> User Email</label>
         <input type="email" id="user_email" class="swal2-input" value="${data.user_email || ""}" placeholder="user@company.com">
       </div>
       
-      <!-- Field Action By -->
       <div class="form-group">
         <label><i class="fa-solid fa-user-gear"></i> Action By</label>
         <select id="action_by" class="swal2-select">
@@ -2377,86 +2372,100 @@ function createEditFormHTML(data, id, currentAdminName, currentStatus) {
         </select>
       </div>
       
-      <!-- Field Phone -->
       <div class="form-group">
         <label><i class="fa-solid fa-phone"></i> Phone Number</label>
         <input type="tel" id="user_phone" class="swal2-input" value="${data.user_phone || ""}" placeholder="+62 XXX-XXXX-XXXX">
       </div>
         
-      <!-- Field Device Type -->
+      <!-- Device & Location -->
       <div class="form-group">
         <label><i class="fa-solid fa-computer"></i> Device Type</label>
         <select id="device" class="swal2-select" required>
           <option value="" disabled>Select Device Type</option>
-          <option value="PC Hardware" ${data.device === "PC Hardware" ? "selected" : ""}>PC Hardware</option>
-          <option value="PC Software" ${data.device === "PC Software" ? "selected" : ""}>PC Software</option>
-          <option value="Laptop" ${data.device === "Laptop" ? "selected" : ""}>Laptop</option>
-          <option value="Printer" ${data.device === "Printer" ? "selected" : ""}>Printer</option>
-          <option value="Network" ${data.device === "Network" ? "selected" : ""}>Network</option>
-          <option value="Projector" ${data.device === "Projector" ? "selected" : ""}>Projector</option>
-          <option value="Backup Data" ${data.device === "Backup Data" ? "selected" : ""}>Backup Data</option>
-          <option value="Others" ${data.device === "Others" ? "selected" : ""}>Others</option>
+          ${getDeviceOptions(data.device)}
         </select>
       </div>
       
-      <!-- Field Location -->
       <div class="form-group">
         <label><i class="fa-solid fa-location-dot"></i> Location</label>
-        <select id="location" class="swal2-select">
-          ${getLocationOptions(data.location)}
-        </select>
+        <select id="location" class="swal2-select">${getLocationOptions(data.location)}</select>
       </div>
       
-      <!-- Field Department -->
       <div class="form-group">
         <label><i class="fa-solid fa-building"></i> Department</label>
-        <select id="department" class="swal2-select">
-          ${getDepartmentOptions(data.department)}
-        </select>
+        <select id="department" class="swal2-select">${getDepartmentOptions(data.department)}</select>
       </div>
       
-      <!-- Field Priority -->
+      <!-- Priority & Status -->
       <div class="form-group">
         <label><i class="fa-solid fa-flag"></i> Priority</label>
-        <select id="priority" class="swal2-select">
-          ${getPriorityOptions(data.priority)}
-        </select>
+        <select id="priority" class="swal2-select">${getPriorityOptions(data.priority)}</select>
       </div>
       
-      <!-- Field Status -->
       <div class="form-group">
         <label><i class="fa-solid fa-circle-check"></i> Status</label>
-        <select id="status_ticket" class="swal2-select">
-          ${getStatusOptions(currentStatus)}
-        </select>
+        <select id="status_ticket" class="swal2-select">${getStatusOptions(currentStatus)}</select>
       </div>
       
-      <!-- Field Note -->
-      <div class="form-group" style="grid-column: 1 / -1;">
+      <!-- Note -->
+      <div class="form-group full-width">
         <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
         <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${data.note || ""}</textarea>
-        <small style="color: #666; font-size: 0.8rem; margin-top: 5px;">
-          <i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"
-        </small>
+        <small><i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"</small>
       </div>
     </div>
     
-    <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
-      <i class="fa-solid fa-info-circle"></i> 
-      ${
-        currentStatus === "Closed" || currentStatus === "On Progress"
-          ? `Duration ${currentStatus === "Closed" ? "sudah terkalkulasi" : "sedang berjalan real-time"}. Ubah status ke "Open" untuk reset duration.`
-          : 'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"'
-      }
-    </div>
-    <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
-      <i class="fa-solid fa-info-circle"></i> 
-      QA akan otomatis di-set ke "Finish" ketika status Closed, "Continue" untuk status lainnya.
+    <!-- Info Sections -->
+    <div class="info-section">
+      <div class="info-item">
+        <i class="fa-solid fa-info-circle"></i>
+        ${getDurationInfo(currentStatus)}
+      </div>
+      <div class="info-item">
+        <i class="fa-solid fa-info-circle"></i>
+        QA akan otomatis di-set ke "${currentQA}" berdasarkan status ticket.
+      </div>
     </div>
     
-    <!-- Hidden Field untuk Auto Code -->
     <input type="hidden" id="code" value="${data.code || ""}">
   `;
+}
+
+// Helper functions
+function getDeviceOptions(currentDevice) {
+  const devices = [
+    "PC Hardware",
+    "PC Software",
+    "Laptop",
+    "Printer",
+    "Network",
+    "Projector",
+    "Backup Data",
+    "Others",
+  ];
+  return devices
+    .map(
+      (device) =>
+        `<option value="${device}" ${currentDevice === device ? "selected" : ""}>${device}</option>`
+    )
+    .join("");
+}
+
+function getDurationInfo(status) {
+  const messages = {
+    Closed: "Duration sudah terkalkulasi",
+    "On Progress": "Duration sedang berjalan real-time",
+    default:
+      'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"',
+  };
+
+  const message = messages[status] || messages.default;
+  const action =
+    status === "Closed" || status === "On Progress"
+      ? `Ubah status ke "Open" untuk reset duration.`
+      : "";
+
+  return `${message}. ${action}`;
 }
 
 /**

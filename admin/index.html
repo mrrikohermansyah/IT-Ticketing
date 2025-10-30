@@ -5,34 +5,34 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - IT Ticketing</title>
     <link rel="stylesheet" href="../css/admin.css" />
-    <script src="../js/export.js"></script>
-    <script src="../js/config.js"></script>
-    <script type="module" src="../js/admin.js"></script>
-    <!-- Library Export -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
     <link rel="icon" type="image/png" href="../imgs/meitech.png" />
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- ExcelJS & FileSaver CDN -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- jsPDF AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="../js/export.js"></script>
+    <script src="../js/config.js"></script>
+    <script type="module" src="../js/admin.js"></script>
   </head>
 
   <body>
     <main class="container">
+      <!-- Header -->
       <header class="main-header">
         <div class="left">
           <img class="logo" src="../imgs/meitech-logo.png" alt="MEITECH Logo" />
           <h1>📋 Daftar Tiket Masuk</h1>
         </div>
+
         <div class="auth-buttons">
-          <!-- 🔥 TAMBAH BUTTON KE USER TICKET -->
           <button
             id="userTicketBtn"
             class="auth-btn user-ticket-btn"
@@ -80,16 +80,13 @@
 
       <!-- Controls Bar -->
       <div class="controls-bar">
-        <!-- Tombol Export -->
         <div class="export-buttons">
-          <!-- ✅ Use this instead -->
           <button onclick="handleExportToExcel()">Export Excel</button>
           <button id="btnExportPDF" style="display: none">
             <i class="fa-solid fa-file-pdf"></i> Export PDF
           </button>
         </div>
 
-        <!-- View Controls -->
         <div class="view-controls">
           <button id="switchViewBtn" class="view-toggle">
             <i class="fa-solid fa-id-card"></i> Switch to Card View
@@ -101,44 +98,22 @@
             <option value="On Progress">On Progress</option>
             <option value="Closed">Closed</option>
           </select>
-          <!-- ✅ TAMBAHKAN ACTION BY FILTER DI SINI -->
+
           <select id="actionByFilter" class="filter-select">
             <option value="all">All IT Staff</option>
-            <!-- Options akan diisi oleh JavaScript -->
           </select>
         </div>
       </div>
 
+      <!-- Main Content -->
       <section class="card">
         <h2 style="margin-top: 0">Tiket Terbaru</h2>
 
         <!-- Table View -->
         <div class="table-wrapper">
           <table id="ticketsTable">
-            <!-- 🔥 TAMBAHKAN COLGROUP INI -->
-            <!-- <colgroup>
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-            </colgroup> -->
             <thead>
               <tr>
-                <!-- ✅ Update kolom sesuai struktur Firebase -->
                 <th>
                   <input
                     type="checkbox"
@@ -157,7 +132,7 @@
                 <th>Priority</th>
                 <th>Subject</th>
                 <th>Message</th>
-                <th>IT Remarks / Note</th>
+                <th>IT Remarks</th>
                 <th>Code</th>
                 <th>Action By</th>
                 <th>QA</th>
@@ -168,7 +143,6 @@
             </thead>
             <tbody id="ticketTableBody">
               <tr>
-                <!-- ✅ Update colspan sesuai jumlah kolom baru (18 kolom) -->
                 <td colspan="18" class="loading">Memuat data...</td>
               </tr>
             </tbody>
@@ -176,17 +150,37 @@
         </div>
 
         <!-- Card View -->
-        <div id="cardContainer" class="card-container" style="display: none">
-          <!-- Cards will be rendered here -->
-        </div>
+        <div
+          id="cardContainer"
+          class="card-container"
+          style="display: none"
+        ></div>
       </section>
     </main>
 
-    <!-- File JS eksternal -->
+    <!-- Bulk Actions -->
+    <div class="bulk-actions hidden">
+      <div class="bulk-overlay"></div>
+      <div class="bulk-actions-content">
+        <div class="bulk-info">
+          <i class="fa-solid fa-layer-group"></i>
+          <span class="bulk-count">0 tickets selected</span>
+        </div>
+        <div class="bulk-buttons">
+          <button class="bulk-delete-btn" disabled>
+            <i class="fa-solid fa-trash"></i> Delete Selected
+          </button>
+          <button class="bulk-cancel-btn">
+            <i class="fa-solid fa-times"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="../js/export.js"></script>
 
-    <!-- 🔹 Script auto data-label untuk responsive table -->
     <script>
+      // Responsive table labels
       function addDataLabels() {
         const table = document.getElementById("ticketsTable");
         if (!table) return;
@@ -204,10 +198,8 @@
         });
       }
 
-      // Jalankan tiap kali halaman load
       window.addEventListener("load", addDataLabels);
 
-      // Jalankan ulang tiap kali ada perubahan tabel
       const observer = new MutationObserver(addDataLabels);
       const ticketsBody = document.getElementById("ticketTableBody");
       if (ticketsBody) {
