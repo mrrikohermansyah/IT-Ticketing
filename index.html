@@ -7,6 +7,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/dropdown.css" />
     <link rel="icon" type="image/png" href="imgs/meitech.png" />
 
     <!-- Google Fonts -->
@@ -63,13 +64,14 @@
               <span class="required">Device Type</span>
               <select name="device" id="device" required>
                 <option value="" disabled selected>Select Device Type</option>
+                <option value="Backup Data">Backup Data</option>
+                <option value="Drone">Drone</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Network">Network</option>
                 <option value="PC Hardware">PC Hardware</option>
                 <option value="PC Software">PC Software</option>
-                <option value="Laptop">Laptop</option>
                 <option value="Printer">Printer</option>
-                <option value="Network">Network</option>
                 <option value="Projector">Projector</option>
-                <option value="Backup Data">Backup Data</option>
                 <option value="Others">Others</option>
               </select>
               <div class="error-message">Please select device type</div>
@@ -129,17 +131,19 @@
               <select name="department" id="department" required>
                 <option value="" disabled selected>Select Department</option>
                 <option value="Clinic">Clinic</option>
+                <option value="Client">Client</option>
                 <option value="Completion">Completion</option>
+                <option value="DC">Dimentional Control (DC)</option>
                 <option value="Document Control">Document Control</option>
                 <option value="Engineer">Engineering</option>
                 <option value="Finance">Finance</option>
-                <option value="HR">Human Resources</option>
+                <option value="HR">Human Resources (HRD)</option>
                 <option value="HSE">HSE</option>
                 <option value="IT">IT</option>
                 <option value="Maintenance">Maintenance</option>
                 <option value="Management">Management</option>
                 <option value="Procurement">Procurement</option>
-                <option value="QC">Quality Control</option>
+                <option value="QC">Quality Control (QC)</option>
                 <option value="Vendor">Vendor</option>
                 <option value="Warehouse">Warehouse</option>
                 <option value="Lainlain">Other Department</option>
@@ -164,6 +168,7 @@
                 <option value="Green Office">Green Office</option>
                 <option value="HRD">HR Department</option>
                 <option value="HSE Yard">HSE Yard</option>
+                <option value="IT Server">IT Server</option>
                 <option value="IT Store">IT Store</option>
                 <option value="Multi Purposes Building">
                   Multi Purposes Building
@@ -182,6 +187,7 @@
                 <option value="Workshop10">Workshop 10</option>
                 <option value="Workshop11">Workshop 11</option>
                 <option value="Workshop12">Workshop 12</option>
+                <option value="Yard">Yard</option>
                 <option value="Lainlain">Other Location</option>
               </select>
               <div class="error-message">Please select your location</div>
@@ -279,6 +285,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://smtpjs.com/v3/smtp.js"></script>
     <script type="module" src="js/app.js"></script>
+    <script src="js/dropdown.js"></script>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {

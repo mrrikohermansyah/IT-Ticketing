@@ -1,5 +1,5 @@
 // ======================================================
-// 🚀 js/admin.js — Optimized Admin Panel with FAST Multiple Selection Delete
+// 🚀 js/admin.js — Optimized Admin Panel with SMART FILTER & FAST Multiple Selection Delete
 // ======================================================
 
 // ==================== 🔥 Firebase Imports ====================
@@ -65,7 +65,7 @@ const AppState = {
   loginInProgress: false,
   ticketsUnsubscribe: null,
   durationIntervalId: null,
-  currentQuickFilter: "all",
+  currentQuickFilter: null,
   resizeTimeout: null,
   selectedTickets: new Set(),
 };
@@ -121,10 +121,12 @@ function formatTicketId(ticket) {
       Management: "MGT",
       Procurement: "PRO",
       Engineer: "ENG",
+      "Dimensional Control": "DC",
       "Document Control": "DOC",
       Completion: "COM",
       Vendor: "VEN",
       Clinic: "CLN",
+      Client: "CLI",
       Lainlain: "OTH",
     },
     locations: {
@@ -158,6 +160,7 @@ function formatTicketId(ticket) {
       Network: "NET",
       Projector: "PJ",
       "Backup Data": "DR",
+      Drone: "DR",
       Others: "OT",
     },
   };
@@ -263,22 +266,11 @@ function isTicketAvailable(ticket) {
 /**
  * Check if ticket belongs to current admin
  */
-/**
- * Check if ticket belongs to current admin - IMPROVED VERSION
- */
 function isMyTicket(ticket) {
   if (!ticket || !ticket.action_by) return false;
 
   const currentAdmin = getAdminDisplayName(auth.currentUser);
   const currentEmail = auth.currentUser?.email?.toLowerCase();
-
-  console.log("🔍 isMyTicket Check:", {
-    ticketActionBy: ticket.action_by,
-    currentAdmin,
-    currentEmail,
-    directMatch: ticket.action_by === currentAdmin,
-    emailInActionBy: ticket.action_by.toLowerCase().includes(currentEmail),
-  });
 
   // Cek direct match dulu
   if (ticket.action_by === currentAdmin) {
@@ -304,23 +296,9 @@ function isMyTicket(ticket) {
 /**
  * Check delete permission for ticket
  */
-/**
- * Check delete permission for ticket - IMPROVED VERSION
- */
 function canDeleteTicket(ticket) {
   if (!ticket) return false;
-
-  const canDelete = isTicketAvailable(ticket) || isMyTicket(ticket);
-
-  console.log("🔍 canDeleteTicket Check:", {
-    ticketId: ticket.id.substring(0, 8),
-    actionBy: ticket.action_by,
-    isAvailable: isTicketAvailable(ticket),
-    isMine: isMyTicket(ticket),
-    canDelete: canDelete,
-  });
-
-  return canDelete;
+  return isTicketAvailable(ticket) || isMyTicket(ticket);
 }
 
 /**
@@ -554,16 +532,16 @@ function createDurationBadge(ticket) {
   </span>`;
 }
 
-// ==================== 🎯 Ticket Grab System ====================
+// ==================== 🎯 SMART FILTER SYSTEM ====================
 
 /**
- * Initialize ticket grab system
+ * Initialize ticket grab system dengan SMART FILTER
  */
 function initTicketGrabSystem() {
-  console.log("🎯 Initializing Ticket Grab System...");
-  AppState.currentQuickFilter = "all";
+  console.log("🎯 Initializing SMART FILTER System...");
   addQuickFilterButtons();
 
+  // Biarkan smart system yang tentukan filter terbaik
   setTimeout(() => {
     refreshFilterState();
   }, 100);
@@ -577,7 +555,7 @@ function addQuickFilterButtons() {
   filterContainer.className = "quick-filter-container";
   filterContainer.innerHTML = `
     <div class="quick-filters">
-      <button class="filter-btn active" data-filter="all">All Tickets</button>
+      <button class="filter-btn" data-filter="all">All Tickets</button>
       <button class="filter-btn" data-filter="available">🟢 Ticket Available</button>
       <button class="filter-btn" data-filter="my_tickets">👤 My Tickets</button>
       <button class="filter-btn" data-filter="others">👥 Others' Tickets</button>
@@ -597,18 +575,13 @@ function addQuickFilterButtons() {
       const filter = e.target.dataset.filter;
       console.log("🎯 Quick filter clicked:", filter);
 
-      document
-        .querySelectorAll(".filter-btn")
-        .forEach((b) => b.classList.remove("active"));
-      e.target.classList.add("active");
-
       applyQuickFilter(filter);
     });
   });
 }
 
 /**
- * Apply quick filter
+ * Apply quick filter dengan AUTO-SWITCH ketika kosong
  */
 function applyQuickFilter(filterType) {
   AppState.currentQuickFilter = filterType;
@@ -618,10 +591,52 @@ function applyQuickFilter(filterType) {
   switch (filterType) {
     case "available":
       filtered = filtered.filter((ticket) => isTicketAvailable(ticket));
+
+      // 🔥 AUTO SWITCH: Jika available kosong, coba switch ke my_tickets
+      if (filtered.length === 0 && filterType === "available") {
+        console.log("🎯 No available tickets, checking my tickets...");
+        const myTickets = AppState.allTickets.filter((ticket) =>
+          isMyTicket(ticket)
+        );
+
+        if (myTickets.length > 0) {
+          console.log("🎯 Auto-switching to My Tickets");
+          showNotification(
+            "No Available Tickets",
+            `Switching to <strong>My Tickets</strong> (${myTickets.length} tickets found)`,
+            "info",
+            2000
+          );
+          return applyQuickFilter("my_tickets");
+        } else {
+          console.log("🎯 No my tickets either, switching to All");
+          showNotification(
+            "No Available Tickets",
+            "Showing all tickets instead",
+            "info",
+            2000
+          );
+          return applyQuickFilter("all");
+        }
+      }
       break;
+
     case "my_tickets":
       filtered = filtered.filter((ticket) => isMyTicket(ticket));
+
+      // 🔥 AUTO SWITCH: Jika my_tickets kosong, switch ke all
+      if (filtered.length === 0 && filterType === "my_tickets") {
+        console.log("🎯 No my tickets, switching to All");
+        showNotification(
+          "No Tickets Assigned to You",
+          "Showing all tickets instead",
+          "info",
+          2000
+        );
+        return applyQuickFilter("all");
+      }
       break;
+
     case "others":
       filtered = filtered.filter(
         (ticket) => ticket.action_by && ticket.action_by !== currentAdmin
@@ -637,10 +652,11 @@ function applyQuickFilter(filterType) {
   });
 
   renderTickets(filtered);
+  updateActiveFilterButton(filterType);
 }
 
 /**
- * Refresh filter state
+ * Refresh filter state dengan SMART DEFAULT selection
  */
 function refreshFilterState() {
   console.log("🎯 Refreshing filter state:", AppState.currentQuickFilter);
@@ -650,22 +666,46 @@ function refreshFilterState() {
     return;
   }
 
-  if (AppState.currentQuickFilter && AppState.currentQuickFilter !== "all") {
-    applyQuickFilter(AppState.currentQuickFilter);
-  } else {
-    renderTickets(AppState.allTickets);
+  // 🔥 SMART DEFAULT: Cari filter yang paling sesuai
+  if (!AppState.currentQuickFilter || AppState.currentQuickFilter === "all") {
+    const availableTickets = AppState.allTickets.filter((ticket) =>
+      isTicketAvailable(ticket)
+    );
+    const myTickets = AppState.allTickets.filter((ticket) =>
+      isMyTicket(ticket)
+    );
+
+    // Prioritize available tickets, then my tickets
+    if (availableTickets.length > 0) {
+      AppState.currentQuickFilter = "available";
+    } else if (myTickets.length > 0) {
+      AppState.currentQuickFilter = "my_tickets";
+    } else {
+      AppState.currentQuickFilter = "all";
+    }
+
+    console.log("🎯 Smart filter selection:", {
+      available: availableTickets.length,
+      myTickets: myTickets.length,
+      selected: AppState.currentQuickFilter,
+    });
   }
 
-  // Update active filter button
-  const activeBtn = document.querySelector(
-    `.filter-btn[data-filter="${AppState.currentQuickFilter}"]`
-  );
-  if (activeBtn) {
-    document
-      .querySelectorAll(".filter-btn")
-      .forEach((b) => b.classList.remove("active"));
-    activeBtn.classList.add("active");
-  }
+  // Terapkan filter yang dipilih
+  applyQuickFilter(AppState.currentQuickFilter);
+}
+
+/**
+ * Update active filter button UI
+ */
+function updateActiveFilterButton(activeFilter) {
+  const buttons = document.querySelectorAll(".filter-btn");
+  buttons.forEach((btn) => {
+    btn.classList.remove("active");
+    if (btn.dataset.filter === activeFilter) {
+      btn.classList.add("active");
+    }
+  });
 }
 
 // ==================== ✅ Multiple Selection System ====================
@@ -708,7 +748,6 @@ function addBulkActionsContainer() {
     </div>
   `;
 
-  // 🔥 PERUBAHAN: Append ke body, bukan ke table wrapper
   document.body.appendChild(bulkActions);
 
   document
@@ -735,7 +774,6 @@ function updateBulkActions() {
   const count = AppState.selectedTickets.size;
 
   if (count > 0) {
-    // Show with animation
     bulkActions.classList.remove("hidden");
     setTimeout(() => {
       bulkActions.classList.add("visible");
@@ -745,10 +783,8 @@ function updateBulkActions() {
     bulkDeleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Delete Selected (${count})`;
     bulkDeleteBtn.disabled = false;
 
-    // Add body class to prevent scrolling
     document.body.classList.add("bulk-actions-active");
   } else {
-    // Hide with animation
     bulkActions.classList.remove("visible");
     setTimeout(() => {
       bulkActions.classList.add("hidden");
@@ -804,21 +840,6 @@ function handleTicketSelect(ticketId, checked) {
     `.ticket-card[data-ticket-id="${ticketId}"]`
   );
 
-  // 🔥 DEBUG: Cek data user dan ticket
-  const currentUser = auth.currentUser;
-  const currentAdminName = getAdminDisplayName(currentUser);
-  const currentEmail = currentUser?.email;
-
-  console.log("🔍 DEBUG Ticket Selection:", {
-    ticketId: ticketId.substring(0, 8),
-    ticketActionBy: ticket?.action_by,
-    currentAdminName,
-    currentEmail,
-    isMyTicket: isMyTicket(ticket),
-    canDelete: canDeleteTicket(ticket),
-    ticketData: ticket,
-  });
-
   if (checked) {
     if (ticket && canDeleteTicket(ticket)) {
       AppState.selectedTickets.add(ticketId);
@@ -833,15 +854,6 @@ function handleTicketSelect(ticketId, checked) {
       });
 
       if (card) card.classList.remove("selected-card");
-
-      // 🔥 DEBUG: Tampilkan info lebih detail
-      console.log("🚫 Selection blocked for ticket:", {
-        actionBy: ticket?.action_by,
-        currentUser: currentAdminName,
-        email: currentEmail,
-        isAvailable: isTicketAvailable(ticket),
-        isMine: isMyTicket(ticket),
-      });
 
       showNotification(
         "Cannot Select Ticket",
@@ -904,7 +916,6 @@ function clearSelection() {
     row.classList.remove("selected-row");
   });
 
-  // Clear card selection
   document.querySelectorAll(".selected-card").forEach((card) => {
     card.classList.remove("selected-card");
   });
@@ -912,7 +923,6 @@ function clearSelection() {
   updateSelectAllCheckbox();
   updateBulkActions();
 
-  // Show feedback
   showNotification(
     "Selection Cleared",
     "All tickets have been unselected",
@@ -987,7 +997,7 @@ async function handleBulkDelete() {
 
   if (!confirmed.isConfirmed) return;
 
-  // Execute deletion - USING FAST VERSION
+  // Execute deletion
   await executeFastBulkDelete(validTickets);
 }
 
@@ -1010,7 +1020,7 @@ function attachCheckboxEvents() {
   });
 }
 
-// ==================== 🗑️ BULK DELETE OPERATIONS - SIMPLE & WORKING ====================
+// ==================== 🗑️ BULK DELETE OPERATIONS ====================
 
 /**
  * SIMPLE & RELIABLE BULK DELETE
@@ -1147,7 +1157,7 @@ async function showDeleteResults(
 }
 
 /**
- * Refresh UI tanpa reload semua data - FIXED VERSION
+ * Refresh UI tanpa reload semua data
  */
 function refreshUIAfterDelete(deletedTicketIds) {
   console.log("🔄 Selective UI refresh after deletion", deletedTicketIds);
@@ -1160,7 +1170,7 @@ function refreshUIAfterDelete(deletedTicketIds) {
   // Clear selection
   AppState.selectedTickets.clear();
 
-  // Re-render current view
+  // Re-render current view dengan SMART FILTER
   refreshFilterState();
 
   console.log("✅ UI refreshed after deletion");
@@ -1169,7 +1179,7 @@ function refreshUIAfterDelete(deletedTicketIds) {
 // ==================== 🎨 Rendering Functions ====================
 
 /**
- * Render tickets based on current view
+ * Render tickets based on current view dengan SMART EMPTY STATE
  */
 function renderTickets(tickets) {
   console.log("🎨 Rendering tickets:", tickets?.length);
@@ -1183,7 +1193,7 @@ function renderTickets(tickets) {
   console.log("🎨 Filtered tickets:", filtered.length);
 
   if (filtered.length === 0) {
-    showEmptyState();
+    showSmartEmptyState();
     return;
   }
 
@@ -1238,6 +1248,159 @@ function applyFilters(tickets) {
 }
 
 /**
+ * Show smart empty state dengan suggestion
+ */
+function showSmartEmptyState() {
+  const currentFilter = AppState.currentQuickFilter;
+  let message = "";
+  let suggestion = "";
+
+  switch (currentFilter) {
+    case "available":
+      message = "No tickets available";
+      suggestion = "All tickets are currently being handled by IT staff";
+      break;
+    case "my_tickets":
+      message = "No tickets assigned to you";
+      suggestion = "You don't have any active tickets";
+      break;
+    case "others":
+      message = "No tickets from other staff";
+      suggestion = "All tickets are either available or assigned to you";
+      break;
+    default:
+      message = "No tickets found";
+      suggestion = "There are no tickets in the system";
+  }
+
+  if (DOM.ticketTableBody) {
+    DOM.ticketTableBody.innerHTML = `
+      <tr>
+        <td colspan="19" class="empty-state">
+          <i class="fa-solid fa-inbox"></i>
+          <h3>${message}</h3>
+          <p>${suggestion}</p>
+          <div class="empty-state-actions">
+            <button onclick="applyQuickFilter('all')" class="suggestion-btn">
+              <i class="fa-solid fa-list"></i> Show All Tickets
+            </button>
+            ${
+              currentFilter !== "my_tickets"
+                ? `<button onclick="applyQuickFilter('my_tickets')" class="suggestion-btn">
+                     <i class="fa-solid fa-user"></i> Check My Tickets
+                   </button>`
+                : ""
+            }
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  // Tambahkan CSS untuk empty state actions
+  const style = document.createElement("style");
+  if (!document.querySelector("#empty-state-styles")) {
+    style.id = "empty-state-styles";
+    style.textContent = `
+      .empty-state-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .suggestion-btn {
+        padding: 0.5rem 1rem;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+      }
+      .suggestion-btn:hover {
+        background: #0056b3;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  if (DOM.cardContainer) {
+    DOM.cardContainer.style.display = "none";
+  }
+
+  const tableWrapper = document.querySelector(".table-wrapper");
+  if (tableWrapper) {
+    tableWrapper.style.display = "block";
+  }
+
+  const bulkActions = document.querySelector(".bulk-actions");
+  if (bulkActions) {
+    bulkActions.classList.add("hidden");
+  }
+}
+
+/**
+ * Show empty state biasa
+ */
+function showEmptyState() {
+  if (DOM.ticketTableBody) {
+    DOM.ticketTableBody.innerHTML = `
+      <tr>
+        <td colspan="19" class="empty-state">
+          <i class="fa-solid fa-inbox"></i>
+          <p>No tickets found</p>
+          <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Belum ada tiket yang dibuat</p>
+        </td>
+      </tr>
+    `;
+  }
+
+  if (DOM.cardContainer) {
+    DOM.cardContainer.style.display = "none";
+  }
+
+  const tableWrapper = document.querySelector(".table-wrapper");
+  if (tableWrapper) {
+    tableWrapper.style.display = "block";
+  }
+
+  const bulkActions = document.querySelector(".bulk-actions");
+  if (bulkActions) {
+    bulkActions.classList.add("hidden");
+  }
+}
+
+/**
+ * Show error state
+ */
+function showErrorState(message) {
+  if (DOM.ticketTableBody) {
+    DOM.ticketTableBody.innerHTML = `
+      <tr>
+        <td colspan="19" class="error-state">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <p>${message}</p>
+          <button onclick="initTickets()" style="margin-top: 10px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            <i class="fa-solid fa-refresh"></i> Try Again
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  if (DOM.cardContainer) {
+    DOM.cardContainer.style.display = "none";
+  }
+
+  const bulkActions = document.querySelector(".bulk-actions");
+  if (bulkActions) {
+    bulkActions.classList.add("hidden");
+  }
+}
+
+/**
  * Render tickets in table view
  */
 function renderTable(data) {
@@ -1255,7 +1418,7 @@ function renderTable(data) {
     const isAvailable = isTicketAvailable(ticket);
     const isMine = isMyTicket(ticket);
     const canDelete = canDeleteTicket(ticket);
-    const isSelected = AppState.selectedTickets.has(ticket.id); // 🔥 NEW
+    const isSelected = AppState.selectedTickets.has(ticket.id);
 
     const rowClass = isAvailable
       ? "ticket-available"
@@ -1277,8 +1440,7 @@ function renderTable(data) {
       displayQA,
       isAvailable,
       isMine,
-      canDelete,
-      isSelected
+      canDelete
     );
     DOM.ticketTableBody.appendChild(tr);
   });
@@ -1467,7 +1629,6 @@ function renderCards(data) {
       card.classList.add("selected-card");
     }
 
-    // 🔥 FIX: Pass canDelete parameter
     card.innerHTML = createCardHTML(
       ticket,
       displayQA,
@@ -1503,10 +1664,9 @@ function attachCardCheckboxEvents() {
 }
 
 /**
- * Create card HTML - FIXED VERSION
+ * Create card HTML
  */
 function createCardHTML(ticket, displayQA, isAvailable, isMine, canDelete) {
-  // 🔥 FIX: Pass canDelete ke getCardActionButtonsHTML
   const actionButtons = getCardActionButtonsHTML(
     ticket,
     isAvailable,
@@ -1644,7 +1804,7 @@ function createQAField(qaValue) {
 }
 
 /**
- * Get card action buttons HTML - FIXED VERSION
+ * Get card action buttons HTML
  */
 function getCardActionButtonsHTML(ticket, isAvailable, isMine, canDelete) {
   if (isAvailable) {
@@ -1669,7 +1829,6 @@ function getCardActionButtonsHTML(ticket, isAvailable, isMine, canDelete) {
       </button>
     `;
   } else {
-    // 🔥 FIX: Gunakan canDelete untuk menentukan tombol delete
     if (canDelete) {
       return `
         <button class="view-btn" data-id="${ticket.id}">
@@ -1692,106 +1851,338 @@ function getCardActionButtonsHTML(ticket, isAvailable, isMine, canDelete) {
   }
 }
 
-// ==================== 🎛️ UI State Management ====================
+/**
+ * Attach row events
+ */
+function attachRowEvents() {
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", handleEdit);
+  });
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", handleDelete);
+  });
+  document.querySelectorAll(".grab-btn").forEach((btn) => {
+    btn.addEventListener("click", handleGrabTicket);
+  });
+  document.querySelectorAll(".release-btn").forEach((btn) => {
+    btn.addEventListener("click", handleReleaseTicket);
+  });
+  document.querySelectorAll(".view-btn").forEach((btn) => {
+    btn.addEventListener("click", handleViewTicket);
+  });
+}
+
+// ==================== ✏️ Edit Ticket Functions ====================
 
 /**
- * Show empty state
+ * Handle ticket edit
  */
-function showEmptyState() {
-  if (DOM.ticketTableBody) {
-    DOM.ticketTableBody.innerHTML = `
-      <tr>
-        <td colspan="19" class="empty-state">
-          <i class="fa-solid fa-inbox"></i>
-          <p>No tickets found</p>
-          <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Belum ada tiket yang dibuat</p>
-        </td>
-      </tr>
-    `;
-  }
+async function handleEdit(e) {
+  const id = e.currentTarget.dataset.id;
 
-  if (DOM.cardContainer) {
-    DOM.cardContainer.style.display = "none";
-  }
+  try {
+    const docRef = doc(db, "tickets", id);
+    const docSnap = await getDoc(docRef);
 
-  const tableWrapper = document.querySelector(".table-wrapper");
-  if (tableWrapper) {
-    tableWrapper.style.display = "block";
-  }
+    if (!docSnap.exists()) {
+      showNotification("Error!", "Ticket not found.", "error");
+      return;
+    }
 
-  const bulkActions = document.querySelector(".bulk-actions");
-  if (bulkActions) {
-    bulkActions.classList.add("hidden");
+    const data = docSnap.data();
+    await showEditForm(data, id, docRef);
+  } catch (error) {
+    console.error("Edit error:", error);
+    showNotification(
+      "Error!",
+      error.message || "Failed to update ticket.",
+      "error"
+    );
   }
 }
 
 /**
- * Show error state
+ * Show edit form
  */
-function showErrorState(message) {
-  if (DOM.ticketTableBody) {
-    DOM.ticketTableBody.innerHTML = `
-      <tr>
-        <td colspan="19" class="error-state">
-          <i class="fa-solid fa-exclamation-triangle"></i>
-          <p>${message}</p>
-          <button onclick="initTickets()" style="margin-top: 10px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
-            <i class="fa-solid fa-refresh"></i> Try Again
-          </button>
-        </td>
-      </tr>
-    `;
-  }
+async function showEditForm(data, id, docRef) {
+  const currentUser = auth.currentUser;
+  const currentAdminName = getAdminDisplayName(currentUser);
+  const currentStatus = data.status_ticket || "Open";
 
-  if (DOM.cardContainer) {
-    DOM.cardContainer.style.display = "none";
-  }
+  const { value: formValues } = await Swal.fire({
+    title: "Edit Ticket",
+    html: createEditFormHTML(data, id, currentAdminName, currentStatus),
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: "Update Ticket",
+    cancelButtonText: "Cancel",
+    preConfirm: () => {
+      const formData = getFormData();
 
-  const bulkActions = document.querySelector(".bulk-actions");
-  if (bulkActions) {
-    bulkActions.classList.add("hidden");
-  }
+      try {
+        validateTicketBeforeSave(formData);
+      } catch (error) {
+        Swal.showValidationMessage(error.message);
+        return false;
+      }
+
+      return formData;
+    },
+    didOpen: () => {
+      addFormStyles();
+    },
+  });
+
+  if (!formValues) return;
+
+  await updateTicketData(docRef, formValues, currentStatus, data);
 }
 
 /**
- * Show login screen
+ * Create edit form HTML
  */
-function showLoginScreen() {
-  AppState.allTickets = [];
-  AppState.selectedTickets.clear();
+function createEditFormHTML(data, id, currentAdminName, currentStatus) {
+  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
+  const currentQA = getAutoQA(currentStatus);
 
-  if (DOM.ticketTableBody) {
-    DOM.ticketTableBody.innerHTML = `
-      <tr>
-        <td colspan="19" class="login-prompt">
-          <div style="text-align: center; padding: 2rem;">
-            <i class="fa-solid fa-lock" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
-            <h3>Admin Login Required</h3>
-            <p>Please login to access the admin panel</p>
-            <div style="margin-top: 1rem;">
-              <button onclick="redirectToLoginPage()" class="login-redirect-btn">
-                <i class="fa-solid fa-right-to-bracket"></i> Go to Login Page
-              </button>
-            </div>
-          </div>
-        </td>
-      </tr>
-    `;
+  return `
+    <div class="form-grid">
+      <!-- Ticket ID -->
+      <div class="form-group full-width">
+        <label><i class="fa-solid fa-ticket"></i> Ticket ID</label>
+        <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly>
+        <small><i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM</small>
+      </div>
+      
+      <!-- Basic Information -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
+        <input type="text" id="inventory" class="swal2-input" value="${data.inventory || ""}" placeholder="Inventory Number">
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-user"></i> Name</label>
+        <input type="text" id="name" class="swal2-input" value="${data.name || ""}" placeholder="User Name">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-envelope"></i> User Email</label>
+        <input type="email" id="user_email" class="swal2-input" value="${data.user_email || ""}" placeholder="user@company.com">
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-user-gear"></i> Action By</label>
+        <select id="action_by" class="swal2-select">
+          <option value="">-- Select IT Staff --</option>
+          ${getActionByOptions(data.action_by || currentAdminName)}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+        <input type="tel" id="user_phone" class="swal2-input" value="${data.user_phone || ""}" placeholder="+62 XXX-XXXX-XXXX">
+      </div>
+        
+      <!-- Device & Location -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-computer"></i> Device Type</label>
+        <select id="device" class="swal2-select" required>
+          <option value="" disabled>Select Device Type</option>
+          ${getDeviceOptions(data.device)}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-location-dot"></i> Location</label>
+        <select id="location" class="swal2-select">${getLocationOptions(data.location)}</select>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-building"></i> Department</label>
+        <select id="department" class="swal2-select">${getDepartmentOptions(data.department)}</select>
+      </div>
+      
+      <!-- Priority & Status -->
+      <div class="form-group">
+        <label><i class="fa-solid fa-flag"></i> Priority</label>
+        <select id="priority" class="swal2-select">${getPriorityOptions(data.priority)}</select>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-circle-check"></i> Status</label>
+        <select id="status_ticket" class="swal2-select">${getStatusOptions(currentStatus)}</select>
+      </div>
+      
+      <!-- Note -->
+      <div class="form-group full-width">
+        <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
+        <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${data.note || ""}</textarea>
+        <small><i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"</small>
+      </div>
+    </div>
+    
+    <!-- Info Sections -->
+    <div class="info-section">
+      <div class="info-item">
+        <i class="fa-solid fa-info-circle"></i>
+        ${getDurationInfo(currentStatus)}
+      </div>
+      <div class="info-item">
+        <i class="fa-solid fa-info-circle"></i>
+        QA akan otomatis di-set ke "${currentQA}" berdasarkan status ticket.
+      </div>
+    </div>
+    
+    <input type="hidden" id="code" value="${data.code || ""}">
+  `;
+}
+
+// Helper functions
+function getDeviceOptions(currentDevice) {
+  const devices = [
+    "PC Hardware",
+    "PC Software",
+    "Laptop",
+    "Printer",
+    "Network",
+    "Projector",
+    "Backup Data",
+    "Drone",
+    "Others",
+  ];
+  return devices
+    .map(
+      (device) =>
+        `<option value="${device}" ${currentDevice === device ? "selected" : ""}>${device}</option>`
+    )
+    .join("");
+}
+
+function getDurationInfo(status) {
+  const messages = {
+    Closed: "Duration sudah terkalkulasi",
+    "On Progress": "Duration sedang berjalan real-time",
+    default:
+      'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"',
+  };
+
+  const message = messages[status] || messages.default;
+  const action =
+    status === "Closed" || status === "On Progress"
+      ? `Ubah status ke "Open" untuk reset duration.`
+      : "";
+
+  return `${message}. ${action}`;
+}
+
+/**
+ * Get form data from edit form
+ */
+function getFormData() {
+  return {
+    user_email: document.getElementById("user_email").value,
+    inventory: document.getElementById("inventory").value,
+    name: document.getElementById("name").value,
+    note: document.getElementById("note").value,
+    action_by: document.getElementById("action_by").value,
+    user_phone: document.getElementById("user_phone").value,
+    device: document.getElementById("device").value,
+    location: document.getElementById("location").value,
+    department: document.getElementById("department").value,
+    priority: document.getElementById("priority").value,
+    status_ticket: document.getElementById("status_ticket").value,
+  };
+}
+
+/**
+ * Add form styles
+ */
+function addFormStyles() {
+  const styles = `
+    <style>
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        max-width: 600px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #374151;
+        font-size: 14px;
+      }
+      .form-group:first-child {
+        grid-column: 1 / -1;
+      }
+      .swal2-select, .swal2-input, .swal2-textarea {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+      .swal2-textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+    </style>
+  `;
+  document.head.insertAdjacentHTML("beforeend", styles);
+}
+
+/**
+ * Update ticket data in Firestore
+ */
+async function updateTicketData(docRef, formValues, currentStatus, data) {
+  // Determine QA based on new status
+  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
+  const newQA = getAutoQA(formValues.status_ticket);
+
+  // Get updated code
+  const codeField = document.getElementById("code");
+  const updatedCode = codeField
+    ? codeField.value
+    : window.CONFIG?.DEVICE_TYPE_MAPPING?.[formValues.device] || "OT";
+
+  // Logic for handling timestamps
+  const updateData = {
+    ...formValues,
+    code: updatedCode,
+    qa: newQA,
+    updatedAt: serverTimestamp(),
+  };
+
+  // Handle timestamp based on status changes
+  if (
+    formValues.status_ticket === "On Progress" &&
+    currentStatus !== "On Progress"
+  ) {
+    // Status changed to On Progress for the first time
+    updateData.onProgressAt = serverTimestamp();
+  } else if (
+    formValues.status_ticket === "Closed" &&
+    currentStatus !== "Closed"
+  ) {
+    // Status changed to Closed for the first time
+    updateData.closedAt = serverTimestamp();
+
+    // If previously On Progress, keep onProgressAt for history
+    if (currentStatus === "On Progress" && data.onProgressAt) {
+      updateData.onProgressAt = data.onProgressAt;
+    }
+  } else if (formValues.status_ticket === "Open") {
+    // Status back to Open - reset all timestamps
+    updateData.onProgressAt = null;
+    updateData.closedAt = null;
   }
 
-  if (DOM.cardContainer) {
-    DOM.cardContainer.style.display = "none";
-  }
+  await updateDoc(docRef, updateData);
+  showNotification("Updated!", "Ticket updated successfully.", "success");
 
-  const tableWrapper = document.querySelector(".table-wrapper");
-  if (tableWrapper) {
-    tableWrapper.style.display = "block";
-  }
-
-  const bulkActions = document.querySelector(".bulk-actions");
-  if (bulkActions) {
-    bulkActions.classList.add("hidden");
-  }
+  // Refresh durations after status change
+  updateDurations();
 }
 
 // ==================== 🔐 Authentication ====================
@@ -2019,7 +2410,7 @@ async function handleLogout() {
 // ==================== 📊 Data Management ====================
 
 /**
- * Initialize tickets data
+ * Initialize tickets data dengan SMART FILTER integration
  */
 function initTickets() {
   console.log("📊 Initializing tickets...");
@@ -2061,8 +2452,11 @@ function initTickets() {
       console.log("📊 Tickets loaded:", tickets.length);
       AppState.allTickets = tickets;
 
-      // Hide loading state and render tickets
-      renderTickets(tickets);
+      // 🔥 APPLY SMART FILTER AFTER DATA LOAD
+      setTimeout(() => {
+        refreshFilterState();
+      }, 100);
+
       startDurationUpdates();
 
       // Update global variable for export.js
@@ -2266,339 +2660,6 @@ async function handleDelete(e) {
   }
 }
 
-// ==================== ✏️ Edit Ticket Functions ====================
-
-/**
- * Handle ticket edit
- */
-async function handleEdit(e) {
-  const id = e.currentTarget.dataset.id;
-
-  try {
-    const docRef = doc(db, "tickets", id);
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      showNotification("Error!", "Ticket not found.", "error");
-      return;
-    }
-
-    const data = docSnap.data();
-    await showEditForm(data, id, docRef);
-  } catch (error) {
-    console.error("Edit error:", error);
-    showNotification(
-      "Error!",
-      error.message || "Failed to update ticket.",
-      "error"
-    );
-  }
-}
-
-/**
- * Show edit form
- */
-async function showEditForm(data, id, docRef) {
-  const currentUser = auth.currentUser;
-  const currentAdminName = getAdminDisplayName(currentUser);
-  const currentStatus = data.status_ticket || "Open";
-
-  const { value: formValues } = await Swal.fire({
-    title: "Edit Ticket",
-    html: createEditFormHTML(data, id, currentAdminName, currentStatus),
-    focusConfirm: false,
-    showCancelButton: true,
-    confirmButtonText: "Update Ticket",
-    cancelButtonText: "Cancel",
-    preConfirm: () => {
-      const formData = getFormData();
-
-      try {
-        validateTicketBeforeSave(formData);
-      } catch (error) {
-        Swal.showValidationMessage(error.message);
-        return false;
-      }
-
-      return formData;
-    },
-    didOpen: () => {
-      addFormStyles();
-    },
-  });
-
-  if (!formValues) return;
-
-  await updateTicketData(docRef, formValues, currentStatus, data);
-}
-
-/**
- * Create edit form HTML
- */
-function createEditFormHTML(data, id, currentAdminName, currentStatus) {
-  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
-  const currentQA = getAutoQA(currentStatus);
-
-  return `
-    <div class="form-grid">
-      <!-- Ticket ID -->
-      <div class="form-group full-width">
-        <label><i class="fa-solid fa-ticket"></i> Ticket ID</label>
-        <input type="text" id="ticketId" class="swal2-input" value="${data.ticketId || id}" readonly>
-        <small><i class="fa-solid fa-info-circle"></i> Format: DEPT-LOC-DEVICE-DATE-RANDOM</small>
-      </div>
-      
-      <!-- Basic Information -->
-      <div class="form-group">
-        <label><i class="fa-solid fa-barcode"></i> Inventory Number</label>
-        <input type="text" id="inventory" class="swal2-input" value="${data.inventory || ""}" placeholder="Inventory Number">
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-user"></i> Name</label>
-        <input type="text" id="name" class="swal2-input" value="${data.name || ""}" placeholder="User Name">
-      </div>
-
-      <div class="form-group">
-        <label><i class="fa-solid fa-envelope"></i> User Email</label>
-        <input type="email" id="user_email" class="swal2-input" value="${data.user_email || ""}" placeholder="user@company.com">
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-user-gear"></i> Action By</label>
-        <select id="action_by" class="swal2-select">
-          <option value="">-- Select IT Staff --</option>
-          ${getActionByOptions(data.action_by || currentAdminName)}
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-        <input type="tel" id="user_phone" class="swal2-input" value="${data.user_phone || ""}" placeholder="+62 XXX-XXXX-XXXX">
-      </div>
-        
-      <!-- Device & Location -->
-      <div class="form-group">
-        <label><i class="fa-solid fa-computer"></i> Device Type</label>
-        <select id="device" class="swal2-select" required>
-          <option value="" disabled>Select Device Type</option>
-          ${getDeviceOptions(data.device)}
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-location-dot"></i> Location</label>
-        <select id="location" class="swal2-select">${getLocationOptions(data.location)}</select>
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-building"></i> Department</label>
-        <select id="department" class="swal2-select">${getDepartmentOptions(data.department)}</select>
-      </div>
-      
-      <!-- Priority & Status -->
-      <div class="form-group">
-        <label><i class="fa-solid fa-flag"></i> Priority</label>
-        <select id="priority" class="swal2-select">${getPriorityOptions(data.priority)}</select>
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fa-solid fa-circle-check"></i> Status</label>
-        <select id="status_ticket" class="swal2-select">${getStatusOptions(currentStatus)}</select>
-      </div>
-      
-      <!-- Note -->
-      <div class="form-group full-width">
-        <label><i class="fa-solid fa-note-sticky"></i> IT Remarks / Note *</label>
-        <textarea id="note" class="swal2-textarea" placeholder="Describe what have you fix or what you did ?">${data.note || ""}</textarea>
-        <small><i class="fa-solid fa-info-circle"></i> Wajib diisi jika status diubah ke "Closed"</small>
-      </div>
-    </div>
-    
-    <!-- Info Sections -->
-    <div class="info-section">
-      <div class="info-item">
-        <i class="fa-solid fa-info-circle"></i>
-        ${getDurationInfo(currentStatus)}
-      </div>
-      <div class="info-item">
-        <i class="fa-solid fa-info-circle"></i>
-        QA akan otomatis di-set ke "${currentQA}" berdasarkan status ticket.
-      </div>
-    </div>
-    
-    <input type="hidden" id="code" value="${data.code || ""}">
-  `;
-}
-
-// Helper functions
-function getDeviceOptions(currentDevice) {
-  const devices = [
-    "PC Hardware",
-    "PC Software",
-    "Laptop",
-    "Printer",
-    "Network",
-    "Projector",
-    "Backup Data",
-    "Others",
-  ];
-  return devices
-    .map(
-      (device) =>
-        `<option value="${device}" ${currentDevice === device ? "selected" : ""}>${device}</option>`
-    )
-    .join("");
-}
-
-function getDurationInfo(status) {
-  const messages = {
-    Closed: "Duration sudah terkalkulasi",
-    "On Progress": "Duration sedang berjalan real-time",
-    default:
-      'Duration akan terkalkulasi ketika status diubah ke "On Progress" atau "Closed"',
-  };
-
-  const message = messages[status] || messages.default;
-  const action =
-    status === "Closed" || status === "On Progress"
-      ? `Ubah status ke "Open" untuk reset duration.`
-      : "";
-
-  return `${message}. ${action}`;
-}
-
-/**
- * Get form data from edit form
- */
-function getFormData() {
-  return {
-    user_email: document.getElementById("user_email").value,
-    inventory: document.getElementById("inventory").value,
-    name: document.getElementById("name").value,
-    note: document.getElementById("note").value,
-    action_by: document.getElementById("action_by").value,
-    user_phone: document.getElementById("user_phone").value,
-    device: document.getElementById("device").value,
-    location: document.getElementById("location").value,
-    department: document.getElementById("department").value,
-    priority: document.getElementById("priority").value,
-    status_ticket: document.getElementById("status_ticket").value,
-  };
-}
-
-/**
- * Add form styles
- */
-function addFormStyles() {
-  const styles = `
-    <style>
-      .form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        max-width: 600px;
-      }
-      .form-group {
-        display: flex;
-        flex-direction: column;
-      }
-      .form-group label {
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #374151;
-        font-size: 14px;
-      }
-      .form-group:first-child {
-        grid-column: 1 / -1;
-      }
-      .swal2-select, .swal2-input, .swal2-textarea {
-        width: 100% !important;
-        margin: 0 !important;
-      }
-      .swal2-textarea {
-        min-height: 80px;
-        resize: vertical;
-      }
-    </style>
-  `;
-  document.head.insertAdjacentHTML("beforeend", styles);
-}
-
-/**
- * Update ticket data in Firestore
- */
-async function updateTicketData(docRef, formValues, currentStatus, data) {
-  // Determine QA based on new status
-  const getAutoQA = (status) => (status === "Closed" ? "Finish" : "Continue");
-  const newQA = getAutoQA(formValues.status_ticket);
-
-  // Get updated code
-  const codeField = document.getElementById("code");
-  const updatedCode = codeField
-    ? codeField.value
-    : window.CONFIG?.DEVICE_TYPE_MAPPING?.[formValues.device] || "OT";
-
-  // Logic for handling timestamps
-  const updateData = {
-    ...formValues,
-    code: updatedCode,
-    qa: newQA,
-    updatedAt: serverTimestamp(),
-  };
-
-  // Handle timestamp based on status changes
-  if (
-    formValues.status_ticket === "On Progress" &&
-    currentStatus !== "On Progress"
-  ) {
-    // Status changed to On Progress for the first time
-    updateData.onProgressAt = serverTimestamp();
-  } else if (
-    formValues.status_ticket === "Closed" &&
-    currentStatus !== "Closed"
-  ) {
-    // Status changed to Closed for the first time
-    updateData.closedAt = serverTimestamp();
-
-    // If previously On Progress, keep onProgressAt for history
-    if (currentStatus === "On Progress" && data.onProgressAt) {
-      updateData.onProgressAt = data.onProgressAt;
-    }
-  } else if (formValues.status_ticket === "Open") {
-    // Status back to Open - reset all timestamps
-    updateData.onProgressAt = null;
-    updateData.closedAt = null;
-  }
-
-  await updateDoc(docRef, updateData);
-  showNotification("Updated!", "Ticket updated successfully.", "success");
-
-  // Refresh durations after status change
-  updateDurations();
-}
-
-/**
- * Attach row events
- */
-function attachRowEvents() {
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", handleEdit);
-  });
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", handleDelete);
-  });
-  document.querySelectorAll(".grab-btn").forEach((btn) => {
-    btn.addEventListener("click", handleGrabTicket);
-  });
-  document.querySelectorAll(".release-btn").forEach((btn) => {
-    btn.addEventListener("click", handleReleaseTicket);
-  });
-  document.querySelectorAll(".view-btn").forEach((btn) => {
-    btn.addEventListener("click", handleViewTicket);
-  });
-}
-
 // ==================== 🧹 Cleanup & Utilities ====================
 
 /**
@@ -2651,91 +2712,7 @@ function setupSessionStorage() {
   }
 }
 
-// ==================== 🚀 Application Initialization ====================
-
-/**
- * Initialize admin application
- */
-function initAdminApp() {
-  console.log("🚀 Initializing admin application...");
-
-  // Check DOM elements
-  console.log("🚀 DOM Elements Check:", {
-    userTicketBtn: !!DOM.userTicketBtn,
-    loginBtn: !!DOM.loginBtn,
-    logoutBtn: !!DOM.logoutBtn,
-    exportBtn: !!DOM.exportBtn,
-  });
-
-  // Validate config
-  if (!window.CONFIG) {
-    console.error("🚀 CONFIG not loaded");
-    showErrorState("Configuration not loaded. Please refresh the page.");
-    return;
-  }
-
-  if (!window.CONFIG.ADMIN_EMAILS || !window.CONFIG.IT_STAFF) {
-    console.error("🚀 Required config missing");
-    showErrorState("Required configuration missing. Please check config.js");
-    return;
-  }
-
-  setupSessionStorage();
-
-  // Add event listeners
-  if (DOM.switchViewBtn) {
-    DOM.switchViewBtn.addEventListener("click", toggleView);
-  }
-  if (DOM.logoutBtn) {
-    DOM.logoutBtn.addEventListener("click", handleLogout);
-  }
-  if (DOM.exportBtn) {
-    DOM.exportBtn.addEventListener("click", handleExport);
-  }
-  if (DOM.filterSelect) {
-    DOM.filterSelect.addEventListener("change", handleFilterChange);
-  }
-  if (DOM.actionByFilter) {
-    DOM.actionByFilter.addEventListener("change", handleFilterChange);
-    populateActionByFilter();
-  }
-  if (DOM.userTicketBtn) {
-    DOM.userTicketBtn.addEventListener("click", redirectToUserTicket);
-  }
-  if (DOM.loginBtn) {
-    DOM.loginBtn.addEventListener("click", handleGoogleLogin);
-  }
-  if (DOM.goLoginBtn) {
-    DOM.goLoginBtn.addEventListener("click", redirectToLoginPage);
-  }
-
-  // Initialize systems
-  initAuth();
-  handleResponsiveView();
-  initMultipleSelection();
-}
-
-/**
- * Toggle view between table and card
- */
-function toggleView() {
-  AppState.isCardView = !AppState.isCardView;
-
-  if (DOM.switchViewBtn) {
-    DOM.switchViewBtn.innerHTML = AppState.isCardView
-      ? '<i class="fa-solid fa-table"></i> Switch to Table View'
-      : '<i class="fa-solid fa-id-card"></i> Switch to Card View';
-  }
-
-  renderTickets(AppState.allTickets);
-}
-
-/**
- * Handle filter changes
- */
-function handleFilterChange() {
-  renderTickets(AppState.allTickets);
-}
+// ==================== 🖥️ Responsive Management ====================
 
 /**
  * Handle responsive view
@@ -2752,6 +2729,28 @@ function handleResponsiveView() {
   if (AppState.allTickets.length > 0) {
     renderTickets(AppState.allTickets);
   }
+}
+
+/**
+ * Handle filter changes
+ */
+function handleFilterChange() {
+  renderTickets(AppState.allTickets);
+}
+
+/**
+ * Toggle view between table and card
+ */
+function toggleView() {
+  AppState.isCardView = !AppState.isCardView;
+
+  if (DOM.switchViewBtn) {
+    DOM.switchViewBtn.innerHTML = AppState.isCardView
+      ? '<i class="fa-solid fa-table"></i> Switch to Table View'
+      : '<i class="fa-solid fa-id-card"></i> Switch to Card View';
+  }
+
+  renderTickets(AppState.allTickets);
 }
 
 // ==================== 🌐 Global Functions ====================
@@ -2977,6 +2976,7 @@ function getLocationOptions(selected) {
     "Dark Room",
     "Green Office",
     "HRD",
+    "IT Server",
     "IT Store",
     "HSE Yard",
     "Maintenance",
@@ -2992,6 +2992,7 @@ function getLocationOptions(selected) {
     "Workshop10",
     "Workshop11",
     "Workshop12",
+    "Yard",
     "Lainlain",
   ];
 
@@ -3008,8 +3009,10 @@ function getLocationOptions(selected) {
  */
 function getDepartmentOptions(selected) {
   const list = [
+    "Client",
     "Clinic",
     "Completion",
+    "Dimensional Control",
     "Document Control",
     "Engineer",
     "Finance",
@@ -3146,6 +3149,70 @@ function convertToCSV(tickets) {
     .join("\n");
 }
 
+// ==================== 🚀 Application Initialization ====================
+
+/**
+ * Initialize admin application
+ */
+function initAdminApp() {
+  console.log("🚀 Initializing admin application...");
+
+  // Check DOM elements
+  console.log("🚀 DOM Elements Check:", {
+    userTicketBtn: !!DOM.userTicketBtn,
+    loginBtn: !!DOM.loginBtn,
+    logoutBtn: !!DOM.logoutBtn,
+    exportBtn: !!DOM.exportBtn,
+  });
+
+  // Validate config
+  if (!window.CONFIG) {
+    console.error("🚀 CONFIG not loaded");
+    showErrorState("Configuration not loaded. Please refresh the page.");
+    return;
+  }
+
+  if (!window.CONFIG.ADMIN_EMAILS || !window.CONFIG.IT_STAFF) {
+    console.error("🚀 Required config missing");
+    showErrorState("Required configuration missing. Please check config.js");
+    return;
+  }
+
+  setupSessionStorage();
+
+  // Add event listeners
+  if (DOM.switchViewBtn) {
+    DOM.switchViewBtn.addEventListener("click", toggleView);
+  }
+  if (DOM.logoutBtn) {
+    DOM.logoutBtn.addEventListener("click", handleLogout);
+  }
+  if (DOM.exportBtn) {
+    DOM.exportBtn.addEventListener("click", handleExport);
+  }
+  if (DOM.filterSelect) {
+    DOM.filterSelect.addEventListener("change", handleFilterChange);
+  }
+  if (DOM.actionByFilter) {
+    DOM.actionByFilter.addEventListener("change", handleFilterChange);
+    populateActionByFilter();
+  }
+  if (DOM.userTicketBtn) {
+    DOM.userTicketBtn.addEventListener("click", redirectToUserTicket);
+  }
+  if (DOM.loginBtn) {
+    DOM.loginBtn.addEventListener("click", handleGoogleLogin);
+  }
+  if (DOM.goLoginBtn) {
+    DOM.goLoginBtn.addEventListener("click", redirectToLoginPage);
+  }
+
+  // Initialize systems
+  initAuth();
+  handleResponsiveView();
+  initMultipleSelection();
+}
+
 // ==================== 📝 Initialize Application ====================
 
 // Initialize when DOM is loaded
@@ -3174,7 +3241,8 @@ window.redirectToLoginPage = redirectToLoginPage;
 window.initTickets = initTickets;
 window.getDisplayedTickets = getDisplayedTickets;
 window.getCurrentFilterInfo = getCurrentFilterInfo;
+window.applyQuickFilter = applyQuickFilter;
 
 console.log(
-  "🚀 Admin JS with FAST Multiple Selection Delete loaded successfully"
+  "🚀 Admin JS with SMART FILTER & FAST Multiple Selection Delete loaded successfully"
 );
