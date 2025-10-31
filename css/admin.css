@@ -218,7 +218,7 @@ button:hover {
 /* ===== FLOATING EXPORT FAB ===== */
 .fab-export {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + var(--bulk-bar-offset, 0px));
   right: 20px;
   width: 48px;
   height: 48px;
@@ -960,7 +960,7 @@ button:hover {
 
   /* Bulk Actions Mobile */
   .bulk-actions {
-    bottom: 60px; /* Lebih tinggi di mobile untuk hindari navigation bar */
+    bottom: 0; /* Nempel dengan paling bawah layar di mobile */
   }
 
   .bulk-actions-content {
@@ -1279,7 +1279,7 @@ button:hover {
 
   @media (max-width: 768px) {
     .bulk-actions {
-      bottom: max(60px, env(safe-area-inset-bottom));
+      bottom: max(0px, env(safe-area-inset-bottom));
     }
   }
 }

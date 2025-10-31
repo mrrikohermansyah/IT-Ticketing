@@ -1081,6 +1081,7 @@ function updateBulkActions() {
     bulkActions.classList.remove("hidden");
     setTimeout(() => {
       bulkActions.classList.add("visible");
+      updateFabPosition();
     }, 10);
 
     bulkCount.textContent = `${count} ticket${count > 1 ? "s" : ""} selected`;
@@ -1088,14 +1089,40 @@ function updateBulkActions() {
     bulkDeleteBtn.disabled = false;
 
     document.body.classList.add("bulk-actions-active");
+    updateFabPosition();
   } else {
     bulkActions.classList.remove("visible");
     setTimeout(() => {
       bulkActions.classList.add("hidden");
       document.body.classList.remove("bulk-actions-active");
+      updateFabPosition();
     }, 300);
 
     bulkDeleteBtn.disabled = true;
+  }
+}
+
+/**
+ * Update floating export button position relative to bulk actions bar
+ */
+function updateFabPosition() {
+  try {
+    const fab = document.querySelector('.fab-export');
+    if (!fab) return;
+
+    const bulkActions = document.querySelector('.bulk-actions');
+    const isVisible = bulkActions && bulkActions.classList.contains('visible');
+    const content = document.querySelector('.bulk-actions-content');
+    const contentHeight = content ? content.offsetHeight : 0;
+
+    // Set CSS variable for dynamic offset so CSS can handle positioning
+    const offsetPx = isVisible ? contentHeight + 20 : 20; // 20px base gap
+    document.body.style.setProperty('--bulk-bar-offset', isVisible ? `${offsetPx}px` : '0px');
+
+    // Also directly set bottom as a fallback (older browsers)
+    fab.style.bottom = isVisible ? `${offsetPx}px` : '20px';
+  } catch (error) {
+    console.error('Failed to update FAB position:', error);
   }
 }
 
@@ -3829,6 +3856,13 @@ function initAdminApp() {
 
   // Tambahkan tombol floating export Excel
   addFloatingExportButton();
+  // Posisi awal FAB
+  updateFabPosition();
+
+  // Recalculate on resize when bulk bar might change layout/height
+  window.addEventListener('resize', () => {
+    updateFabPosition();
+  });
 }
 
 // ==================== 📝 Initialize Application ====================
