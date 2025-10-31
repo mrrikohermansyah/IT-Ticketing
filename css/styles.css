@@ -370,8 +370,8 @@ footer small {
   z-index: 1000;
   border: 2px solid var(--white);
   overflow: hidden;
-  width: 44px;
-  height: 44px;
+  width: 48px; /* Samakan diameter colored area dengan FAB export (48px) */
+  height: 48px;
   animation: floatBubble 4s ease-in-out infinite;
 }
 
@@ -407,7 +407,7 @@ footer small {
 /* Icon - Perfectly Centered */
 /* Icon - Perfectly Centered */
 .admin-bubble i {
-  font-size: 1.1rem;
+  font-size: 1.2rem; /* Selaraskan dengan ikon FAB export */
   animation: pulseIcon 2s ease-in-out infinite;
   display: flex;
   align-items: center;

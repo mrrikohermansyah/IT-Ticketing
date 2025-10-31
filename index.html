@@ -267,6 +267,8 @@
       class="admin-bubble"
       id="adminBubble"
       target="_blank"
+      aria-label="Open Admin Panel"
+      aria-expanded="false"
     >
       <div class="bubble-icon">
         <i class="fas fa-cog"></i>
@@ -297,6 +299,7 @@
           if (!isExpanded) {
             adminBubble.classList.add("expanded");
             isExpanded = true;
+            adminBubble.setAttribute("aria-expanded", "true");
             autoCollapseTimer = setTimeout(() => {
               collapseBubble();
             }, 4000);
@@ -307,19 +310,21 @@
           if (isExpanded) {
             adminBubble.classList.remove("expanded");
             isExpanded = false;
+            adminBubble.setAttribute("aria-expanded", "false");
             clearTimeout(autoCollapseTimer);
           }
         }
 
-        adminBubble.addEventListener("click", function (e) {
-          if (!isExpanded) {
-            e.preventDefault();
-            expandBubble();
-          }
-        });
+        // Hover/focus memperluas bubble; klik selalu navigasi
+        // Biarkan default click pada <a> agar langsung buka Admin Panel
 
         adminBubble.addEventListener("mouseenter", function () {
           expandBubble();
+        });
+
+        adminBubble.addEventListener("mouseleave", function () {
+          // Sedikit jeda sebelum collapse agar tidak terasa patah
+          setTimeout(() => collapseBubble(), 300);
         });
 
         document.addEventListener("click", function (e) {
@@ -328,22 +333,12 @@
           }
         });
 
-        adminBubble.addEventListener("touchstart", function (e) {
-          if (!isExpanded) {
-            e.preventDefault();
-            expandBubble();
-          }
+        // Aksesibilitas: expand saat fokus keyboard, collapse saat blur
+        adminBubble.addEventListener("focus", function () {
+          expandBubble();
         });
-
-        adminBubble.addEventListener("keydown", function (e) {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            if (!isExpanded) {
-              expandBubble();
-            } else {
-              window.location.href = adminBubble.href;
-            }
-          }
+        adminBubble.addEventListener("blur", function () {
+          collapseBubble();
         });
       });
     </script>

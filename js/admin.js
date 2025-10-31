@@ -624,35 +624,64 @@ function addQuickFilterButtons() {
   // Pastikan hapus yang lama dulu
   removeQuickFilterContainer();
 
-  const filterContainer = document.createElement("div");
-  filterContainer.className = "quick-filter-container";
-  filterContainer.id = "quickFilterContainer";
-  filterContainer.innerHTML = `
-    <div class="quick-filters">
-      <button class="filter-btn" data-filter="all">All Tickets</button>
-      <button class="filter-btn" data-filter="available">🟢 Ticket Available</button>
-      <button class="filter-btn" data-filter="my_tickets">👤 My Tickets</button>
-      <button class="filter-btn" data-filter="others">👥 Others' Tickets</button>
-    </div>
-  `;
+  // Sisipkan langsung ke dalam .view-controls tanpa wrapper .quick-filters
+  const viewControls = document.querySelector(".controls-bar .view-controls") || document.querySelector(".controls-bar");
+  if (viewControls) {
+    const fragment = document.createDocumentFragment();
 
-  const tableWrapper = document.querySelector(".table-wrapper");
-  if (tableWrapper) {
-    tableWrapper.parentNode.insertBefore(filterContainer, tableWrapper);
-    DOM.quickFilterContainer = filterContainer;
-  }
+    const buttonsData = [
+      { filter: "all", label: "All Tickets" },
+      { filter: "available", label: "🟢 Ticket Available" },
+      { filter: "my_tickets", label: "👤 My Tickets" },
+      { filter: "others", label: "👥 Others' Tickets" },
+    ];
 
-  document.querySelectorAll(".filter-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
+    buttonsData.forEach(({ filter, label }) => {
+      const btn = document.createElement("button");
+      btn.className = "filter-btn quick-filter-item";
+      btn.dataset.filter = filter;
+      btn.textContent = label;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const selected = e.currentTarget.dataset.filter;
+        applyQuickFilter(selected);
+        // Tutup panel di mobile
+        viewControls.classList.remove("filters-open");
+      });
+      fragment.appendChild(btn);
+    });
+
+    // Pindahkan select langsung ke dalam view-controls
+    const filterSelect = document.getElementById("filterSelect");
+    const actionByFilter = document.getElementById("actionByFilter");
+    if (filterSelect) {
+      filterSelect.classList.add("filter-select", "quick-filter-item");
+      fragment.appendChild(filterSelect);
+    }
+    if (actionByFilter) {
+      actionByFilter.classList.add("filter-select", "quick-filter-item");
+      fragment.appendChild(actionByFilter);
+    }
+
+    // Tambahkan tombol burger untuk toggle di mobile
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "quick-filters-toggle view-toggle";
+    toggleBtn.setAttribute("aria-expanded", "false");
+    toggleBtn.innerHTML = `<i class=\"fa-solid fa-bars\"></i> Filters`;
+
+    viewControls.appendChild(toggleBtn);
+    viewControls.appendChild(fragment);
+    DOM.quickFilterContainer = viewControls;
+
+    // Toggle expand/collapse (mobile) dengan class di view-controls
+    toggleBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-
-      const filter = e.target.dataset.filter;
-      console.log("🎯 Quick filter clicked:", filter);
-
-      applyQuickFilter(filter);
+      const isOpen = viewControls.classList.toggle("filters-open");
+      toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
     });
-  });
+  }
 }
 
 /**
@@ -727,8 +756,14 @@ function removeControlsBar() {
  */
 function removeQuickFilterContainer() {
   try {
-    // Multiple removal strategies
-    const selectors = [".quick-filter-container", "#quickFilterContainer"];
+    // Multiple removal strategies (termasuk versi baru di dalam controls-bar)
+    const selectors = [
+      ".controls-bar .quick-filters",
+      ".controls-bar .quick-filters-toggle",
+      ".quick-filter-container",
+      "#quickFilterContainer",
+      ".controls-bar .view-controls .quick-filter-item",
+    ];
 
     selectors.forEach((selector) => {
       const elements = document.querySelectorAll(selector);
@@ -737,6 +772,12 @@ function removeQuickFilterContainer() {
         console.log(`🧹 Removed quick filter: ${selector}`);
       });
     });
+
+    // Pastikan state mobile ditutup
+    const vc = document.querySelector(".controls-bar .view-controls") || document.querySelector(".controls-bar");
+    if (vc) {
+      vc.classList.remove("filters-open");
+    }
 
     // Clear DOM reference
     DOM.quickFilterContainer = null;
@@ -1590,7 +1631,28 @@ function showSmartEmptyState() {
       }
       .suggestion-btn:hover {
         background: #0056b3;
-      }
+      }.skeleton-loader {
+  padding: 1rem;
+}
+
+.skeleton-line {
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+        
     `;
     document.head.appendChild(style);
   }
@@ -3052,10 +3114,20 @@ function initTickets() {
  * Show loading state - FIXED VERSION
  */
 function showLoadingState() {
-  // Only show loading if user is logged in and in admin panel
-  if (!auth.currentUser) {
-    console.log("📊 Skipping loading - user not logged in");
-    return;
+  if (DOM.ticketTableBody) {
+    DOM.ticketTableBody.innerHTML = `
+      <tr>
+        <td colspan="19" class="loading-state">
+          <div class="skeleton-loader">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        </td>
+      </tr>
+    `;
   }
 
   const adminPanel = document.getElementById("adminPanel");
@@ -3754,6 +3826,9 @@ function initAdminApp() {
   initAuth();
   handleResponsiveView();
   initMultipleSelection();
+
+  // Tambahkan tombol floating export Excel
+  addFloatingExportButton();
 }
 
 // ==================== 📝 Initialize Application ====================
@@ -3790,3 +3865,41 @@ window.cleanup = cleanup;
 console.log(
   "🚀 Admin JS with SMART FILTER & FAST Multiple Selection Delete loaded successfully"
 );
+
+/**
+ * Tambahkan tombol floating untuk Export Excel di kanan bawah layar
+ */
+function addFloatingExportButton() {
+  try {
+    // Cegah duplikasi
+    if (document.querySelector('.fab-export')) return;
+
+    const fab = document.createElement('button');
+    fab.className = 'fab-export';
+    fab.title = 'Export Excel';
+    fab.setAttribute('aria-label', 'Export Excel');
+    fab.innerHTML = '<i class="fa-solid fa-file-excel"></i>';
+
+    fab.addEventListener('click', async () => {
+      try {
+        if (typeof window.handleExportToExcel === 'function') {
+          await window.handleExportToExcel();
+        } else if (typeof handleExport === 'function') {
+          await handleExport();
+        }
+      } catch (err) {
+        console.error('FAB export click error:', err);
+      }
+    });
+
+    document.body.appendChild(fab);
+
+    // Sembunyikan tombol export lama agar tidak duplikat
+    const oldExportBtn = document.querySelector('.export-buttons button[onclick="handleExportToExcel()"]');
+    if (oldExportBtn) {
+      oldExportBtn.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Failed to add floating export button:', error);
+  }
+}
