@@ -222,9 +222,12 @@ button:hover {
 }
 
 .action-buttons button {
-  padding: 6px 10px;
-  font-size: 0.75rem;
+  padding: 8px 12px;
+  font-size: 0.875rem;
   min-width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .grab-btn {
@@ -1313,6 +1316,29 @@ button:hover {
 
   .controls-bar .quick-filters.is-open {
     display: grid;
+  }
+}
+
+/* Media query untuk ukuran layar 421px sampai 768px - tombol di kanan */
+@media (min-width: 421px) and (max-width: 768px) {
+  .auth-buttons {
+    justify-content: flex-end;
+    justify-self: end;
+  }
+}
+
+/* Media query untuk ukuran layar 769px sampai 1199px - table menjadi card */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .table-wrapper {
+    display: none !important;
+  }
+  
+  .card-container {
+    display: grid !important;
+  }
+  
+  .switch-view-btn {
+    display: none !important;
   }
 }
 
