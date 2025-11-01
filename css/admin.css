@@ -139,15 +139,74 @@ body {
 }
 
 .export-buttons,
-.view-controls {
+.view-controls,
+.search-controls {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
 }
 
+/* Search Box Styling */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 35px 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  width: 280px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: none;
+  transition: color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  color: #374151;
+}
+
+.clear-search-btn.show {
+  display: block;
+}
+
 /* Desktop alignment: pastikan konten rata kiri dan full-width */
 @media (min-width: 769px) {
+  /* Posisikan tombol clear di kiri input pada desktop */
+  .search-box .clear-search-btn {
+    left: 8px;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Sesuaikan padding agar tidak tertutup tombol di kiri */
+  .search-box .search-input {
+    
+    padding-right: 12px;
+  }
+
   .controls-bar {
     justify-content: flex-start; /* jangan center/space-between saat hanya ada satu kolom */
   }

@@ -57,6 +57,8 @@ const DOM = {
   userName: document.getElementById("userName"),
   userTicketBtn: document.getElementById("userTicketBtn"),
   quickFilterContainer: null,
+  ticketIdSearch: document.getElementById("ticketIdSearch"),
+  clearSearchBtn: document.getElementById("clearSearchBtn"),
 };
 
 // Application State
@@ -72,6 +74,8 @@ const AppState = {
   lastAvailableCount: 0,
   lastAvailableIds: new Set(),
   smartFilterAuto: true,
+  searchQuery: "",
+  searchTimeout: null,
 };
 
 /* NEW: Add CSS for flash effect (inject once) */
@@ -195,6 +199,7 @@ function formatTicketId(ticket) {
       Vendor: "VEN",
       Clinic: "CLN",
       Client: "CLI",
+      Civil: "CIV",
       Lainlain: "OTH",
     },
     locations: {
@@ -625,7 +630,9 @@ function addQuickFilterButtons() {
   removeQuickFilterContainer();
 
   // Sisipkan langsung ke dalam .view-controls tanpa wrapper .quick-filters
-  const viewControls = document.querySelector(".controls-bar .view-controls") || document.querySelector(".controls-bar");
+  const viewControls =
+    document.querySelector(".controls-bar .view-controls") ||
+    document.querySelector(".controls-bar");
   if (viewControls) {
     const fragment = document.createDocumentFragment();
 
@@ -774,7 +781,9 @@ function removeQuickFilterContainer() {
     });
 
     // Pastikan state mobile ditutup
-    const vc = document.querySelector(".controls-bar .view-controls") || document.querySelector(".controls-bar");
+    const vc =
+      document.querySelector(".controls-bar .view-controls") ||
+      document.querySelector(".controls-bar");
     if (vc) {
       vc.classList.remove("filters-open");
     }
@@ -1107,22 +1116,25 @@ function updateBulkActions() {
  */
 function updateFabPosition() {
   try {
-    const fab = document.querySelector('.fab-export');
+    const fab = document.querySelector(".fab-export");
     if (!fab) return;
 
-    const bulkActions = document.querySelector('.bulk-actions');
-    const isVisible = bulkActions && bulkActions.classList.contains('visible');
-    const content = document.querySelector('.bulk-actions-content');
+    const bulkActions = document.querySelector(".bulk-actions");
+    const isVisible = bulkActions && bulkActions.classList.contains("visible");
+    const content = document.querySelector(".bulk-actions-content");
     const contentHeight = content ? content.offsetHeight : 0;
 
     // Set CSS variable for dynamic offset so CSS can handle positioning
     const offsetPx = isVisible ? contentHeight + 20 : 20; // 20px base gap
-    document.body.style.setProperty('--bulk-bar-offset', isVisible ? `${offsetPx}px` : '0px');
+    document.body.style.setProperty(
+      "--bulk-bar-offset",
+      isVisible ? `${offsetPx}px` : "0px"
+    );
 
     // Also directly set bottom as a fallback (older browsers)
-    fab.style.bottom = isVisible ? `${offsetPx}px` : '20px';
+    fab.style.bottom = isVisible ? `${offsetPx}px` : "20px";
   } catch (error) {
-    console.error('Failed to update FAB position:', error);
+    console.error("Failed to update FAB position:", error);
   }
 }
 
@@ -1526,7 +1538,10 @@ function renderTickets(tickets) {
     return;
   }
 
-  const filtered = applyFilters(tickets);
+  let filtered = applyFilters(tickets);
+
+  // Apply search filter
+  filtered = applySearchFilter(filtered);
   console.log("🎨 Filtered tickets:", filtered.length);
 
   if (filtered.length === 0) {
@@ -1582,6 +1597,84 @@ function applyFilters(tickets) {
   }
 
   return filtered;
+}
+
+/**
+ * Apply search filter berdasarkan ID ticket
+ */
+function applySearchFilter(tickets) {
+  if (!AppState.searchQuery.trim()) {
+    return tickets;
+  }
+
+  const query = AppState.searchQuery.toLowerCase().trim();
+
+  return tickets.filter((ticket) => {
+    const ticketId = formatTicketId(ticket).toLowerCase();
+
+    // Exact match
+    if (ticketId === query) {
+      return true;
+    }
+
+    // Partial match dari awal
+    if (ticketId.startsWith(query)) {
+      return true;
+    }
+
+    // Match 3 digit terakhir
+    if (query.length === 3 && ticketId.endsWith(query)) {
+      return true;
+    }
+
+    // Match bagian tengah (untuk kasus seperti OTH-OTH-NET)
+    if (ticketId.includes(query)) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+/**
+ * Initialize search functionality
+ */
+function initSearchFunctionality() {
+  if (!DOM.ticketIdSearch || !DOM.clearSearchBtn) return;
+
+  // Search input event
+  DOM.ticketIdSearch.addEventListener("input", (e) => {
+    AppState.searchQuery = e.target.value;
+
+    // Show/hide clear button
+    if (AppState.searchQuery.trim()) {
+      DOM.clearSearchBtn.classList.add("show");
+    } else {
+      DOM.clearSearchBtn.classList.remove("show");
+    }
+
+    // Apply search with debounce
+    clearTimeout(AppState.searchTimeout);
+    AppState.searchTimeout = setTimeout(() => {
+      renderTickets(AppState.allTickets);
+    }, 300);
+  });
+
+  // Clear search button
+  DOM.clearSearchBtn.addEventListener("click", () => {
+    DOM.ticketIdSearch.value = "";
+    AppState.searchQuery = "";
+    DOM.clearSearchBtn.classList.remove("show");
+    renderTickets(AppState.allTickets);
+  });
+
+  // Enter key untuk search
+  DOM.ticketIdSearch.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      renderTickets(AppState.allTickets);
+    }
+  });
 }
 
 /**
@@ -3653,6 +3746,7 @@ function getDepartmentOptions(selected) {
   const list = [
     "Client",
     "Clinic",
+    "Civil",
     "Completion",
     "Dimensional Control",
     "Document Control",
@@ -3853,6 +3947,7 @@ function initAdminApp() {
   initAuth();
   handleResponsiveView();
   initMultipleSelection();
+  initSearchFunctionality();
 
   // Tambahkan tombol floating export Excel
   addFloatingExportButton();
@@ -3860,7 +3955,7 @@ function initAdminApp() {
   updateFabPosition();
 
   // Recalculate on resize when bulk bar might change layout/height
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     updateFabPosition();
   });
 }
@@ -3906,34 +4001,36 @@ console.log(
 function addFloatingExportButton() {
   try {
     // Cegah duplikasi
-    if (document.querySelector('.fab-export')) return;
+    if (document.querySelector(".fab-export")) return;
 
-    const fab = document.createElement('button');
-    fab.className = 'fab-export';
-    fab.title = 'Export Excel';
-    fab.setAttribute('aria-label', 'Export Excel');
+    const fab = document.createElement("button");
+    fab.className = "fab-export";
+    fab.title = "Export Excel";
+    fab.setAttribute("aria-label", "Export Excel");
     fab.innerHTML = '<i class="fa-solid fa-file-excel"></i>';
 
-    fab.addEventListener('click', async () => {
+    fab.addEventListener("click", async () => {
       try {
-        if (typeof window.handleExportToExcel === 'function') {
+        if (typeof window.handleExportToExcel === "function") {
           await window.handleExportToExcel();
-        } else if (typeof handleExport === 'function') {
+        } else if (typeof handleExport === "function") {
           await handleExport();
         }
       } catch (err) {
-        console.error('FAB export click error:', err);
+        console.error("FAB export click error:", err);
       }
     });
 
     document.body.appendChild(fab);
 
     // Sembunyikan tombol export lama agar tidak duplikat
-    const oldExportBtn = document.querySelector('.export-buttons button[onclick="handleExportToExcel()"]');
+    const oldExportBtn = document.querySelector(
+      '.export-buttons button[onclick="handleExportToExcel()"]'
+    );
     if (oldExportBtn) {
-      oldExportBtn.style.display = 'none';
+      oldExportBtn.style.display = "none";
     }
   } catch (error) {
-    console.error('Failed to add floating export button:', error);
+    console.error("Failed to add floating export button:", error);
   }
 }
