@@ -77,13 +77,15 @@ body {
 
 .main-header .left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  padding-top: 5px;
 }
 
 .logo {
   width: 100px; /* perkecil logo */
   height: auto;
+  margin-top: -5px;
 }
 
 .main-header h1 {
